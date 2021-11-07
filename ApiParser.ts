@@ -93,40 +93,58 @@ export default class ApiParser {
         type: "AnonymousTypeDeclaration",
         fields: this.Fields(),
       };
-    } else if (this.lookahead.type === "VariableType") {
+    } else if (
+      this.lookahead.type === "VariableType" ||
+      this.lookahead.type === "["
+    ) {
       return this.TypeReference();
     }
   }
 
   private TypeReference() {
-    const variableType = this.lookahead.value;
-    this.eat("VariableType");
+    if (this.lookahead.type === "[") {
+      this.eat("[");
 
-    const isRequired = this.lookahead.type === "!";
-    if (isRequired) {
-      this.eat("!");
+      const variableType = this.lookahead.value;
+      this.eat("VariableType");
+
+      const isItemRequired = this.lookahead.type === "!";
+      if (isItemRequired) {
+        this.eat("!");
+      }
+
+      this.eat("]");
+
+      const isRequired = this.lookahead.type === "!";
+      if (isRequired) {
+        this.eat("!");
+      }
+
+      return {
+        type: "TypeReference",
+        variableType: "Array",
+        isRequired,
+        item: {
+          variableType,
+          isRequired: isItemRequired,
+        },
+      };
+    } else {
+      const variableType = this.lookahead.value;
+      this.eat("VariableType");
+
+      const isRequired = this.lookahead.type === "!";
+      if (isRequired) {
+        this.eat("!");
+      }
+      return {
+        type: "TypeReference",
+        variableType,
+        isRequired,
+      };
     }
-    return {
-      type: "TypeReference",
-      variableType,
-    };
   }
 
-  private FieldArray() {
-    this.eat("[");
-    console.log("fieldarray", this.lookahead);
-
-    const isRequired = this.lookahead.type === "!";
-    if (isRequired) {
-      this.eat("!");
-    }
-    // return {
-    //   type: 'FieldArray'
-    //   variableType
-    //   isRequired
-    // }
-    this.eat("]");
-  }
   private Fields() {
     this.eat("{");
     const variables = [];
@@ -134,35 +152,49 @@ export default class ApiParser {
       const id = this.lookahead.value.slice(0, -1);
       this.eat("FIELD_IDENTIFIER");
 
-      const isArray = this.lookahead.type === "[";
-      if (isArray) {
+      if (this.lookahead.type === "[") {
         this.eat("[");
-      }
 
-      const variableType = this.lookahead.value;
-      this.eat("VariableType");
+        const variableType = this.lookahead.value;
+        this.eat("VariableType");
 
-      let isItemRequired = false;
-      if (isArray) {
-        isItemRequired = this.lookahead.type === "!";
+        const isItemRequired = this.lookahead.type === "!";
         if (isItemRequired) {
           this.eat("!");
         }
         this.eat("]");
-      }
-      const isRequired = this.lookahead.type === "!";
-      if (isRequired) {
-        this.eat("!");
-      }
 
-      variables.push({
-        type: "FieldDefinition",
-        id,
-        variableType,
-        isRequired,
-        isArray,
-        isItemRequired,
-      });
+        const isRequired = this.lookahead.type === "!";
+        if (isRequired) {
+          this.eat("!");
+        }
+
+        variables.push({
+          type: "FieldDefinition",
+          id,
+          variableType: "Array",
+          isRequired,
+          item: {
+            variableType,
+            isRequired: isItemRequired,
+          },
+        });
+      } else {
+        const variableType = this.lookahead.value;
+        this.eat("VariableType");
+
+        const isRequired = this.lookahead.type === "!";
+        if (isRequired) {
+          this.eat("!");
+        }
+
+        variables.push({
+          type: "FieldDefinition",
+          id,
+          variableType,
+          isRequired,
+        });
+      }
     }
     this.eat("}");
     return variables;

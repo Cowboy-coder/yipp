@@ -185,7 +185,7 @@ describe(ApiParser, () => {
     });
   });
 
-  it("Api Definition with Types", () => {
+  it("Api Definition with Types and Type references", () => {
     const parser = new ApiParser();
     const program = `
     type User {
@@ -236,6 +236,7 @@ describe(ApiParser, () => {
           query: {
             type: "TypeReference",
             variableType: "UserFilterQuery",
+            isRequired: false,
           },
           responses: [
             {
@@ -243,6 +244,7 @@ describe(ApiParser, () => {
               body: {
                 type: "TypeReference",
                 variableType: "User",
+                isRequired: true,
               },
             },
             {
@@ -265,71 +267,71 @@ describe(ApiParser, () => {
     });
   });
 
-  it.only("Api Definition with arrays", () => {
+  it("Api Definition with arrays", () => {
     const parser = new ApiParser();
     const program = `
-    DELETE /users/:ids {
+    HEAD /users/:ids {
       params: {
-        id: [String!]!
+        ids: [String!]!
       }
-      200: String!
+      200: {
+        id: [String]
+      }
+      404: [Error!]!
     }`;
-    console.log(JSON.stringify(parser.parse(program), null, 2));
     expect(parser.parse(program)).toEqual({
       type: "Program",
       definitions: [
         {
-          type: "TypeDeclaration",
-          name: "User",
-          fields: [
-            {
-              type: "FieldDefinition",
-              id: "id",
-              variableType: "String",
-              isRequired: true,
-            },
-          ],
-        },
-        {
           type: "ApiDefinition",
-          method: "DELETE",
-          path: "/users/:id",
+          method: "HEAD",
+          path: "/users/:ids",
           params: {
             type: "AnonymousTypeDeclaration",
             fields: [
               {
                 type: "FieldDefinition",
-                id: "id",
-                variableType: "String",
+                id: "ids",
+                variableType: "Array",
                 isRequired: true,
+                item: {
+                  variableType: "String",
+                  isRequired: true,
+                },
               },
             ],
           },
           body: null,
-          query: {
-            type: "TypeReference",
-            variableType: "UserFilterQuery",
-          },
+          query: null,
           responses: [
             {
               status: 200,
-              body: {
-                type: "TypeReference",
-                variableType: "User",
-              },
-            },
-            {
-              status: 404,
               body: {
                 type: "AnonymousTypeDeclaration",
                 fields: [
                   {
                     type: "FieldDefinition",
-                    id: "error",
-                    variableType: "String",
-                    isRequired: true,
+                    id: "id",
+                    variableType: "Array",
+                    isRequired: false,
+                    item: {
+                      variableType: "String",
+                      isRequired: false,
+                    },
                   },
                 ],
+              },
+            },
+            {
+              status: 404,
+              body: {
+                type: "TypeReference",
+                variableType: "Array",
+                isRequired: true,
+                item: {
+                  variableType: "Error",
+                  isRequired: true,
+                },
               },
             },
           ],
