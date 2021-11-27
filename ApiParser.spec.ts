@@ -2,7 +2,7 @@ import ApiParser from "./ApiParser";
 describe(ApiParser, () => {
   it("ApiDefinition with empty params", () => {
     const parser = new ApiParser();
-    const program = `GET /users/:id {
+    const program = `getUser: GET /users/:id {
       params: {}
       200: {
         id: String!
@@ -13,14 +13,15 @@ describe(ApiParser, () => {
       definitions: [
         {
           type: "ApiDefinition",
+          name: "getUser",
           method: "GET",
           path: "/users/:id",
           params: {
             type: "AnonymousTypeDeclaration",
             fields: [],
           },
-          query: null,
-          body: null,
+          query: undefined,
+          body: undefined,
           responses: [
             {
               status: 200,
@@ -44,7 +45,7 @@ describe(ApiParser, () => {
 
   it("ApiDefinition with no params", () => {
     const parser = new ApiParser();
-    const program = `POST /users {
+    const program = `createUser: POST /users {
       200: {
         id: String!
       }
@@ -54,11 +55,12 @@ describe(ApiParser, () => {
       definitions: [
         {
           type: "ApiDefinition",
+          name: "createUser",
           method: "POST",
           path: "/users",
-          params: null,
-          query: null,
-          body: null,
+          params: undefined,
+          query: undefined,
+          body: undefined,
           responses: [
             {
               status: 200,
@@ -82,7 +84,7 @@ describe(ApiParser, () => {
 
   it("Full Api definition", () => {
     const parser = new ApiParser();
-    const program = `PUT /users/:id {
+    const program = `updateUser: PUT /users/:id {
       params: {
         id: String!
         name: String
@@ -105,6 +107,7 @@ describe(ApiParser, () => {
       definitions: [
         {
           type: "ApiDefinition",
+          name: "updateUser",
           method: "PUT",
           path: "/users/:id",
           params: {
@@ -192,7 +195,7 @@ describe(ApiParser, () => {
       id: String!
     }
 
-    DELETE /users/:id {
+    deleteUser: DELETE /users/:id {
       params: {
         id: String!
       }
@@ -219,6 +222,7 @@ describe(ApiParser, () => {
         },
         {
           type: "ApiDefinition",
+          name: "deleteUser",
           method: "DELETE",
           path: "/users/:id",
           params: {
@@ -232,7 +236,7 @@ describe(ApiParser, () => {
               },
             ],
           },
-          body: null,
+          body: undefined,
           query: {
             type: "TypeReference",
             variableType: "UserFilterQuery",
@@ -270,7 +274,7 @@ describe(ApiParser, () => {
   it("Api Definition with arrays", () => {
     const parser = new ApiParser();
     const program = `
-    HEAD /users/:ids {
+    randomFunc: HEAD /users/:ids {
       params: {
         ids: [String!]!
       }
@@ -284,6 +288,7 @@ describe(ApiParser, () => {
       definitions: [
         {
           type: "ApiDefinition",
+          name: "randomFunc",
           method: "HEAD",
           path: "/users/:ids",
           params: {
@@ -301,8 +306,8 @@ describe(ApiParser, () => {
               },
             ],
           },
-          body: null,
-          query: null,
+          body: undefined,
+          query: undefined,
           responses: [
             {
               status: 200,

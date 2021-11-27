@@ -12,7 +12,7 @@ const Spec = [
   [/^\d+:/, "API_STATUS"],
   [/^\btype\b \b[a-zA-Z_]+\b/, "TYPE_DECLARATION"],
 
-  [/^\w+:/, "FIELD_IDENTIFIER"],
+  [/^\w+:/, "WORD_WITH_COLON"],
 
   [/^\b[a-zA-Z_]+\b/, "VariableType"],
 
@@ -30,7 +30,7 @@ export default class ApiTokenizer {
   private str: string;
   private cursor: number;
 
-  init(str: string) {
+  constructor(str: string) {
     this.str = str;
     this.cursor = 0;
   }

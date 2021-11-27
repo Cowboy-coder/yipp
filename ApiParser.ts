@@ -1,11 +1,11 @@
 import ApiTokenizer from "./ApiTokenizer";
 
 export default class ApiParser {
-  private tokenizer = new ApiTokenizer();
+  private tokenizer: ApiTokenizer;
   private lookahead: any;
 
   parse(str: string) {
-    this.tokenizer.init(str);
+    this.tokenizer = new ApiTokenizer(str);
 
     this.lookahead = this.tokenizer.getNextToken();
     return this.Document();
@@ -21,10 +21,10 @@ export default class ApiParser {
   Definitions() {
     const definitions = [];
     while (
-      this.lookahead?.type === "API_METHOD" ||
+      this.lookahead?.type === "WORD_WITH_COLON" ||
       this.lookahead?.type === "TYPE_DECLARATION"
     ) {
-      if (this.lookahead.type === "API_METHOD") {
+      if (this.lookahead.type === "WORD_WITH_COLON") {
         definitions.push(this.ApiDefinition());
       } else if (this.lookahead.type === "TYPE_DECLARATION") {
         definitions.push(this.TypeDeclaration());
@@ -33,6 +33,11 @@ export default class ApiParser {
           "TypeDefinition or ApiDefinition required on top-level"
         );
       }
+    }
+    if (definitions.length === 0) {
+      throw new SyntaxError(
+        "TypeDefinition or ApiDefinition required on top-level"
+      );
     }
     return definitions;
   }
@@ -48,6 +53,9 @@ export default class ApiParser {
   }
 
   ApiDefinition() {
+    const name = this.lookahead.value.slice(0, -1);
+    this.eat("WORD_WITH_COLON");
+
     const method = this.lookahead.value;
     this.eat("API_METHOD");
 
@@ -55,19 +63,19 @@ export default class ApiParser {
     this.eat("API_PATH");
 
     this.eat("{");
-    let params = null;
+    let params = undefined;
     if (this.lookahead.type === "API_PARAMS") {
       this.eat("API_PARAMS");
       params = this.Type();
     }
 
-    let query = null;
+    let query = undefined;
     if (this.lookahead.type === "API_QUERY") {
       this.eat("API_QUERY");
       query = this.Type();
     }
 
-    let body = null;
+    let body = undefined;
     if (this.lookahead.type === "API_BODY") {
       this.eat("API_BODY");
       body = this.Type();
@@ -78,6 +86,7 @@ export default class ApiParser {
 
     return {
       type: "ApiDefinition",
+      name,
       method,
       path,
       params,
@@ -148,9 +157,9 @@ export default class ApiParser {
   private Fields() {
     this.eat("{");
     const variables = [];
-    while (this.lookahead.type === "FIELD_IDENTIFIER") {
+    while (this.lookahead.type === "WORD_WITH_COLON") {
       const id = this.lookahead.value.slice(0, -1);
-      this.eat("FIELD_IDENTIFIER");
+      this.eat("WORD_WITH_COLON");
 
       if (this.lookahead.type === "[") {
         this.eat("[");
