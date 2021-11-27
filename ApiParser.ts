@@ -188,7 +188,7 @@ export default class ApiParser {
             isRequired: isItemRequired,
           },
         });
-      } else {
+      } else if (this.lookahead.type === "VariableType") {
         const variableType = this.lookahead.value;
         this.eat("VariableType");
 
@@ -201,6 +201,20 @@ export default class ApiParser {
           type: "FieldDefinition",
           id,
           variableType,
+          isRequired,
+        });
+      } else if (this.lookahead.type === "{") {
+        // nested field
+        const fields = this.Fields();
+        const isRequired = this.lookahead.type === "!";
+        if (isRequired) {
+          this.eat("!");
+        }
+        variables.push({
+          type: "FieldDefinition",
+          id,
+          variableType: "AnonymousTypeDeclaration",
+          fields,
           isRequired,
         });
       }

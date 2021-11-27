@@ -84,7 +84,14 @@ describe(ApiParser, () => {
 
   it("Full Api definition", () => {
     const parser = new ApiParser();
-    const program = `updateUser: PUT /users/:id {
+    const program = `
+    type Foobar {
+      id: String
+      nested: {
+        name: String
+      }
+    }
+    updateUser: PUT /users/:id {
       params: {
         id: String!
         name: String
@@ -97,6 +104,11 @@ describe(ApiParser, () => {
       body: {
         id: String
         age: Int!
+        nested: {
+          id: String!
+          foo: String!
+        }!
+        nested2: Nested2!
       }
       200: {
         id: String!
@@ -105,6 +117,32 @@ describe(ApiParser, () => {
     expect(parser.parse(program)).toEqual({
       type: "Program",
       definitions: [
+        {
+          type: "TypeDeclaration",
+          name: "Foobar",
+          fields: [
+            {
+              type: "FieldDefinition",
+              id: "id",
+              variableType: "String",
+              isRequired: false,
+            },
+            {
+              type: "FieldDefinition",
+              id: "nested",
+              variableType: "AnonymousTypeDeclaration",
+              isRequired: false,
+              fields: [
+                {
+                  type: "FieldDefinition",
+                  id: "name",
+                  variableType: "String",
+                  isRequired: false,
+                },
+              ],
+            },
+          ],
+        },
         {
           type: "ApiDefinition",
           name: "updateUser",
@@ -163,6 +201,32 @@ describe(ApiParser, () => {
                 type: "FieldDefinition",
                 id: "age",
                 variableType: "Int",
+                isRequired: true,
+              },
+              {
+                type: "FieldDefinition",
+                id: "nested",
+                variableType: "AnonymousTypeDeclaration",
+                fields: [
+                  {
+                    type: "FieldDefinition",
+                    id: "id",
+                    variableType: "String",
+                    isRequired: true,
+                  },
+                  {
+                    type: "FieldDefinition",
+                    id: "foo",
+                    variableType: "String",
+                    isRequired: true,
+                  },
+                ],
+                isRequired: true,
+              },
+              {
+                type: "FieldDefinition",
+                id: "nested2",
+                variableType: "Nested2",
                 isRequired: true,
               },
             ],

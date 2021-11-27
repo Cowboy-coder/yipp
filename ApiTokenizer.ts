@@ -14,7 +14,8 @@ const Spec = [
 
   [/^\w+:/, "WORD_WITH_COLON"],
 
-  [/^\b[a-zA-Z_]+\b/, "VariableType"],
+  // TODO: Make sure this doesn't start with a number
+  [/^\b[a-zA-Z_0-9]+\b/, "VariableType"],
 
   [/^!/, "!"],
 
