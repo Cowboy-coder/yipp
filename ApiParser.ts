@@ -45,11 +45,45 @@ export default class ApiParser {
   TypeDeclaration() {
     const value = this.lookahead.value;
     this.eat("TYPE_DECLARATION");
-    return {
-      type: "TypeDeclaration",
-      name: value.replace("type ", ""),
-      fields: this.Fields(),
-    };
+    if (this.lookahead.type === "{") {
+      return {
+        type: "TypeDeclaration",
+        name: value.replace("type ", ""),
+        fields: this.Fields(),
+      };
+    } else if (this.lookahead.type === "|") {
+      return {
+        type: "UnionDeclaration",
+        name: value.replace("type ", ""),
+        unions: this.Unions(),
+      };
+    }
+  }
+
+  Unions() {
+    const unions = [];
+    while (this.lookahead.type === "|") {
+      this.eat("|");
+
+      const variableType = this.lookahead.value;
+      if (this.lookahead.type === "STRING") {
+        this.eat("STRING");
+        unions.push({ type: "UnionItem", variableType });
+      } else if (this.lookahead.type === "NUMBER") {
+        this.eat("NUMBER");
+        unions.push({ type: "UnionItem", variableType: Number(variableType) });
+      } else if (this.lookahead.type === "VariableType") {
+        this.eat("VariableType");
+        unions.push({ type: "UnionItem", variableType });
+      } else if (this.lookahead.type === "{") {
+        unions.push({
+          type: "UnionItem",
+          variableType: "AnonymousTypeDeclaration",
+          fields: this.Fields(),
+        });
+      }
+    }
+    return unions;
   }
 
   ApiDefinition() {
@@ -215,6 +249,20 @@ export default class ApiParser {
           id,
           variableType: "AnonymousTypeDeclaration",
           fields,
+          isRequired,
+        });
+      } else if (this.lookahead.type === "|") {
+        // nested field
+        const unions = this.Unions();
+        const isRequired = this.lookahead.type === "!";
+        if (isRequired) {
+          this.eat("!");
+        }
+        variables.push({
+          type: "FieldDefinition",
+          id,
+          variableType: "UnionDeclaration",
+          unions,
           isRequired,
         });
       }

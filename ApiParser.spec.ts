@@ -408,4 +408,142 @@ describe(ApiParser, () => {
       ],
     });
   });
+
+  it("ApiDefinition with unions", () => {
+    const parser = new ApiParser();
+    const program = `
+    type UserType
+      | {q: String}
+      | "admin"
+      | "user"
+      | "thug"
+      | 49
+
+    createUser: POST /users {
+      body: {
+        username: String!
+        userType: UserType!
+      }
+      200: {
+        id: String!
+        test: | "foo" | "bar" | "baz" | SomeType | { a: String }!
+      }
+    }`;
+    expect(parser.parse(program)).toEqual({
+      type: "Program",
+      definitions: [
+        {
+          type: "UnionDeclaration",
+          name: "UserType",
+          unions: [
+            {
+              type: "UnionItem",
+              variableType: "AnonymousTypeDeclaration",
+              fields: [
+                {
+                  type: "FieldDefinition",
+                  id: "q",
+                  variableType: "String",
+                  isRequired: false,
+                },
+              ],
+            },
+            {
+              type: "UnionItem",
+              variableType: '"admin"',
+            },
+            {
+              type: "UnionItem",
+              variableType: '"user"',
+            },
+            {
+              type: "UnionItem",
+              variableType: '"thug"',
+            },
+            {
+              type: "UnionItem",
+              variableType: 49,
+            },
+          ],
+        },
+        {
+          type: "ApiDefinition",
+          name: "createUser",
+          method: "POST",
+          path: "/users",
+          body: {
+            type: "AnonymousTypeDeclaration",
+            fields: [
+              {
+                type: "FieldDefinition",
+                id: "username",
+                variableType: "String",
+                isRequired: true,
+              },
+              {
+                type: "FieldDefinition",
+                id: "userType",
+                variableType: "UserType",
+                isRequired: true,
+              },
+            ],
+          },
+          params: undefined,
+          query: undefined,
+          responses: [
+            {
+              status: 200,
+              body: {
+                type: "AnonymousTypeDeclaration",
+                fields: [
+                  {
+                    type: "FieldDefinition",
+                    id: "id",
+                    variableType: "String",
+                    isRequired: true,
+                  },
+                  {
+                    type: "FieldDefinition",
+                    id: "test",
+                    variableType: "UnionDeclaration",
+                    unions: [
+                      {
+                        type: "UnionItem",
+                        variableType: '"foo"',
+                      },
+                      {
+                        type: "UnionItem",
+                        variableType: '"bar"',
+                      },
+                      {
+                        type: "UnionItem",
+                        variableType: '"baz"',
+                      },
+                      {
+                        type: "UnionItem",
+                        variableType: "SomeType",
+                      },
+                      {
+                        type: "UnionItem",
+                        variableType: "AnonymousTypeDeclaration",
+                        fields: [
+                          {
+                            type: "FieldDefinition",
+                            id: "a",
+                            variableType: "String",
+                            isRequired: false,
+                          },
+                        ],
+                      },
+                    ],
+                    isRequired: true,
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    });
+  });
 });

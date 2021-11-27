@@ -6,6 +6,7 @@ const Spec = [
 
   [/^\/[^\s]*/, "API_PATH"],
 
+  [/^"([^"\\]*(\\.[^"\\]*)*)"/, "STRING"],
   [/^\bparams\b:/, "API_PARAMS"],
   [/^\bquery\b:/, "API_QUERY"],
   [/^\bbody\b:/, "API_BODY"],
@@ -23,6 +24,7 @@ const Spec = [
   [/^}/, "}"],
   [/^\[/, "["],
   [/^\]/, "]"],
+  [/^\|/, "|"],
 
   [/\s+/, null],
 ];
