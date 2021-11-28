@@ -30,13 +30,13 @@ export default class ApiParser {
         definitions.push(this.TypeDeclaration());
       } else {
         throw new SyntaxError(
-          "TypeDefinition or ApiDefinition required on top-level"
+          `TypeDefinition or ApiDefinition required on top-level got ${this.lookahead.type}`
         );
       }
     }
-    if (definitions.length === 0) {
+    if (this.lookahead && this.lookahead.type !== null) {
       throw new SyntaxError(
-        "TypeDefinition or ApiDefinition required on top-level"
+        `TypeDefinition or ApiDefinition required on top-level got token '${this.lookahead.type}'`
       );
     }
     return definitions;
@@ -57,6 +57,10 @@ export default class ApiParser {
         name: value.replace("type ", ""),
         unions: this.Unions(),
       };
+    } else {
+      throw new SyntaxError(
+        `Unsupported token found in TypeDeclaration: '${this.lookahead.type}'`
+      );
     }
   }
 
@@ -141,6 +145,10 @@ export default class ApiParser {
       this.lookahead.type === "["
     ) {
       return this.TypeReference();
+    } else {
+      throw new SyntaxError(
+        `Unsupported token found in Type: '${this.lookahead.type}'`
+      );
     }
   }
 
@@ -265,6 +273,10 @@ export default class ApiParser {
           unions,
           isRequired,
         });
+      } else {
+        throw new SyntaxError(
+          `Unsupported token found in Fields: '${this.lookahead.type}'`
+        );
       }
     }
     this.eat("}");

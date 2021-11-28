@@ -47,6 +47,7 @@ export default class ApiTokenizer {
 
     for (const [regExp, tokenType] of Spec as any) {
       const tokenValue = this.match(regExp, str);
+      // No match, try next
       if (tokenValue === null) {
         continue;
       }
