@@ -104,19 +104,19 @@ export default class ApiParser {
     let params = undefined;
     if (this.lookahead.type === "API_PARAMS") {
       this.eat("API_PARAMS");
-      params = this.Type();
+      params = this.ApiFieldDefinition();
     }
 
     let query = undefined;
     if (this.lookahead.type === "API_QUERY") {
       this.eat("API_QUERY");
-      query = this.Type();
+      query = this.ApiFieldDefinition();
     }
 
     let body = undefined;
     if (this.lookahead.type === "API_BODY") {
       this.eat("API_BODY");
-      body = this.Type();
+      body = this.ApiFieldDefinition();
     }
 
     const responses = this.Responses();
@@ -134,25 +134,29 @@ export default class ApiParser {
     };
   }
 
-  private Type() {
+  private ApiFieldDefinition() {
     if (this.lookahead.type === "{") {
       return {
-        type: "AnonymousTypeDeclaration",
+        type: "ApiFieldDefinition",
+        variableType: "AnonymousTypeDeclaration",
         fields: this.Fields(),
       };
     } else if (
       this.lookahead.type === "VariableType" ||
       this.lookahead.type === "["
     ) {
-      return this.TypeReference();
+      return {
+        type: "ApiFieldDefinition",
+        ...this.parseFieldReference(),
+      };
     } else {
       throw new SyntaxError(
-        `Unsupported token found in Type: '${this.lookahead.type}'`
+        `Unsupported token found in ApiFieldDefinition: '${this.lookahead.type}'`
       );
     }
   }
 
-  private TypeReference() {
+  private parseFieldReference() {
     if (this.lookahead.type === "[") {
       this.eat("[");
 
@@ -166,15 +170,8 @@ export default class ApiParser {
 
       this.eat("]");
 
-      const isRequired = this.lookahead.type === "!";
-      if (isRequired) {
-        this.eat("!");
-      }
-
       return {
-        type: "TypeReference",
         variableType: "Array",
-        isRequired,
         item: {
           variableType,
           isRequired: isItemRequired,
@@ -184,14 +181,8 @@ export default class ApiParser {
       const variableType = this.lookahead.value;
       this.eat("VariableType");
 
-      const isRequired = this.lookahead.type === "!";
-      if (isRequired) {
-        this.eat("!");
-      }
       return {
-        type: "TypeReference",
         variableType,
-        isRequired,
       };
     }
   }
@@ -310,7 +301,7 @@ export default class ApiParser {
       this.eat("API_STATUS");
       responses.push({
         status: value,
-        body: this.Type(),
+        body: this.ApiFieldDefinition(),
       });
     }
     return responses;

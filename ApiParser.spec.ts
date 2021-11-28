@@ -20,7 +20,8 @@ describe(ApiParser, () => {
           method: "GET",
           path: "/users/:id",
           params: {
-            type: "AnonymousTypeDeclaration",
+            type: "ApiFieldDefinition",
+            variableType: "AnonymousTypeDeclaration",
             fields: [
               {
                 type: "FieldDefinition",
@@ -42,7 +43,8 @@ describe(ApiParser, () => {
             {
               status: 200,
               body: {
-                type: "AnonymousTypeDeclaration",
+                type: "ApiFieldDefinition",
+                variableType: "AnonymousTypeDeclaration",
                 fields: [
                   {
                     type: "FieldDefinition",
@@ -81,7 +83,8 @@ describe(ApiParser, () => {
             {
               status: 200,
               body: {
-                type: "AnonymousTypeDeclaration",
+                type: "ApiFieldDefinition",
+                variableType: "AnonymousTypeDeclaration",
                 fields: [
                   {
                     type: "FieldDefinition",
@@ -165,7 +168,8 @@ describe(ApiParser, () => {
           method: "PUT",
           path: "/users/:id",
           params: {
-            type: "AnonymousTypeDeclaration",
+            type: "ApiFieldDefinition",
+            variableType: "AnonymousTypeDeclaration",
             fields: [
               {
                 type: "FieldDefinition",
@@ -194,7 +198,8 @@ describe(ApiParser, () => {
             ],
           },
           query: {
-            type: "AnonymousTypeDeclaration",
+            type: "ApiFieldDefinition",
+            variableType: "AnonymousTypeDeclaration",
             fields: [
               {
                 type: "FieldDefinition",
@@ -205,7 +210,8 @@ describe(ApiParser, () => {
             ],
           },
           body: {
-            type: "AnonymousTypeDeclaration",
+            type: "ApiFieldDefinition",
+            variableType: "AnonymousTypeDeclaration",
             fields: [
               {
                 type: "FieldDefinition",
@@ -251,7 +257,8 @@ describe(ApiParser, () => {
             {
               status: 200,
               body: {
-                type: "AnonymousTypeDeclaration",
+                type: "ApiFieldDefinition",
+                variableType: "AnonymousTypeDeclaration",
                 fields: [
                   {
                     type: "FieldDefinition",
@@ -280,7 +287,7 @@ describe(ApiParser, () => {
         id: String!
       }
       query: UserFilterQuery
-      200: User!
+      200: User
       404: {
         error: String!
       }
@@ -306,7 +313,8 @@ describe(ApiParser, () => {
           method: "DELETE",
           path: "/users/:id",
           params: {
-            type: "AnonymousTypeDeclaration",
+            type: "ApiFieldDefinition",
+            variableType: "AnonymousTypeDeclaration",
             fields: [
               {
                 type: "FieldDefinition",
@@ -318,23 +326,22 @@ describe(ApiParser, () => {
           },
           body: undefined,
           query: {
-            type: "TypeReference",
+            type: "ApiFieldDefinition",
             variableType: "UserFilterQuery",
-            isRequired: false,
           },
           responses: [
             {
               status: 200,
               body: {
-                type: "TypeReference",
+                type: "ApiFieldDefinition",
                 variableType: "User",
-                isRequired: true,
               },
             },
             {
               status: 404,
               body: {
-                type: "AnonymousTypeDeclaration",
+                type: "ApiFieldDefinition",
+                variableType: "AnonymousTypeDeclaration",
                 fields: [
                   {
                     type: "FieldDefinition",
@@ -361,7 +368,7 @@ describe(ApiParser, () => {
       200: {
         id: [String]
       }
-      404: [Error!]!
+      404: [Error!]
     }`;
     expect(parser.parse(program)).toEqual({
       type: "Program",
@@ -372,7 +379,8 @@ describe(ApiParser, () => {
           method: "HEAD",
           path: "/users/:ids",
           params: {
-            type: "AnonymousTypeDeclaration",
+            type: "ApiFieldDefinition",
+            variableType: "AnonymousTypeDeclaration",
             fields: [
               {
                 type: "FieldDefinition",
@@ -392,7 +400,8 @@ describe(ApiParser, () => {
             {
               status: 200,
               body: {
-                type: "AnonymousTypeDeclaration",
+                type: "ApiFieldDefinition",
+                variableType: "AnonymousTypeDeclaration",
                 fields: [
                   {
                     type: "FieldDefinition",
@@ -410,9 +419,8 @@ describe(ApiParser, () => {
             {
               status: 404,
               body: {
-                type: "TypeReference",
+                type: "ApiFieldDefinition",
                 variableType: "Array",
-                isRequired: true,
                 item: {
                   variableType: "Error",
                   isRequired: true,
@@ -489,7 +497,8 @@ describe(ApiParser, () => {
           method: "POST",
           path: "/users",
           body: {
-            type: "AnonymousTypeDeclaration",
+            type: "ApiFieldDefinition",
+            variableType: "AnonymousTypeDeclaration",
             fields: [
               {
                 type: "FieldDefinition",
@@ -511,7 +520,8 @@ describe(ApiParser, () => {
             {
               status: 200,
               body: {
-                type: "AnonymousTypeDeclaration",
+                type: "ApiFieldDefinition",
+                variableType: "AnonymousTypeDeclaration",
                 fields: [
                   {
                     type: "FieldDefinition",
