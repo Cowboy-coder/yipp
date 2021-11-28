@@ -230,9 +230,24 @@ export default class ApiParser {
             isRequired: isItemRequired,
           },
         });
-      } else if (this.lookahead.type === "VariableType") {
-        const variableType = this.lookahead.value;
-        this.eat("VariableType");
+      } else if (
+        this.lookahead.type === "VariableType" ||
+        this.lookahead.type === "STRING" ||
+        this.lookahead.type === "NUMBER"
+      ) {
+        let variableType = this.lookahead.value;
+        if (this.lookahead.type === "VariableType") {
+          this.eat("VariableType");
+        } else if (this.lookahead.type === "STRING") {
+          this.eat("STRING");
+        } else if (this.lookahead.type === "NUMBER") {
+          variableType = Number(variableType);
+          this.eat("NUMBER");
+        } else {
+          throw new SyntaxError(
+            `Unsupported token type in fields '${this.lookahead.type}'`
+          );
+        }
 
         const isRequired = this.lookahead.type === "!";
         if (isRequired) {

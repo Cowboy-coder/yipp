@@ -6,7 +6,6 @@ const Spec = [
 
   [/^\/[^\s]*/, "API_PATH"],
 
-  [/^"([^"\\]*(\\.[^"\\]*)*)"/, "STRING"],
   [/^\bparams\b:/, "API_PARAMS"],
   [/^\bquery\b:/, "API_QUERY"],
   [/^\bbody\b:/, "API_BODY"],
@@ -15,8 +14,9 @@ const Spec = [
 
   [/^\w+:/, "WORD_WITH_COLON"],
 
-  // TODO: Make sure this doesn't start with a number
-  [/^\b[a-zA-Z_0-9]+\b/, "VariableType"],
+  [/^\d+/, "NUMBER"],
+  [/^"([^"\\]*(\\.[^"\\]*)*)"/, "STRING"],
+  [/^\b[a-zA-Z_][a-zA-Z_0-9]+\b/, "VariableType"],
 
   [/^!/, "!"],
 

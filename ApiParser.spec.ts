@@ -3,7 +3,10 @@ describe(ApiParser, () => {
   it("ApiDefinition with empty params", () => {
     const parser = new ApiParser();
     const program = `getUser: GET /users/:id {
-      params: {}
+      params: {
+        x: "foo"
+        y: 42!
+      }
       200: {
         id: String!
       }
@@ -18,7 +21,20 @@ describe(ApiParser, () => {
           path: "/users/:id",
           params: {
             type: "AnonymousTypeDeclaration",
-            fields: [],
+            fields: [
+              {
+                type: "FieldDefinition",
+                id: "x",
+                variableType: '"foo"',
+                isRequired: false,
+              },
+              {
+                type: "FieldDefinition",
+                id: "y",
+                variableType: 42,
+                isRequired: true,
+              },
+            ],
           },
           query: undefined,
           body: undefined,
@@ -418,6 +434,7 @@ describe(ApiParser, () => {
       | "user"
       | "thug"
       | 49
+
 
     createUser: POST /users {
       body: {
