@@ -27,7 +27,12 @@ const Spec = [
   [/^\|/, "|"],
 
   [/\s+/, null],
-];
+] as const;
+
+export type Token = {
+  type: typeof Spec[number][1];
+  value: string;
+} | null;
 
 export default class ApiTokenizer {
   private str: string;
@@ -38,7 +43,7 @@ export default class ApiTokenizer {
     this.cursor = 0;
   }
 
-  getNextToken() {
+  getNextToken(): Token {
     if (!this.hasMoreTokens()) {
       return null;
     }

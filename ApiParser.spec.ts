@@ -1,9 +1,10 @@
 import ApiParser from "./ApiParser";
+
 describe(ApiParser, () => {
   it("ApiDefinition with empty params", () => {
     const parser = new ApiParser();
     const program = `getUser: GET /users/:id {
-      params: {
+      body: {
         x: "foo"
         y: 42!
       }
@@ -19,7 +20,7 @@ describe(ApiParser, () => {
           name: "getUser",
           method: "GET",
           path: "/users/:id",
-          params: {
+          body: {
             type: "ApiFieldDefinition",
             variableType: "AnonymousTypeDeclaration",
             fields: [
@@ -38,7 +39,6 @@ describe(ApiParser, () => {
             ],
           },
           query: undefined,
-          body: undefined,
           responses: [
             {
               status: 200,
