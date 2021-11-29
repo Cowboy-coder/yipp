@@ -1,0 +1,47 @@
+type User {
+  id: String!
+  address: {
+    name: string
+  }
+}
+
+type Query {
+  id: String!
+  filter: String!
+}
+
+type Error
+| { message: String! } 
+| { code: 404 message: "testing" }
+| "Foo"
+| 42
+
+getUser: GET /users/:id {
+  params: {
+    id: [String!]!
+  }
+  query: Query
+  body: {
+    user: User!
+  }
+  200: {
+    id: String!
+    name: String
+    address: {
+      city: String!
+      street: String!
+      country:
+        | "Sweden"
+        | "UK"!
+    }
+  }
+  404: Error
+} 
+
+postUser: POST /users {
+  body: {
+    user: User!
+  }
+  200: User
+  404: Error
+} 
