@@ -8,6 +8,9 @@ const plugin: FastifyPluginAsync = async (fastify, options) => {
       console.log("query", query);
       return {
         code: 200,
+        headers: {
+          authorization: "something",
+        },
         body: {
           id: "foo",
           address: {
@@ -18,7 +21,7 @@ const plugin: FastifyPluginAsync = async (fastify, options) => {
         },
       };
     },
-    getUsers: () => {
+    getUsers: (params) => {
       return {
         code: 200,
         body: [

@@ -70,6 +70,20 @@ export const JsonSchema = [
     ],
   },
   {
+    $id: "https://example.com/#AuthorizationHeader",
+    type: "object",
+    properties: {
+      authorization: {
+        type: "string",
+      },
+    },
+    required: ["authorization"],
+  },
+  {
+    $id: "https://example.com/#getUsers_headers",
+    $ref: "https://example.com/#AuthorizationHeader",
+  },
+  {
     $id: "https://example.com/#getUsers_200",
     type: "array",
     items: {
@@ -176,8 +190,12 @@ export type Error =
   | "Foo"
   | 42;
 
+export type AuthorizationHeader = {
+  authorization: string;
+};
+
 export type Api = {
-  getUsers: (req: {}) => MaybePromise<{
+  getUsers: (req: { headers: AuthorizationHeader }) => MaybePromise<{
     code: 200;
     body: User[];
   }>;
@@ -198,6 +216,9 @@ export type Api = {
             street: string;
             country: "Sweden" | "UK";
           };
+        };
+        headers: {
+          authorization: string;
         };
       }>
     | MaybePromise<{
@@ -222,15 +243,24 @@ export type Api = {
 export const addRoutes = (fastify: FastifyInstance, routes: Api) => {
   JsonSchema.forEach((schema) => fastify.addSchema(schema));
 
-  fastify.get<{}>(
+  fastify.get<{
+    Headers: AuthorizationHeader;
+  }>(
     "/users",
     {
       schema: {
+        headers: { $ref: "https://example.com/#getUsers_headers" },
         response: { "200": { $ref: "https://example.com/#getUsers_200" } },
       },
     },
     async (req, reply) => {
-      const response = await routes.getUsers({});
+      const response = await routes.getUsers({
+        headers: { ...req.headers },
+      });
+
+      if ("headers" in response && (response as any).headers) {
+        reply.headers((response as any).headers);
+      }
       reply.code(response.code).send(response.body);
     }
   );
@@ -254,9 +284,13 @@ export const addRoutes = (fastify: FastifyInstance, routes: Api) => {
     },
     async (req, reply) => {
       const response = await routes.getUser({
-        params: req.params,
-        query: req.query,
+        params: { ...req.params },
+        query: { ...req.query },
       });
+
+      if ("headers" in response && (response as any).headers) {
+        reply.headers((response as any).headers);
+      }
       reply.code(response.code).send(response.body);
     }
   );
@@ -269,7 +303,6 @@ export const addRoutes = (fastify: FastifyInstance, routes: Api) => {
     "/users",
     {
       schema: {
-        body: { $ref: "https://example.com/#postUser_body" },
         response: {
           "200": { $ref: "https://example.com/#postUser_200" },
           "404": { $ref: "https://example.com/#postUser_404" },
@@ -278,8 +311,12 @@ export const addRoutes = (fastify: FastifyInstance, routes: Api) => {
     },
     async (req, reply) => {
       const response = await routes.postUser({
-        body: req.body,
+        body: { ...req.body },
       });
+
+      if ("headers" in response && (response as any).headers) {
+        reply.headers((response as any).headers);
+      }
       reply.code(response.code).send(response.body);
     }
   );

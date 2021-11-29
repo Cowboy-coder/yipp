@@ -122,14 +122,23 @@ describe(JsonSchema, () => {
       id: String!
     } 
 
+    type Headers {
+      x-header: "yo"!
+    } 
+
     getUser: GET /user/:id {
       params: {
         id: String!
       }
+      headers: Headers
       200: {
-        user: User!
+        body: {
+          user: User!
+        }
       }
-      400: User
+      400: {
+        body: User
+      }
     }
     `;
     expect(JsonSchema(parser.parse(program))).toEqual([
@@ -140,10 +149,20 @@ describe(JsonSchema, () => {
         required: ["id"],
       },
       {
+        $id: "https://example.com/#Headers",
+        type: "object",
+        properties: { "x-header": { const: "yo" } },
+        required: ["x-header"],
+      },
+      {
         $id: "https://example.com/#getUser_params",
         type: "object",
         properties: { id: { type: "string" } },
         required: ["id"],
+      },
+      {
+        $id: "https://example.com/#getUser_headers",
+        $ref: "https://example.com/#Headers",
       },
       {
         $id: "https://example.com/#getUser_200",
@@ -178,16 +197,25 @@ describe(JsonSchema, () => {
       params: {
         id: String!
       }
-      200: {
-        user: User!
+      headers: {
+        x: String!
       }
-      400: User
+      200: {
+        body: {
+          user: User!
+        }
+      }
+      400: {
+        body: User
+      }
       404: {
-        userType: UserType
-        user: User
-        nested: {
-          a: String!
-          b: Int
+        body: {
+          userType: UserType
+          user: User
+          nested: {
+            a: String!
+            b: Int
+          }
         }
       }
     }
@@ -218,6 +246,12 @@ describe(JsonSchema, () => {
         type: "object",
         properties: { id: { type: "string" } },
         required: ["id"],
+      },
+      {
+        $id: "https://example.com/#getUser_headers",
+        type: "object",
+        properties: { x: { type: "string" } },
+        required: ["x"],
       },
       {
         $id: "https://example.com/#getUser_200",

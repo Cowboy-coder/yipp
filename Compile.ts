@@ -61,7 +61,10 @@ const Fields = (fields: Field[]): string => {
   }`;
 };
 
-const ApiDefinitionInput = (d: ApiFieldDefinition) => {
+const ApiDefinitionInput = (d: ApiFieldDefinition | undefined) => {
+  if (d === undefined) {
+    return "undefined";
+  }
   return `${
     d.variableType === "AnonymousTypeDeclaration" && "fields" in d
       ? Fields(d.fields ?? [])
@@ -75,7 +78,7 @@ const apiDefinition = (d: ApiDefinition) => {
   return `
   ${d.name}: (
     req: {
-      ${(["params", "query", "body"] as const)
+      ${(["params", "query", "body", "headers"] as const)
         .map((t) => {
           const x = d[t];
           if (x === undefined) {
@@ -86,10 +89,15 @@ const apiDefinition = (d: ApiDefinition) => {
         .filter((x) => !!x)
         .join(",\n")} 
     }) => ${d.responses
-      .map(({ body, status }) => {
+      .map(({ body, headers, status }) => {
         return `MaybePromise<{
     code: ${status};
-    body: ${ApiDefinitionInput(body)}
+    ${[
+      body ? `body: ${ApiDefinitionInput(body)}` : "",
+      headers ? `headers: ${ApiDefinitionInput(headers)}` : "",
+    ]
+      .filter((x) => !!x)
+      .join(";\n")}
   }>`;
       })
       .join(" | ")}
@@ -103,6 +111,7 @@ const fastify = (d: ApiDefinition) => {
       d.params ? `Params: ${ApiDefinitionInput(d.params)}` : "",
       d.query ? `Querystring: ${ApiDefinitionInput(d.query)}` : "",
       d.body ? `Body: ${ApiDefinitionInput(d.body)}` : "",
+      d.headers ? `Headers: ${ApiDefinitionInput(d.headers)}` : "",
     ]
       .filter((x) => !!x)
       .join(",")}
@@ -111,6 +120,7 @@ const fastify = (d: ApiDefinition) => {
     ${[
       d.params ? `params: { $ref: "${schemaId(d.name)}_params"}` : undefined,
       d.query ? `querystring: { $ref: "${schemaId(d.name)}_query"}` : undefined,
+      d.headers ? `headers: { $ref: "${schemaId(d.name)}_headers"}` : undefined,
       d.body ? `body: { $ref: "${schemaId(d.name)}_body"}` : undefined,
       `response: {${d.responses
         .map(
@@ -125,13 +135,18 @@ const fastify = (d: ApiDefinition) => {
   }, async (req, reply) => {
     const response = await routes.${d.name}({
     ${[
-      d.params ? "params: req.params" : "",
-      d.query ? "query: req.query" : "",
-      d.body ? "body: req.body" : "",
+      d.params ? "params: {...req.params}" : "",
+      d.query ? "query: {...req.query}" : "",
+      d.body ? "body: {...req.body}" : "",
+      d.headers ? "headers: {...req.headers}" : "",
     ]
       .filter((x) => !!x)
       .join(",")}
     });
+
+    if ("headers" in response && (response as any).headers) {
+      reply.headers((response as any).headers);
+    }
     reply.code(response.code).send(response.body);
   })
   `;

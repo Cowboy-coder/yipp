@@ -9,14 +9,15 @@ const Spec = [
   [/^\bparams\b:/, "API_PARAMS"],
   [/^\bquery\b:/, "API_QUERY"],
   [/^\bbody\b:/, "API_BODY"],
+  [/^\bheaders\b:/, "API_HEADERS"],
   [/^\d+:/, "API_STATUS"],
   [/^\btype\b \b[a-zA-Z_]+\b/, "TYPE_DECLARATION"],
 
-  [/^\w+:/, "WORD_WITH_COLON"],
+  [/^\b[a-zA-Z][a-zA-Z_0-9_-]*\b:/, "WORD_WITH_COLON"],
 
   [/^\d+/, "NUMBER"],
   [/^"([^"\\]*(\\.[^"\\]*)*)"/, "STRING"],
-  [/^\b[a-zA-Z_][a-zA-Z_0-9]+\b/, "VariableType"],
+  [/^\b[a-zA-Z][a-zA-Z_0-9_-]*\b/, "VariableType"],
 
   [/^!/, "!"],
 

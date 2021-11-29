@@ -54,8 +54,11 @@ const fieldSchema = (
 
 const apiFieldDefinitionSchema = (
   $id: string,
-  d: ApiFieldDefinition
+  d: ApiFieldDefinition | undefined
 ): JSONSchema7 => {
+  if (d === undefined) {
+    return { type: "null" };
+  }
   if (d.variableType === "AnonymousTypeDeclaration" && "fields" in d) {
     const properties: {
       [key: string]: JSONSchema7Definition;
@@ -117,7 +120,7 @@ const JsonSchema = (ast: Ast): JSONSchema7[] => {
     ...(apis
       .map((api) => {
         return [
-          ...(["params", "query", "body"] as const)
+          ...(["params", "query", "body", "headers"] as const)
             .map((key) => {
               const current = api[key];
               if (!current) {

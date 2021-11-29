@@ -17,8 +17,15 @@ type Error
 | "Foo"
 | 42
 
+type AuthorizationHeader {
+  authorization: String!
+}
+
 getUsers: GET /users {
-  200: [User!]
+  headers: AuthorizationHeader
+  200: {
+    body: [User!]
+  }
 } 
 
 getUser: GET /users/:id {
@@ -27,23 +34,34 @@ getUser: GET /users/:id {
   }
   query: Query
   200: {
-    id: String!
-    name: String
-    address: {
-      city: String!
-      street: String!
-      country:
-        | "Sweden"
-        | "UK"!
+    body: {
+      id: String!
+      name: String
+      address: {
+        city: String!
+        street: String!
+        country:
+          | "Sweden"
+          | "UK"!
+      }
+    }
+    headers: {
+      authorization: String!
     }
   }
-  404: Error
+  404: {
+    body: Error
+  }
 } 
 
 postUser: POST /users {
   body: {
     user: User!
   }
-  200: User
-  404: Error
+  200: {
+    body: User
+  }
+  404: {
+    body: Error
+  }
 } 

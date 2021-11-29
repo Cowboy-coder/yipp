@@ -128,22 +128,37 @@ export default class ApiParser {
     this.eat("API_PATH");
 
     this.eat("{");
+
     let params = undefined;
-    if (this.lookahead?.type === "API_PARAMS") {
-      this.eat("API_PARAMS");
-      params = this.ApiFieldDefinition();
-    }
-
     let query = undefined;
-    if (this.lookahead?.type === "API_QUERY") {
-      this.eat("API_QUERY");
-      query = this.ApiFieldDefinition();
-    }
-
     let body = undefined;
-    if (this.lookahead?.type === "API_BODY") {
-      this.eat("API_BODY");
-      body = this.ApiFieldDefinition();
+    let headers = undefined;
+
+    while (
+      this.lookahead?.type &&
+      ["API_PARAMS", "API_QUERY", "API_BODY", "API_HEADERS"].includes(
+        this.lookahead.type
+      )
+    ) {
+      if (this.lookahead.type === "API_PARAMS") {
+        this.eat("API_PARAMS");
+        params = this.ApiFieldDefinition();
+      }
+
+      if (this.lookahead.type === "API_QUERY") {
+        this.eat("API_QUERY");
+        query = this.ApiFieldDefinition();
+      }
+
+      if (this.lookahead.type === "API_BODY") {
+        this.eat("API_BODY");
+        body = this.ApiFieldDefinition();
+      }
+
+      if (this.lookahead.type === "API_HEADERS") {
+        this.eat("API_HEADERS");
+        headers = this.ApiFieldDefinition();
+      }
     }
 
     const responses = this.Responses();
@@ -157,6 +172,7 @@ export default class ApiParser {
       params,
       query,
       body,
+      headers,
       responses,
     } as const;
   }
@@ -356,9 +372,27 @@ export default class ApiParser {
     while (this.lookahead.type === "API_STATUS") {
       const value = Number(this.lookahead.value.slice(0, -1));
       this.eat("API_STATUS");
+      this.eat("{");
+
+      let body = undefined;
+      let headers = undefined;
+      while (["API_BODY", "API_HEADERS"].includes(this.lookahead.type)) {
+        if ((this.lookahead as Token)?.type === "API_BODY") {
+          this.eat("API_BODY");
+          body = this.ApiFieldDefinition();
+        }
+
+        if ((this.lookahead as Token)?.type === "API_HEADERS") {
+          this.eat("API_HEADERS");
+          headers = this.ApiFieldDefinition();
+        }
+      }
+      this.eat("}");
+
       responses.push({
         status: value,
-        body: this.ApiFieldDefinition(),
+        body,
+        headers,
       } as const);
     }
     return responses;

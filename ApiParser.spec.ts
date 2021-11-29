@@ -9,7 +9,9 @@ describe(ApiParser, () => {
         y: 42!
       }
       200: {
-        id: String!
+        body: {
+          id: String!
+        }
       }
     }`;
     expect(parser.parse(program)).toEqual({
@@ -38,7 +40,6 @@ describe(ApiParser, () => {
               },
             ],
           },
-          query: undefined,
           responses: [
             {
               status: 200,
@@ -65,7 +66,9 @@ describe(ApiParser, () => {
     const parser = new ApiParser();
     const program = `createUser: POST /users {
       200: {
-        id: String!
+        body: {
+          id: String!
+        }
       }
     }`;
     expect(parser.parse(program)).toEqual({
@@ -76,9 +79,6 @@ describe(ApiParser, () => {
           name: "createUser",
           method: "POST",
           path: "/users",
-          params: undefined,
-          query: undefined,
-          body: undefined,
           responses: [
             {
               status: 200,
@@ -129,8 +129,16 @@ describe(ApiParser, () => {
         }!
         nested2: Nested2!
       }
+      headers: {
+        authorization: String!
+      }
       200: {
-        id: String!
+        body: {
+          id: String!
+        }
+        headers: {
+          content-type: "application/json"
+        }
       }
     }`;
     expect(parser.parse(program)).toEqual({
@@ -253,6 +261,18 @@ describe(ApiParser, () => {
               },
             ],
           },
+          headers: {
+            type: "ApiFieldDefinition",
+            variableType: "AnonymousTypeDeclaration",
+            fields: [
+              {
+                type: "FieldDefinition",
+                id: "authorization",
+                variableType: "String",
+                isRequired: true,
+              },
+            ],
+          },
           responses: [
             {
               status: 200,
@@ -265,6 +285,18 @@ describe(ApiParser, () => {
                     id: "id",
                     variableType: "String",
                     isRequired: true,
+                  },
+                ],
+              },
+              headers: {
+                type: "ApiFieldDefinition",
+                variableType: "AnonymousTypeDeclaration",
+                fields: [
+                  {
+                    type: "FieldDefinition",
+                    id: "content-type",
+                    variableType: '"application/json"',
+                    isRequired: false,
                   },
                 ],
               },
@@ -287,9 +319,13 @@ describe(ApiParser, () => {
         id: String!
       }
       query: UserFilterQuery
-      200: User
+      200: {
+        body: User
+      }
       404: {
-        error: String!
+        body: {
+          error: String!
+        }
       }
     }`;
     expect(parser.parse(program)).toEqual({
@@ -324,7 +360,6 @@ describe(ApiParser, () => {
               },
             ],
           },
-          body: undefined,
           query: {
             type: "ApiFieldDefinition",
             variableType: "UserFilterQuery",
@@ -366,9 +401,13 @@ describe(ApiParser, () => {
         ids: [String!]!
       }
       200: {
-        id: [String]
+        body: {
+          id: [String]
+        }
       }
-      404: [Error!]
+      404: {
+        body: [Error!]
+      }
     }`;
     expect(parser.parse(program)).toEqual({
       type: "Program",
@@ -394,8 +433,6 @@ describe(ApiParser, () => {
               },
             ],
           },
-          body: undefined,
-          query: undefined,
           responses: [
             {
               status: 200,
@@ -450,8 +487,10 @@ describe(ApiParser, () => {
         userType: UserType!
       }
       200: {
-        id: String!
-        test: | "foo" | "bar" | "baz" | SomeType | { a: String }!
+        body: {
+          id: String!
+          test: | "foo" | "bar" | "baz" | SomeType | { a: String }!
+        }
       }
     }`;
     expect(parser.parse(program)).toEqual({
@@ -514,8 +553,6 @@ describe(ApiParser, () => {
               },
             ],
           },
-          params: undefined,
-          query: undefined,
           responses: [
             {
               status: 200,
