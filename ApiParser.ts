@@ -232,10 +232,7 @@ export default class ApiParser {
           id: string;
           variableType: "Array";
           isRequired: boolean;
-          item: {
-            variableType: string;
-            isRequired: boolean;
-          };
+          item: ArrayItem;
         }
       | {
           type: "FieldDefinition";
@@ -384,6 +381,10 @@ export default class ApiParser {
   }
 }
 
+export type ArrayItem = {
+  variableType: string;
+  isRequired: boolean;
+};
 export type Ast = ReturnType<ApiParser["Document"]>;
 export type ApiDefinition = ReturnType<ApiParser["ApiDefinition"]>;
 export type ApiFieldDefinition = ReturnType<ApiParser["ApiFieldDefinition"]>;

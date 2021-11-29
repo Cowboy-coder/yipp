@@ -5,12 +5,16 @@ import ApiParser, {
   ApiFieldDefinition,
   Ast,
   Field,
+  TypeDeclaration,
   Union,
 } from "./ApiParser";
+import JsonSchema, { schemaId } from "./JsonSchema";
 import { getApiDefinitions, getDeclarations } from "./AstQuery";
 
 const Type = (variableType: string | number) => {
   switch (variableType) {
+    case "Int":
+      return "number";
     case "String":
       return "string";
     default:
@@ -61,6 +65,8 @@ const ApiDefinitionInput = (d: ApiFieldDefinition) => {
   return `${
     d.variableType === "AnonymousTypeDeclaration" && "fields" in d
       ? Fields(d.fields ?? [])
+      : d.variableType === "Array" && d.item
+      ? `${Type(d.item.variableType)}[]`
       : Type(d.variableType)
   }`;
 };
@@ -81,14 +87,10 @@ const apiDefinition = (d: ApiDefinition) => {
         .join(",\n")} 
     }) => ${d.responses
       .map(({ body, status }) => {
-        return `{
+        return `MaybePromise<{
     code: ${status};
-    body: ${
-      body.variableType === "AnonymousTypeDeclaration"
-        ? Fields(body.fields ?? [])
-        : Type(body.variableType)
-    }
-  }`;
+    body: ${ApiDefinitionInput(body)}
+  }>`;
       })
       .join(" | ")}
   `;
@@ -104,9 +106,24 @@ const fastify = (d: ApiDefinition) => {
     ]
       .filter((x) => !!x)
       .join(",")}
-    ,
-  }>("${d.path}", (req, reply) => {
-    const response = routes.${d.name}({
+  }>("${d.path}", {
+    schema: {
+    ${[
+      d.params ? `params: { $ref: "${schemaId(d.name)}_params"}` : undefined,
+      d.query ? `querystring: { $ref: "${schemaId(d.name)}_query"}` : undefined,
+      d.body ? `body: { $ref: "${schemaId(d.name)}_body"}` : undefined,
+      `response: {${d.responses
+        .map(
+          (r) => `"${r.status}": {$ref: "${schemaId(`${d.name}_${r.status}"}`)}`
+        )
+        .filter((x) => !!x)
+        .join(",")}}`,
+    ]
+      .filter((x) => !!x)
+      .join(",")},
+    }
+  }, async (req, reply) => {
+    const response = await routes.${d.name}({
     ${[
       d.params ? "params: req.params" : "",
       d.query ? "query: req.query" : "",
@@ -122,6 +139,7 @@ const fastify = (d: ApiDefinition) => {
 
 const routes = (definitions: ApiDefinition[]) => {
   return `export const addRoutes = (fastify:FastifyInstance, routes:Api) => {
+    JsonSchema.forEach(schema => fastify.addSchema(schema))
     ${definitions.map(fastify).join("\n")}
   }`;
 };
@@ -130,6 +148,10 @@ const compile = (ast: Ast) => {
   return prettier.format(
     `
     import { FastifyInstance } from "fastify";
+
+    export const JsonSchema = ${JSON.stringify(JsonSchema(ast), null, 2)};
+
+    type MaybePromise<T> = Promise<T> | T;
 
     ${getDeclarations(ast)
       .map((d) => {

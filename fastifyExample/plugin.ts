@@ -3,10 +3,9 @@ import { addRoutes } from "./generated";
 
 const plugin: FastifyPluginAsync = async (fastify, options) => {
   addRoutes(fastify, {
-    getUser: ({ params, query, body }) => {
+    getUser: ({ params, query }) => {
       console.log("params", params);
       console.log("query", query);
-      console.log("body", body);
       return {
         code: 200,
         body: {
@@ -17,6 +16,25 @@ const plugin: FastifyPluginAsync = async (fastify, options) => {
             country: "UK",
           },
         },
+      };
+    },
+    getUsers: () => {
+      return {
+        code: 200,
+        body: [
+          {
+            id: "1",
+            address: {
+              name: "test",
+            },
+          },
+          {
+            id: "2",
+            address: {
+              name: "test2",
+            },
+          },
+        ],
       };
     },
     postUser: (params) => {

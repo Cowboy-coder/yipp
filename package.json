@@ -8,6 +8,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@types/json-schema": "^7.0.9",
     "prettier": "^2.5.0"
   },
   "devDependencies": {
