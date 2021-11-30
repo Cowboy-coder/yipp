@@ -4,57 +4,67 @@ import ApiParser, {
   ApiDefinition,
   ApiFieldDefinition,
   Ast,
-  Field,
-  Union,
+  BooleanLiteral,
+  BooleanVariable,
+  FloatLiteral,
+  FloatVariable,
+  IntLiteral,
+  IntVariable,
+  ObjectField,
+  StringLiteral,
+  StringVariable,
+  TypeReference,
+  UnionItem,
 } from "./ApiParser";
 import JsonSchema, { schemaId } from "./JsonSchema";
 import { getApiDefinitions, getDeclarations } from "./AstQuery";
 
-const Type = (variableType: string | number) => {
-  switch (variableType) {
+const Type = (
+  d:
+    | BooleanVariable
+    | IntVariable
+    | StringVariable
+    | FloatVariable
+    | BooleanLiteral
+    | IntLiteral
+    | StringLiteral
+    | FloatLiteral
+    | TypeReference
+) => {
+  switch (d.variableType) {
     case "Int":
       return "number";
     case "String":
       return "string";
+    case "StringLiteral":
+      return `"${d.value}"`;
+    case "IntLiteral":
+      return d.value;
+    case "TypeReference":
+      return d.value;
     default:
-      return variableType;
+      throw `unsupported type in Type ${d.variableType}`;
   }
 };
-const typeDeclaration = (d: any) => {
-  return `
-  export type ${d.name} = {
-    ${d.fields.map(field).join("\n")}
-  }
-  `;
+const union = (union: UnionItem) => {
+  return union.variableType === "Object" ? Fields(union.fields) : Type(union);
 };
 
-const union = (union: Union) => {
-  return union.variableType === "AnonymousTypeDeclaration" && "fields" in union
-    ? Fields(union.fields)
-    : Type(union.variableType);
-};
-
-const UnionDeclaration = (d: any) => {
-  return `
-  export type ${d.name} = ${d.unions.map(union).join(" | ")}
-  `;
-};
-
-const field = (field: Field) => {
-  return `${field.id}${field.isRequired ? ":" : "?:"} ${
-    field.variableType === "AnonymousTypeDeclaration" && "fields" in field
+const field = (field: ObjectField) => {
+  return `${field.name}${field.isRequired ? ":" : "?:"} ${
+    field.variableType === "Object"
       ? Fields(field.fields)
-      : field.variableType === "UnionDeclaration" && "unions" in field
+      : field.variableType === "Union"
       ? field.unions.map(union).join(" | ")
-      : field.variableType === "Array" && "item" in field
-      ? `(${Type(field.item.variableType)}${
-          field.item.isRequired === false ? " | null" : ""
+      : field.variableType === "Array"
+      ? `(${Type(field.items)}${
+          field.items.isRequired === false ? " | null" : ""
         })[]`
-      : Type(field.variableType)
+      : Type(field)
   }`;
 };
 
-const Fields = (fields: Field[]): string => {
+const Fields = (fields: ObjectField[]): string => {
   return `{
     ${fields.map(field).join("\n")}
   }`;
@@ -65,13 +75,11 @@ const ApiDefinitionInput = (d: ApiFieldDefinition | undefined) => {
     return "undefined";
   }
   return `${
-    d.variableType === "AnonymousTypeDeclaration" && "fields" in d
-      ? Fields(d.fields ?? [])
-      : d.variableType === "Array" && d.item
-      ? `(${Type(d.item.variableType)}${
-          d.item.isRequired === false ? " | null" : ""
-        })[]`
-      : Type(d.variableType)
+    d.variableType === "Object"
+      ? Fields(d.fields)
+      : d.variableType === "Array"
+      ? `(${Type(d.items)}${d.items.isRequired === false ? " | null" : ""})[]`
+      : Type(d)
   }`;
 };
 
@@ -175,11 +183,13 @@ const compile = (ast: Ast) => {
 
     ${getDeclarations(ast)
       .map((d) => {
-        if (d.type === "TypeDeclaration") {
-          return typeDeclaration(d);
+        if (d.variableType === "Object") {
+          return `export type ${d.name} = {
+            ${d.fields.map(field).join("\n")}
+          }`;
         }
-        if (d.type === "UnionDeclaration") {
-          return UnionDeclaration(d);
+        if (d.variableType === "Union") {
+          return `export type ${d.name} = ${d.unions.map(union).join(" | ")}`;
         }
       })
       .join("\n")}

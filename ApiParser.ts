@@ -1,25 +1,127 @@
 import ApiTokenizer, { Token } from "./ApiTokenizer";
 
+export type IntVariable = { variableType: "Int" };
+export type FloatVariable = { variableType: "Float" };
+export type StringVariable = { variableType: "String" };
+export type BooleanVariable = { variableType: "Boolean" };
+export type IntLiteral = { variableType: "IntLiteral"; value: number };
+export type FloatLiteral = { variableType: "FloatLiteral"; value: number };
+export type StringLiteral = { variableType: "StringLiteral"; value: string };
+export type BooleanLiteral = { variableType: "BooleanLiteral"; value: boolean };
+export type TypeReference = { variableType: "TypeReference"; value: string };
+export type Builtin =
+  | IntVariable
+  | FloatVariable
+  | StringVariable
+  | BooleanVariable
+  | IntLiteral
+  | FloatLiteral
+  | StringLiteral
+  | BooleanLiteral
+  | TypeReference;
+
+export type ObjectField = {
+  type: "ObjectField";
+  name: string;
+  isRequired: boolean;
+} & (Builtin | UnionVariable | ArrayVariable | ObjectVariable);
+
+export type ObjectVariable = { variableType: "Object"; fields: ObjectField[] };
+
+export type UnionItem = {
+  type: "UnionItem";
+} & (Builtin | ObjectVariable);
+
+export type UnionVariable = {
+  variableType: "Union";
+  unions: UnionItem[];
+};
+
+export type ArrayItem = {
+  isRequired: boolean;
+} & Builtin;
+export type ArrayVariable = { variableType: "Array"; items: ArrayItem };
+
+export type ApiFieldDefinition = {
+  type: "ApiFieldDefinition";
+} & (ObjectVariable | ArrayVariable | TypeReference);
+
+export type ApiResponseDefinition = {
+  type: "ApiResponseDefinition";
+  status: number;
+  body?: ApiFieldDefinition;
+  headers?: ApiFieldDefinition;
+};
+
+export type ApiMethod = "GET" | "POST" | "PATCH" | "PUT" | "DELETE" | "HEAD";
+export type ApiDefinition = {
+  type: "ApiDefinition";
+  name: string;
+  method: ApiMethod;
+  path: string;
+  params?: ApiFieldDefinition;
+  query?: ApiFieldDefinition;
+  body?: ApiFieldDefinition;
+  headers?: ApiFieldDefinition;
+  responses: ApiResponseDefinition[];
+};
+
+export type TypeDeclaration = {
+  type: "TypeDeclaration";
+  name: string;
+} & (ObjectVariable | UnionVariable);
+
+export type Definition = TypeDeclaration | ApiDefinition;
+
+export type Ast = {
+  type: "Document";
+  definitions: Definition[];
+};
+
+const isBuiltIn = (
+  value: string
+): value is "Int" | "Float" | "String" | "Boolean" => {
+  return ["Int", "Float", "String", "Boolean"].includes(value);
+};
+
+const isApiMethod = (value: string): value is ApiMethod => {
+  return ["GET", "POST", "PATCH", "PUT", "DELETE", "HEAD"].includes(value);
+};
+
+const getArrayItem = (value: string, isRequired: boolean): ArrayItem => {
+  if (isBuiltIn(value)) {
+    return {
+      variableType: value,
+      isRequired,
+    };
+  }
+  return {
+    variableType: "TypeReference",
+    value,
+    isRequired,
+  };
+};
+
 export default class ApiParser {
   private tokenizer: ApiTokenizer;
   private lookahead: Token;
 
-  parse(str: string) {
+  parse(str: string): Ast {
     this.tokenizer = new ApiTokenizer(str);
 
     this.lookahead = this.tokenizer.getNextToken();
     return this.Document();
   }
 
-  Document() {
+  Document(): Ast {
     return {
-      type: "Program",
+      type: "Document",
       definitions: this.Definitions(),
     };
   }
 
-  Definitions() {
-    const definitions = [];
+  Definitions(): Definition[] {
+    const definitions: (TypeDeclaration | ApiDefinition)[] = [];
     while (
       this.lookahead?.type === "WORD_WITH_COLON" ||
       this.lookahead?.type === "TYPE_DECLARATION"
@@ -42,7 +144,7 @@ export default class ApiParser {
     return definitions;
   }
 
-  TypeDeclaration() {
+  TypeDeclaration(): TypeDeclaration {
     const value = this.lookahead?.value;
     if (!value) {
       throw new SyntaxError("TypeDeclaration expected `value`");
@@ -52,12 +154,14 @@ export default class ApiParser {
       return {
         type: "TypeDeclaration",
         name: value.replace("type ", ""),
+        variableType: "Object",
         fields: this.Fields(),
       };
     } else if (this.lookahead?.type === "|") {
       return {
-        type: "UnionDeclaration",
+        type: "TypeDeclaration",
         name: value.replace("type ", ""),
+        variableType: "Union",
         unions: this.Unions(),
       };
     } else {
@@ -67,40 +171,45 @@ export default class ApiParser {
     }
   }
 
-  Unions() {
-    const unions: (
-      | {
-          type: "UnionItem";
-          variableType: string;
-        }
-      | {
-          type: "UnionItem";
-          variableType: number;
-        }
-      | {
-          type: "UnionItem";
-          variableType: "AnonymousTypeDeclaration";
-          fields: ReturnType<ApiParser["Fields"]>;
-        }
-    )[] = [];
+  Unions(): UnionItem[] {
+    const unions: UnionItem[] = [];
 
     while (this.lookahead?.type === "|") {
       this.eat("|");
 
-      const variableType = this.lookahead.value;
+      const value = this.lookahead.value;
       if ((this.lookahead as Token)?.type === "STRING") {
         this.eat("STRING");
-        unions.push({ type: "UnionItem", variableType });
+        unions.push({
+          type: "UnionItem",
+          variableType: "StringLiteral",
+          value: value.slice(0, -1).slice(1),
+        });
       } else if ((this.lookahead as Token)?.type === "NUMBER") {
         this.eat("NUMBER");
-        unions.push({ type: "UnionItem", variableType: Number(variableType) });
+        unions.push({
+          type: "UnionItem",
+          variableType: "IntLiteral",
+          value: Number(value),
+        });
       } else if ((this.lookahead as Token)?.type === "VariableType") {
         this.eat("VariableType");
-        unions.push({ type: "UnionItem", variableType });
+        if (isBuiltIn(value)) {
+          unions.push({
+            type: "UnionItem",
+            variableType: value,
+          });
+        } else {
+          unions.push({
+            type: "UnionItem",
+            variableType: "TypeReference",
+            value,
+          });
+        }
       } else if ((this.lookahead as Token)?.type === "{") {
         unions.push({
           type: "UnionItem",
-          variableType: "AnonymousTypeDeclaration",
+          variableType: "Object",
           fields: this.Fields(),
         });
       }
@@ -108,16 +217,20 @@ export default class ApiParser {
     return unions;
   }
 
-  ApiDefinition() {
+  ApiDefinition(): ApiDefinition {
     const name = this.lookahead?.value.slice(0, -1);
     if (name === undefined) {
       throw new SyntaxError("Unexpected name");
     }
     this.eat("WORD_WITH_COLON");
 
-    const method = this.lookahead?.value;
+    const method = this.lookahead?.value
+      ? isApiMethod(this.lookahead.value)
+        ? this.lookahead.value
+        : undefined
+      : undefined;
     if (method === undefined) {
-      throw new SyntaxError("Unexpected method");
+      throw new SyntaxError(`Unexpected method value ${method}`);
     }
     this.eat("API_METHOD");
 
@@ -174,24 +287,49 @@ export default class ApiParser {
       body,
       headers,
       responses,
-    } as const;
+    };
   }
 
-  private ApiFieldDefinition() {
+  private ApiFieldDefinition(): ApiFieldDefinition {
     if (this.lookahead?.type === "{") {
       return {
         type: "ApiFieldDefinition",
-        variableType: "AnonymousTypeDeclaration",
+        variableType: "Object",
         fields: this.Fields(),
-      } as const;
+      };
     } else if (
       this.lookahead?.type === "VariableType" ||
       this.lookahead?.type === "["
     ) {
+      if (this.lookahead.type === "[") {
+        this.eat("[");
+
+        const variableType = this.lookahead.value;
+        this.eat("VariableType");
+
+        const isItemRequired = (this.lookahead as Token)?.type === "!";
+        if (isItemRequired) {
+          this.eat("!");
+        }
+
+        this.eat("]");
+
+        return {
+          type: "ApiFieldDefinition",
+          variableType: "Array",
+          items: getArrayItem(variableType, isItemRequired),
+        };
+      }
+      const value = this.lookahead?.value;
+      if (value === undefined) {
+        throw new SyntaxError("Could not parse FieldReference value");
+      }
+      this.eat("VariableType");
       return {
         type: "ApiFieldDefinition",
-        ...this.parseFieldReference(),
-      } as const;
+        variableType: "TypeReference",
+        value,
+      };
     } else {
       throw new SyntaxError(
         `Unsupported token found in ApiFieldDefinition: '${this.lookahead?.type}'`
@@ -199,73 +337,11 @@ export default class ApiParser {
     }
   }
 
-  private parseFieldReference() {
-    if (this.lookahead?.type === "[") {
-      this.eat("[");
-
-      const variableType = this.lookahead.value;
-      this.eat("VariableType");
-
-      const isItemRequired = (this.lookahead as Token)?.type === "!";
-      if (isItemRequired) {
-        this.eat("!");
-      }
-
-      this.eat("]");
-
-      return {
-        variableType: "Array",
-        item: {
-          variableType,
-          isRequired: isItemRequired,
-        },
-      } as const;
-    } else {
-      const variableType = this.lookahead?.value;
-      if (variableType === undefined) {
-        throw new SyntaxError("Could not parse FieldReference value");
-      }
-      this.eat("VariableType");
-
-      return {
-        variableType,
-      } as const;
-    }
-  }
-
-  private Fields() {
+  private Fields(): ObjectField[] {
     this.eat("{");
-    const variables: (
-      | {
-          type: "FieldDefinition";
-          id: string;
-          variableType: "AnonymousTypeDeclaration";
-          isRequired: boolean;
-          fields: ReturnType<ApiParser["Fields"]>;
-        }
-      | {
-          type: "FieldDefinition";
-          id: string;
-          variableType: "Array";
-          isRequired: boolean;
-          item: ArrayItem;
-        }
-      | {
-          type: "FieldDefinition";
-          id: string;
-          variableType: string | number;
-          isRequired: boolean;
-        }
-      | {
-          type: "FieldDefinition";
-          id: string;
-          variableType: "UnionDeclaration";
-          isRequired: boolean;
-          unions: ReturnType<ApiParser["Unions"]>;
-        }
-    )[] = [];
+    const variables: ObjectField[] = [];
     while (this.lookahead?.type === "WORD_WITH_COLON") {
-      const id = this.lookahead.value.slice(0, -1);
+      const name = this.lookahead.value.slice(0, -1);
       this.eat("WORD_WITH_COLON");
 
       if ((this.lookahead as Token)?.type === "[") {
@@ -286,44 +362,71 @@ export default class ApiParser {
         }
 
         variables.push({
-          type: "FieldDefinition",
-          id,
+          type: "ObjectField",
+          name,
           variableType: "Array",
           isRequired,
-          item: {
-            variableType,
-            isRequired: isItemRequired,
-          },
+          items: getArrayItem(variableType, isItemRequired),
         });
       } else if (
         this.lookahead &&
         ["VariableType", "STRING", "NUMBER"].includes(this.lookahead.type)
       ) {
-        let variableType: string | number = this.lookahead.value;
+        let value = this.lookahead.value;
         if ((this.lookahead as Token)?.type === "VariableType") {
           this.eat("VariableType");
+          const isRequired = (this.lookahead as Token)?.type === "!";
+          if (isRequired) {
+            this.eat("!");
+          }
+          if (isBuiltIn(value)) {
+            variables.push({
+              type: "ObjectField",
+              name,
+              variableType: value,
+              isRequired,
+            });
+          } else {
+            variables.push({
+              type: "ObjectField",
+              name,
+              variableType: "TypeReference",
+              value: value,
+              isRequired,
+            });
+          }
         } else if ((this.lookahead as Token)?.type === "STRING") {
           this.eat("STRING");
+          const isRequired = (this.lookahead as Token)?.type === "!";
+          if (isRequired) {
+            this.eat("!");
+          }
+          variables.push({
+            type: "ObjectField",
+            name,
+            variableType: "StringLiteral",
+            value: value.slice(0, -1).slice(1),
+            isRequired,
+          });
         } else if ((this.lookahead as Token)?.type === "NUMBER") {
-          variableType = Number(variableType);
           this.eat("NUMBER");
+          const isRequired = (this.lookahead as Token)?.type === "!";
+          if (isRequired) {
+            this.eat("!");
+          }
+
+          variables.push({
+            type: "ObjectField",
+            name,
+            variableType: "IntLiteral",
+            value: Number(value),
+            isRequired,
+          });
         } else {
           throw new SyntaxError(
             `Unsupported token type in fields '${this.lookahead.type}'`
           );
         }
-
-        const isRequired = (this.lookahead as Token)?.type === "!";
-        if (isRequired) {
-          this.eat("!");
-        }
-
-        variables.push({
-          type: "FieldDefinition",
-          id,
-          variableType,
-          isRequired,
-        });
       } else if ((this.lookahead as Token)?.type === "{") {
         // nested field
         const fields = this.Fields();
@@ -332,12 +435,12 @@ export default class ApiParser {
           this.eat("!");
         }
         variables.push({
-          type: "FieldDefinition",
-          id,
-          variableType: "AnonymousTypeDeclaration",
+          type: "ObjectField",
+          name,
+          variableType: "Object",
           fields,
           isRequired,
-        } as const);
+        });
       } else if ((this.lookahead as Token)?.type === "|") {
         // union field
         const unions = this.Unions();
@@ -346,9 +449,9 @@ export default class ApiParser {
           this.eat("!");
         }
         variables.push({
-          type: "FieldDefinition",
-          id,
-          variableType: "UnionDeclaration",
+          type: "ObjectField",
+          name,
+          variableType: "Union",
           unions,
           isRequired,
         });
@@ -362,13 +465,13 @@ export default class ApiParser {
     return variables;
   }
 
-  private Responses() {
+  private Responses(): ApiResponseDefinition[] {
     if (this.lookahead?.type !== "API_STATUS") {
       throw new SyntaxError(
         `Expected a HTTP Status Code. Got "${this.lookahead?.value}"`
       );
     }
-    const responses = [];
+    const responses: ApiResponseDefinition[] = [];
     while (this.lookahead.type === "API_STATUS") {
       const value = Number(this.lookahead.value.slice(0, -1));
       this.eat("API_STATUS");
@@ -390,10 +493,11 @@ export default class ApiParser {
       this.eat("}");
 
       responses.push({
+        type: "ApiResponseDefinition",
         status: value,
         body,
         headers,
-      } as const);
+      });
     }
     return responses;
   }
@@ -414,14 +518,3 @@ export default class ApiParser {
     return token;
   }
 }
-
-export type ArrayItem = {
-  variableType: string;
-  isRequired: boolean;
-};
-export type Ast = ReturnType<ApiParser["Document"]>;
-export type ApiDefinition = ReturnType<ApiParser["ApiDefinition"]>;
-export type ApiFieldDefinition = ReturnType<ApiParser["ApiFieldDefinition"]>;
-export type Field = ReturnType<ApiParser["Fields"]>[0];
-export type Union = ReturnType<ApiParser["Unions"]>[0];
-export type TypeDeclaration = ReturnType<ApiParser["TypeDeclaration"]>;

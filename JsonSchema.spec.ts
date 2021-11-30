@@ -1,3 +1,4 @@
+import { JSONSchema7 } from "json-schema";
 import ApiParser from "./ApiParser";
 import JsonSchema from "./JsonSchema";
 
@@ -9,9 +10,10 @@ describe(JsonSchema, () => {
       id: String!
       age: Int
       fixed: 42
+      funny: "LOL"
     }
     `;
-    expect(JsonSchema(parser.parse(program))).toEqual([
+    expect(JsonSchema(parser.parse(program))).toEqual<JSONSchema7[]>([
       {
         $id: "https://example.com/#Foo",
         type: "object",
@@ -19,6 +21,7 @@ describe(JsonSchema, () => {
           id: { type: "string" },
           age: { type: "number" },
           fixed: { const: 42 },
+          funny: { const: "LOL" },
         },
         required: ["id"],
       },

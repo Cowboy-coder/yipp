@@ -11,7 +11,7 @@ export const JsonSchema = [
       address: {
         type: "object",
         properties: {
-          name: {
+          street: {
             type: "string",
           },
         },
@@ -38,6 +38,19 @@ export const JsonSchema = [
     required: [],
   },
   {
+    $id: "https://example.com/#FieldError",
+    type: "object",
+    properties: {
+      field: {
+        type: "string",
+      },
+      message: {
+        type: "string",
+      },
+    },
+    required: ["field", "message"],
+  },
+  {
     $id: "https://example.com/#Error",
     oneOf: [
       {
@@ -52,20 +65,17 @@ export const JsonSchema = [
       {
         type: "object",
         properties: {
-          code: {
-            const: 404,
-          },
           message: {
-            const: "testing",
+            type: "string",
+          },
+          fields: {
+            type: "array",
+            items: {
+              $ref: "https://example.com/#FieldError",
+            },
           },
         },
-        required: [],
-      },
-      {
-        const: "Foo",
-      },
-      {
-        const: 42,
+        required: ["message", "fields"],
       },
     ],
   },
@@ -104,25 +114,7 @@ export const JsonSchema = [
   },
   {
     $id: "https://example.com/#login_400",
-    type: "object",
-    properties: {
-      message: {
-        type: "string",
-      },
-      fields: {
-        type: "object",
-        properties: {
-          username: {
-            type: "string",
-          },
-          password: {
-            type: "string",
-          },
-        },
-        required: [],
-      },
-    },
-    required: ["message", "fields"],
+    $ref: "https://example.com/#Error",
   },
   {
     $id: "https://example.com/#getUsers_headers",
@@ -227,29 +219,27 @@ type MaybePromise<T> = Promise<T> | T;
 export type User = {
   id: string;
   address?: {
-    name?: string;
+    street?: string;
   };
 };
-
 export type Query = {
   filter?: "id" | "address";
 };
-
+export type FieldError = {
+  field: string;
+  message: string;
+};
 export type Error =
   | {
       message: string;
     }
   | {
-      code?: 404;
-      message?: "testing";
-    }
-  | "Foo"
-  | 42;
-
+      message: string;
+      fields: FieldError[];
+    };
 export type AuthorizationHeader = {
   authorization: string;
 };
-
 export type Api = {
   login: (req: {
     body: {
@@ -265,13 +255,7 @@ export type Api = {
       }>
     | MaybePromise<{
         code: 400;
-        body: {
-          message: string;
-          fields: {
-            username?: string;
-            password?: string;
-          };
-        };
+        body: Error;
       }>;
 
   getUsers: (req: { headers: AuthorizationHeader }) => MaybePromise<{

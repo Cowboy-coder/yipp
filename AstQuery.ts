@@ -8,7 +8,6 @@ export const getApiDefinitions = (ast: Ast) => {
 
 export const getDeclarations = (ast: Ast) => {
   return ast.definitions.filter(
-    (d): d is TypeDeclaration =>
-      d.type === "TypeDeclaration" || d.type === "UnionDeclaration"
+    (d): d is TypeDeclaration => d.type === "TypeDeclaration"
   );
 };

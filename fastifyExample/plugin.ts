@@ -22,11 +22,31 @@ const plugin: FastifyPluginAsync = async (fastify, options) => {
             },
           };
     },
-    getUser: ({ params, query }) => {
-      console.log("params", params);
-      console.log("query", query);
+    getUsers: (params) => {
       return {
-        code: 204,
+        code: 200,
+        body: [
+          null,
+          {
+            id: "1",
+            address: {
+              street: "test",
+            },
+          },
+          null,
+          {
+            id: "2",
+            address: {
+              street: "test2",
+            },
+          },
+        ],
+      };
+    },
+    getUser: ({ params }) => {
+      console.log("params", params);
+      return {
+        code: 200,
         headers: {
           authorization: "something",
         },
@@ -40,27 +60,6 @@ const plugin: FastifyPluginAsync = async (fastify, options) => {
         },
       };
     },
-    getUsers: (params) => {
-      return {
-        code: 200,
-        body: [
-          null,
-          {
-            id: "1",
-            address: {
-              name: "test",
-            },
-          },
-          null,
-          {
-            id: "2",
-            address: {
-              name: "test2",
-            },
-          },
-        ],
-      };
-    },
     postUser: (params) => {
       console.log(params);
       return {
@@ -68,7 +67,7 @@ const plugin: FastifyPluginAsync = async (fastify, options) => {
         body: {
           id: "foo",
           address: {
-            name: "lol",
+            street: "lol",
           },
         },
       };
