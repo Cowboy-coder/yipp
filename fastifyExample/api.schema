@@ -33,6 +33,7 @@ getUser: GET /users/:id {
     id: [Int!]!
   }
   query: Query
+
   200: {
     body: {
       id: String!
@@ -49,6 +50,7 @@ getUser: GET /users/:id {
       authorization: String!
     }
   }
+  204: {}
   404: {
     body: Error
   }

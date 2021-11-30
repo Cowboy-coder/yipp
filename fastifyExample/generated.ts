@@ -143,6 +143,10 @@ export const JsonSchema = [
     required: ["id"],
   },
   {
+    $id: "https://example.com/#getUser_204",
+    type: "null",
+  },
+  {
     $id: "https://example.com/#getUser_404",
     $ref: "https://example.com/#Error",
   },
@@ -222,6 +226,9 @@ export type Api = {
         };
       }>
     | MaybePromise<{
+        code: 204;
+      }>
+    | MaybePromise<{
         code: 404;
         body: Error;
       }>;
@@ -261,7 +268,11 @@ export const addRoutes = (fastify: FastifyInstance, routes: Api) => {
       if ("headers" in response && (response as any).headers) {
         reply.headers((response as any).headers);
       }
-      reply.code(response.code).send(response.body);
+
+      reply.code(response.code);
+      if ("body" in response && (response as any).body) {
+        reply.send(response.body);
+      }
     }
   );
 
@@ -278,6 +289,7 @@ export const addRoutes = (fastify: FastifyInstance, routes: Api) => {
         querystring: { $ref: "https://example.com/#getUser_query" },
         response: {
           "200": { $ref: "https://example.com/#getUser_200" },
+          "204": { $ref: "https://example.com/#getUser_204" },
           "404": { $ref: "https://example.com/#getUser_404" },
         },
       },
@@ -291,7 +303,11 @@ export const addRoutes = (fastify: FastifyInstance, routes: Api) => {
       if ("headers" in response && (response as any).headers) {
         reply.headers((response as any).headers);
       }
-      reply.code(response.code).send(response.body);
+
+      reply.code(response.code);
+      if ("body" in response && (response as any).body) {
+        reply.send(response.body);
+      }
     }
   );
 
@@ -317,7 +333,11 @@ export const addRoutes = (fastify: FastifyInstance, routes: Api) => {
       if ("headers" in response && (response as any).headers) {
         reply.headers((response as any).headers);
       }
-      reply.code(response.code).send(response.body);
+
+      reply.code(response.code);
+      if ("body" in response && (response as any).body) {
+        reply.send(response.body);
+      }
     }
   );
 };

@@ -6,20 +6,7 @@ const plugin: FastifyPluginAsync = async (fastify, options) => {
     getUser: ({ params, query }) => {
       console.log("params", params);
       console.log("query", query);
-      return {
-        code: 200,
-        headers: {
-          authorization: "something",
-        },
-        body: {
-          id: "foo",
-          address: {
-            city: "stockholm",
-            street: "foo",
-            country: "UK",
-          },
-        },
-      };
+      return { code: 204 };
     },
     getUsers: (params) => {
       return {

@@ -147,7 +147,11 @@ const fastify = (d: ApiDefinition) => {
     if ("headers" in response && (response as any).headers) {
       reply.headers((response as any).headers);
     }
-    reply.code(response.code).send(response.body);
+
+    reply.code(response.code)
+    if ("body" in response && (response as any).body) {
+      reply.send(response.body)
+    }
   })
   `;
 };

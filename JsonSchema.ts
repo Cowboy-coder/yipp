@@ -57,7 +57,10 @@ const apiFieldDefinitionSchema = (
   d: ApiFieldDefinition | undefined
 ): JSONSchema7 => {
   if (d === undefined) {
-    return { type: "null" };
+    return {
+      $id,
+      type: "null",
+    };
   }
   if (d.variableType === "AnonymousTypeDeclaration" && "fields" in d) {
     const properties: {
