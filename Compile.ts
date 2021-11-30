@@ -5,7 +5,6 @@ import ApiParser, {
   ApiFieldDefinition,
   Ast,
   Field,
-  TypeDeclaration,
   Union,
 } from "./ApiParser";
 import JsonSchema, { schemaId } from "./JsonSchema";
@@ -49,7 +48,7 @@ const field = (field: Field) => {
       ? field.unions.map(union).join(" | ")
       : field.variableType === "Array" && "item" in field
       ? `(${Type(field.item.variableType)}${
-          field.item.isRequired === false ? " | undefined" : ""
+          field.item.isRequired === false ? " | null" : ""
         })[]`
       : Type(field.variableType)
   }`;
@@ -69,7 +68,9 @@ const ApiDefinitionInput = (d: ApiFieldDefinition | undefined) => {
     d.variableType === "AnonymousTypeDeclaration" && "fields" in d
       ? Fields(d.fields ?? [])
       : d.variableType === "Array" && d.item
-      ? `${Type(d.item.variableType)}[]`
+      ? `(${Type(d.item.variableType)}${
+          d.item.isRequired === false ? " | null" : ""
+        })[]`
       : Type(d.variableType)
   }`;
 };

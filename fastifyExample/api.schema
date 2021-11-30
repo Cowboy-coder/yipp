@@ -11,11 +11,16 @@ type Query {
    | "address"
 }
 
+type FieldError {
+  field: String!
+  message: String!
+}
 type Error
 | { message: String! } 
-| { code: 404 message: "testing" }
-| "Foo"
-| 42
+| {
+    message: String!
+    fields: [Field!]!
+  } 
 
 type AuthorizationHeader {
   authorization: String!
@@ -32,20 +37,14 @@ login: POST /login {
     }
   }
   400: {
-    body: {
-      message: String!
-      fields: {
-        username: String
-        password: String
-      }
-    }
+    body: Error
   }
 } 
 
 getUsers: GET /users {
   headers: AuthorizationHeader
   200: {
-    body: [User!]
+    body: [User]
   }
 } 
 

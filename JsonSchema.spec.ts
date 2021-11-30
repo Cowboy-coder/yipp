@@ -61,6 +61,52 @@ describe(JsonSchema, () => {
     ]);
   });
 
+  it("Arrays", () => {
+    const parser = new ApiParser();
+    const program = `
+    type Foo {
+      a: [Test]!
+      b: [Test!]
+      c: [Test!]!
+      d: [Test]
+    }
+    `;
+
+    expect(JsonSchema(parser.parse(program))).toEqual([
+      {
+        $id: "https://example.com/#Foo",
+        type: "object",
+        properties: {
+          a: {
+            type: "array",
+            items: {
+              oneOf: [{ type: "null" }, { $ref: "https://example.com/#Test" }],
+            },
+          },
+          b: {
+            type: "array",
+            items: {
+              $ref: "https://example.com/#Test",
+            },
+          },
+          c: {
+            type: "array",
+            items: {
+              $ref: "https://example.com/#Test",
+            },
+          },
+          d: {
+            type: "array",
+            items: {
+              oneOf: [{ type: "null" }, { $ref: "https://example.com/#Test" }],
+            },
+          },
+        },
+        required: ["a", "c"],
+      },
+    ]);
+  });
+
   it("Simple Union type", () => {
     const parser = new ApiParser();
     const program = `
@@ -235,7 +281,10 @@ describe(JsonSchema, () => {
           userType: {
             type: "array",
             items: {
-              $ref: "https://example.com/#UserType",
+              oneOf: [
+                { type: "null" },
+                { $ref: "https://example.com/#UserType" },
+              ],
             },
           },
         },

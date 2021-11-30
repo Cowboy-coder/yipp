@@ -39,7 +39,9 @@ const fieldSchema = (
   if (field.variableType === "Array" && "item" in field) {
     return {
       type: "array",
-      items: fieldSchema(field.item),
+      items: field.item.isRequired
+        ? fieldSchema(field.item)
+        : { oneOf: [{ type: "null" }, fieldSchema(field.item)] },
     };
   }
   if (field.variableType === "UnionDeclaration" && "unions" in field) {
@@ -79,7 +81,9 @@ const apiFieldDefinitionSchema = (
     return {
       $id,
       type: "array",
-      items: fieldSchema(d.item),
+      items: d.item.isRequired
+        ? fieldSchema(d.item)
+        : { oneOf: [{ type: "null" }, fieldSchema(d.item)] },
     };
   }
   return {

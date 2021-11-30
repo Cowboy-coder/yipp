@@ -122,7 +122,7 @@ export const JsonSchema = [
         required: [],
       },
     },
-    required: ["message"],
+    required: ["message", "fields"],
   },
   {
     $id: "https://example.com/#getUsers_headers",
@@ -132,7 +132,14 @@ export const JsonSchema = [
     $id: "https://example.com/#getUsers_200",
     type: "array",
     items: {
-      $ref: "https://example.com/#User",
+      oneOf: [
+        {
+          type: "null",
+        },
+        {
+          $ref: "https://example.com/#User",
+        },
+      ],
     },
   },
   {
@@ -260,7 +267,7 @@ export type Api = {
         code: 400;
         body: {
           message: string;
-          fields?: {
+          fields: {
             username?: string;
             password?: string;
           };
@@ -269,7 +276,7 @@ export type Api = {
 
   getUsers: (req: { headers: AuthorizationHeader }) => MaybePromise<{
     code: 200;
-    body: User[];
+    body: (User | null)[];
   }>;
 
   getUser: (req: {

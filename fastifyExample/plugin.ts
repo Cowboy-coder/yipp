@@ -44,12 +44,14 @@ const plugin: FastifyPluginAsync = async (fastify, options) => {
       return {
         code: 200,
         body: [
+          null,
           {
             id: "1",
             address: {
               name: "test",
             },
           },
+          null,
           {
             id: "2",
             address: {
