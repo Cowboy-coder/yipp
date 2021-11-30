@@ -9,10 +9,11 @@ describe(ApiParser, () => {
         y: 42!
       }
       200: {
+        # with some comments
         body: {
-          id: String!
-        }
-      }
+          id: String! # more comment
+        } 
+      } # and even more
     }`;
     expect(parser.parse(program)).toEqual({
       type: "Program",

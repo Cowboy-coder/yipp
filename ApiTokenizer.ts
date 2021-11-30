@@ -1,7 +1,4 @@
 const Spec = [
-  // strings
-  // [/^"[^"]*"/, "STRING"],
-  // [/^'[^']*'/, "STRING"],
   [/^\b(GET|POST|PATCH|PUT|DELETE|HEAD)\b/, "API_METHOD"],
 
   [/^\/[^\s]*/, "API_PATH"],
@@ -27,6 +24,9 @@ const Spec = [
   [/^\]/, "]"],
   [/^\|/, "|"],
 
+  // Comments
+  [/^\#.+/, null],
+  // Whitespace
   [/\s+/, null],
 ] as const;
 
