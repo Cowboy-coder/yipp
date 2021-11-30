@@ -12,9 +12,11 @@ const Spec = [
 
   [/^\b[a-zA-Z][a-zA-Z_0-9_-]*\b:/, "WORD_WITH_COLON"],
 
-  [/^\d+/, "NUMBER"],
-  [/^"([^"\\]*(\\.[^"\\]*)*)"/, "STRING"],
-  [/^\b[a-zA-Z][a-zA-Z_0-9_-]*\b/, "VariableType"],
+  [/^-?\d+\.\d+/, "FLOAT_LITERAL"],
+  [/^-?\d+/, "INT_LITERAL"],
+  [/^\b(true|false)\b/, "BOOLEAN_LITERAL"],
+  [/^"([^"\\]*(\\.[^"\\]*)*)"/, "STRING_LITERAL"],
+  [/^\b[a-zA-Z][a-zA-Z_0-9_-]*\b/, "VARIABLE_TYPE"],
 
   [/^!/, "!"],
 

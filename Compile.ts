@@ -30,20 +30,28 @@ const Type = (
     | StringLiteral
     | FloatLiteral
     | TypeReference
-) => {
+): string => {
   switch (d.variableType) {
     case "Int":
       return "number";
+    case "IntLiteral":
+      return `${d.value}`;
     case "String":
       return "string";
     case "StringLiteral":
       return `"${d.value}"`;
-    case "IntLiteral":
-      return d.value;
+    case "Boolean":
+      return "boolean";
+    case "BooleanLiteral":
+      return `${d.value}`;
+    case "Float":
+      return "number";
+    case "FloatLiteral":
+      return `${d.value}`;
     case "TypeReference":
       return d.value;
     default:
-      throw `unsupported type in Type ${d.variableType}`;
+      throw `unsupported type`;
   }
 };
 const union = (union: UnionItem) => {

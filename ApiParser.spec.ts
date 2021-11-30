@@ -1,12 +1,20 @@
 import ApiParser, { Ast } from "./ApiParser";
 
 describe(ApiParser, () => {
-  it("ApiDefinition with empty params", () => {
+  it("ApiDefinition with different types", () => {
     const parser = new ApiParser();
     const program = `getUser: GET /users/:id {
       body: {
-        x: "foo"
-        y: 42!
+        a: "foo"!
+        b: String
+        c: -42!
+        d: 42!
+        e: Int
+        f: Boolean
+        g: true
+        h: false
+        i: 32.0
+        j: -12.042
       }
       200: {
         # with some comments
@@ -29,17 +37,70 @@ describe(ApiParser, () => {
             fields: [
               {
                 type: "ObjectField",
-                name: "x",
+                name: "a",
                 variableType: "StringLiteral",
                 value: "foo",
+                isRequired: true,
+              },
+              {
+                type: "ObjectField",
+                name: "b",
+                variableType: "String",
                 isRequired: false,
               },
               {
                 type: "ObjectField",
-                name: "y",
+                name: "c",
+                variableType: "IntLiteral",
+                value: -42,
+                isRequired: true,
+              },
+              {
+                type: "ObjectField",
+                name: "d",
                 variableType: "IntLiteral",
                 value: 42,
                 isRequired: true,
+              },
+              {
+                type: "ObjectField",
+                name: "e",
+                variableType: "Int",
+                isRequired: false,
+              },
+              {
+                type: "ObjectField",
+                name: "f",
+                variableType: "Boolean",
+                isRequired: false,
+              },
+              {
+                type: "ObjectField",
+                name: "g",
+                variableType: "BooleanLiteral",
+                value: true,
+                isRequired: false,
+              },
+              {
+                type: "ObjectField",
+                name: "h",
+                variableType: "BooleanLiteral",
+                value: false,
+                isRequired: false,
+              },
+              {
+                type: "ObjectField",
+                name: "i",
+                variableType: "FloatLiteral",
+                value: 32.0,
+                isRequired: false,
+              },
+              {
+                type: "ObjectField",
+                name: "j",
+                variableType: "FloatLiteral",
+                value: -12.042,
+                isRequired: false,
               },
             ],
           },
@@ -496,6 +557,14 @@ describe(ApiParser, () => {
       | "user"
       | "thug"
       | 49
+      | -49
+      | 12.12
+      | -32.02
+      | true
+      | false
+      | String
+      | Int
+      | SomeType
 
 
     createUser: POST /users {
@@ -549,6 +618,44 @@ describe(ApiParser, () => {
               type: "UnionItem",
               variableType: "IntLiteral",
               value: 49,
+            },
+            {
+              type: "UnionItem",
+              value: -49,
+              variableType: "IntLiteral",
+            },
+            {
+              type: "UnionItem",
+              value: 12.12,
+              variableType: "FloatLiteral",
+            },
+            {
+              type: "UnionItem",
+              value: -32.02,
+              variableType: "FloatLiteral",
+            },
+            {
+              type: "UnionItem",
+              value: true,
+              variableType: "BooleanLiteral",
+            },
+            {
+              type: "UnionItem",
+              value: false,
+              variableType: "BooleanLiteral",
+            },
+            {
+              type: "UnionItem",
+              variableType: "String",
+            },
+            {
+              type: "UnionItem",
+              variableType: "Int",
+            },
+            {
+              type: "UnionItem",
+              variableType: "TypeReference",
+              value: "SomeType",
             },
           ],
         },

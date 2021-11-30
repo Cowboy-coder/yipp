@@ -3,14 +3,20 @@ import ApiParser from "./ApiParser";
 import JsonSchema from "./JsonSchema";
 
 describe(JsonSchema, () => {
-  it("Simple type", () => {
+  it("Different types", () => {
     const parser = new ApiParser();
     const program = `
     type Foo {
-      id: String!
-      age: Int
-      fixed: 42
-      funny: "LOL"
+      a: "foo"!
+      b: String
+      c: -42!
+      d: 42!
+      e: Int
+      f: Boolean
+      g: true
+      h: false
+      i: 32.0
+      j: -12.042
     }
     `;
     expect(JsonSchema(parser.parse(program))).toEqual<JSONSchema7[]>([
@@ -18,12 +24,18 @@ describe(JsonSchema, () => {
         $id: "https://example.com/#Foo",
         type: "object",
         properties: {
-          id: { type: "string" },
-          age: { type: "number" },
-          fixed: { const: 42 },
-          funny: { const: "LOL" },
+          a: { const: "foo" },
+          b: { type: "string" },
+          c: { const: -42 },
+          d: { const: 42 },
+          e: { type: "number" },
+          f: { type: "boolean" },
+          g: { const: true },
+          h: { const: false },
+          i: { const: 32.0 },
+          j: { const: -12.042 },
         },
-        required: ["id"],
+        required: ["a", "c", "d"],
       },
     ]);
   });
@@ -40,7 +52,7 @@ describe(JsonSchema, () => {
     }
     `;
 
-    expect(JsonSchema(parser.parse(program))).toEqual([
+    expect(JsonSchema(parser.parse(program))).toEqual<JSONSchema7[]>([
       {
         $id: "https://example.com/#Foo",
         type: "object",
@@ -75,7 +87,7 @@ describe(JsonSchema, () => {
     }
     `;
 
-    expect(JsonSchema(parser.parse(program))).toEqual([
+    expect(JsonSchema(parser.parse(program))).toEqual<JSONSchema7[]>([
       {
         $id: "https://example.com/#Foo",
         type: "object",
@@ -110,25 +122,35 @@ describe(JsonSchema, () => {
     ]);
   });
 
-  it("Simple Union type", () => {
+  it("Union type", () => {
     const parser = new ApiParser();
     const program = `
-    type UserType
-     | "Admin"
-     | "User"
-     | "Editor"
-     | "SuperAdmin"
-     | 1337
+    type Foo
+     | "foo"
+     | String
+     | -42
+     | 42
+     | Int
+     | Boolean
+     | true
+     | false
+     | 32.0
+     | -12.042
     `;
-    expect(JsonSchema(parser.parse(program))).toEqual([
+    expect(JsonSchema(parser.parse(program))).toEqual<JSONSchema7[]>([
       {
-        $id: "https://example.com/#UserType",
+        $id: "https://example.com/#Foo",
         oneOf: [
-          { const: "Admin" },
-          { const: "User" },
-          { const: "Editor" },
-          { const: "SuperAdmin" },
-          { const: 1337 },
+          { const: "foo" },
+          { type: "string" },
+          { const: -42 },
+          { const: 42 },
+          { type: "number" },
+          { type: "boolean" },
+          { const: true },
+          { const: false },
+          { const: 32.0 },
+          { const: -12.042 },
         ],
       },
     ]);
@@ -143,7 +165,7 @@ describe(JsonSchema, () => {
      | "Foo"
      | 42
     `;
-    expect(JsonSchema(parser.parse(program))).toEqual([
+    expect(JsonSchema(parser.parse(program))).toEqual<JSONSchema7[]>([
       {
         $id: "https://example.com/#Error",
         oneOf: [
@@ -190,7 +212,7 @@ describe(JsonSchema, () => {
       }
     }
     `;
-    expect(JsonSchema(parser.parse(program))).toEqual([
+    expect(JsonSchema(parser.parse(program))).toEqual<JSONSchema7[]>([
       {
         $id: "https://example.com/#User",
         type: "object",
@@ -269,7 +291,7 @@ describe(JsonSchema, () => {
       }
     }
     `;
-    expect(JsonSchema(parser.parse(program))).toEqual([
+    expect(JsonSchema(parser.parse(program))).toEqual<JSONSchema7[]>([
       {
         $id: "https://example.com/#UserType",
         oneOf: [{ const: "Admin" }, { const: "User" }],

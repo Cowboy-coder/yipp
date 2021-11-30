@@ -44,6 +44,22 @@ const fieldSchema = (
     return { type: "string" };
   }
 
+  if (field.variableType === "Boolean") {
+    return { type: "boolean" };
+  }
+
+  if (field.variableType === "BooleanLiteral") {
+    return { const: field.value };
+  }
+
+  if (field.variableType === "Float") {
+    return { const: "number" };
+  }
+
+  if (field.variableType === "FloatLiteral") {
+    return { const: field.value };
+  }
+
   if (field.variableType === "TypeReference") {
     return { $ref: schemaId(field.value) };
   }
@@ -63,7 +79,7 @@ const fieldSchema = (
       }),
     };
   }
-  throw new Error(`Unsupported field ${field.variableType}`);
+  throw new Error(`Unsupported field`);
 };
 
 const apiFieldDefinitionSchema = (
