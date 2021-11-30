@@ -80,6 +80,51 @@ export const JsonSchema = [
     required: ["authorization"],
   },
   {
+    $id: "https://example.com/#login_body",
+    type: "object",
+    properties: {
+      username: {
+        type: "string",
+      },
+      password: {
+        type: "string",
+      },
+    },
+    required: ["username", "password"],
+  },
+  {
+    $id: "https://example.com/#login_200",
+    type: "object",
+    properties: {
+      token: {
+        type: "string",
+      },
+    },
+    required: [],
+  },
+  {
+    $id: "https://example.com/#login_400",
+    type: "object",
+    properties: {
+      message: {
+        type: "string",
+      },
+      fields: {
+        type: "object",
+        properties: {
+          username: {
+            type: "string",
+          },
+          password: {
+            type: "string",
+          },
+        },
+        required: [],
+      },
+    },
+    required: ["message"],
+  },
+  {
     $id: "https://example.com/#getUsers_headers",
     $ref: "https://example.com/#AuthorizationHeader",
   },
@@ -199,6 +244,29 @@ export type AuthorizationHeader = {
 };
 
 export type Api = {
+  login: (req: {
+    body: {
+      username: string;
+      password: string;
+    };
+  }) =>
+    | MaybePromise<{
+        code: 200;
+        body: {
+          token?: string;
+        };
+      }>
+    | MaybePromise<{
+        code: 400;
+        body: {
+          message: string;
+          fields?: {
+            username?: string;
+            password?: string;
+          };
+        };
+      }>;
+
   getUsers: (req: { headers: AuthorizationHeader }) => MaybePromise<{
     code: 200;
     body: User[];
@@ -249,6 +317,38 @@ export type Api = {
 };
 export const addRoutes = (fastify: FastifyInstance, routes: Api) => {
   JsonSchema.forEach((schema) => fastify.addSchema(schema));
+
+  fastify.post<{
+    Body: {
+      username: string;
+      password: string;
+    };
+  }>(
+    "/login",
+    {
+      schema: {
+        body: { $ref: "https://example.com/#login_body" },
+        response: {
+          "200": { $ref: "https://example.com/#login_200" },
+          "400": { $ref: "https://example.com/#login_400" },
+        },
+      },
+    },
+    async (req, reply) => {
+      const response = await routes.login({
+        body: { ...req.body },
+      });
+
+      if ("headers" in response && (response as any).headers) {
+        reply.headers((response as any).headers);
+      }
+
+      reply.code(response.code);
+      if ("body" in response && (response as any).body) {
+        reply.send(response.body);
+      }
+    }
+  );
 
   fastify.get<{
     Headers: AuthorizationHeader;
@@ -319,6 +419,7 @@ export const addRoutes = (fastify: FastifyInstance, routes: Api) => {
     "/users",
     {
       schema: {
+        body: { $ref: "https://example.com/#postUser_body" },
         response: {
           "200": { $ref: "https://example.com/#postUser_200" },
           "404": { $ref: "https://example.com/#postUser_404" },

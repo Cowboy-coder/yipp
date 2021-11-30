@@ -21,6 +21,27 @@ type AuthorizationHeader {
   authorization: String!
 }
 
+login: POST /login {
+  body: {
+    username: String!
+    password: String!
+  }
+  200: {
+    body: {
+      token: String
+    }
+  }
+  400: {
+    body: {
+      message: String!
+      fields: {
+        username: String
+        password: String
+      }
+    }
+  }
+} 
+
 getUsers: GET /users {
   headers: AuthorizationHeader
   200: {
