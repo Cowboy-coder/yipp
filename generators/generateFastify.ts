@@ -1,6 +1,5 @@
-import fs from "fs";
 import prettier from "prettier";
-import ApiParser, {
+import {
   ApiDefinition,
   ApiFieldDefinition,
   Ast,
@@ -15,9 +14,9 @@ import ApiParser, {
   StringVariable,
   TypeReference,
   UnionItem,
-} from "./ApiParser";
-import JsonSchema, { schemaId } from "./JsonSchema";
-import { getApiDefinitions, getDeclarations } from "./AstQuery";
+} from "../ApiParser";
+import JsonSchema, { schemaId } from "../JsonSchema";
+import { getApiDefinitions, getDeclarations } from "../AstQuery";
 
 const Type = (
   d:
@@ -180,7 +179,7 @@ const routes = (definitions: ApiDefinition[]) => {
   }`;
 };
 
-const compile = (ast: Ast) => {
+const generateFastify = (ast: Ast) => {
   return prettier.format(
     `
     import { FastifyInstance } from "fastify";
@@ -214,10 +213,4 @@ const compile = (ast: Ast) => {
   );
 };
 
-const parser = new ApiParser();
-const ast = parser.parse(
-  fs.readFileSync("./fastifyExample/api.schema", { encoding: "utf8" })
-);
-fs.writeFileSync("./fastifyExample/generated.ts", compile(ast));
-console.log(JSON.stringify(ast, null, 2));
-console.log(compile(ast));
+export default generateFastify;
