@@ -320,7 +320,6 @@ const RestPlugin: FastifyPluginAsync<{
 }> = async (fastify, options) => {
   fastify.decorateRequest("xyz", null);
 
-  // Update our property
   fastify.addHook("preHandler", (req, _, done) => {
     (req as any).xyz = options.setContext(req);
     done();
