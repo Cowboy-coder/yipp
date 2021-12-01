@@ -158,7 +158,7 @@ const fastify = (d: ApiDefinition) => {
     ]
       .filter((x) => !!x)
       .join(",")}
-    }, (req as any).xyz);
+    }, (req as any).restplugin_context);
 
     if ("headers" in response && (response as any).headers) {
       reply.headers((response as any).headers);
@@ -193,7 +193,7 @@ const generateFastify = (ast: Ast) => {
         }
       })
       .join("\n")}
-    export type Api<T = any> = {
+    export type Api<T = undefined> = {
     ${getApiDefinitions(ast)
       .map((d) => {
         return apiDefinition(d);
@@ -201,10 +201,10 @@ const generateFastify = (ast: Ast) => {
       .join("\n")}
     }
     const RestPlugin: FastifyPluginAsync<{routes:Api; setContext: (req: FastifyRequest) => any;}> = async (fastify, options) => {
-    fastify.decorateRequest("xyz", null);
+    fastify.decorateRequest("restplugin_context", null);
 
     fastify.addHook("preHandler", (req, _, done) => {
-      (req as any).xyz = options.setContext(req);
+      (req as any).restplugin_context = options.setContext(req);
       done();
     });
       JsonSchema.forEach(schema => fastify.addSchema(schema))

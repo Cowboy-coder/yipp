@@ -139,7 +139,7 @@ export type User = {
   age: number;
   type: "admin" | "user";
 };
-export type Api<T = any> = {
+export type Api<T = undefined> = {
   login: (
     req: {
       body: {
@@ -182,10 +182,10 @@ const RestPlugin: FastifyPluginAsync<{
   routes: Api;
   setContext: (req: FastifyRequest) => any;
 }> = async (fastify, options) => {
-  fastify.decorateRequest("xyz", null);
+  fastify.decorateRequest("restplugin_context", null);
 
   fastify.addHook("preHandler", (req, _, done) => {
-    (req as any).xyz = options.setContext(req);
+    (req as any).restplugin_context = options.setContext(req);
     done();
   });
   JsonSchema.forEach((schema) => fastify.addSchema(schema));
@@ -211,7 +211,7 @@ const RestPlugin: FastifyPluginAsync<{
         {
           body: { ...req.body },
         },
-        (req as any).xyz
+        (req as any).restplugin_context
       );
 
       if ("headers" in response && (response as any).headers) {
@@ -248,7 +248,7 @@ const RestPlugin: FastifyPluginAsync<{
           query: { ...req.query },
           headers: { ...req.headers },
         },
-        (req as any).xyz
+        (req as any).restplugin_context
       );
 
       if ("headers" in response && (response as any).headers) {
