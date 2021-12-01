@@ -1,4 +1,4 @@
-import { FastifyInstance } from "fastify";
+import { FastifyPluginAsync, FastifyRequest } from "fastify";
 
 export const JsonSchema = [
   {
@@ -115,10 +115,6 @@ export const JsonSchema = [
   {
     $id: "https://example.com/#login_400",
     $ref: "https://example.com/#Error",
-  },
-  {
-    $id: "https://example.com/#getUsers_headers",
-    $ref: "https://example.com/#AuthorizationHeader",
   },
   {
     $id: "https://example.com/#getUsers_200",
@@ -240,13 +236,16 @@ export type Error =
 export type AuthorizationHeader = {
   authorization: string;
 };
-export type Api = {
-  login: (req: {
-    body: {
-      username: string;
-      password: string;
-    };
-  }) =>
+export type Api<T = any> = {
+  login: (
+    req: {
+      body: {
+        username: string;
+        password: string;
+      };
+    },
+    context: T
+  ) =>
     | MaybePromise<{
         code: 200;
         body: {
@@ -258,17 +257,23 @@ export type Api = {
         body: Error;
       }>;
 
-  getUsers: (req: { headers: AuthorizationHeader }) => MaybePromise<{
+  getUsers: (
+    req: {},
+    context: T
+  ) => MaybePromise<{
     code: 200;
     body: (User | null)[];
   }>;
 
-  getUser: (req: {
-    params: {
-      id: number[];
-    };
-    query: Query;
-  }) =>
+  getUser: (
+    req: {
+      params: {
+        id: number[];
+      };
+      query: Query;
+    },
+    context: T
+  ) =>
     | MaybePromise<{
         code: 200;
         body: {
@@ -292,11 +297,14 @@ export type Api = {
         body: Error;
       }>;
 
-  postUser: (req: {
-    body: {
-      user: User;
-    };
-  }) =>
+  postUser: (
+    req: {
+      body: {
+        user: User;
+      };
+    },
+    context: T
+  ) =>
     | MaybePromise<{
         code: 200;
         body: User;
@@ -306,7 +314,17 @@ export type Api = {
         body: Error;
       }>;
 };
-export const addRoutes = (fastify: FastifyInstance, routes: Api) => {
+const RestPlugin: FastifyPluginAsync<{
+  routes: Api;
+  setContext: (req: FastifyRequest) => any;
+}> = async (fastify, options) => {
+  fastify.decorateRequest("xyz", null);
+
+  // Update our property
+  fastify.addHook("preHandler", (req, _, done) => {
+    (req as any).xyz = options.setContext(req);
+    done();
+  });
   JsonSchema.forEach((schema) => fastify.addSchema(schema));
 
   fastify.post<{
@@ -326,9 +344,12 @@ export const addRoutes = (fastify: FastifyInstance, routes: Api) => {
       },
     },
     async (req, reply) => {
-      const response = await routes.login({
-        body: { ...req.body },
-      });
+      const response = await options.routes.login(
+        {
+          body: { ...req.body },
+        },
+        (req as any).xyz
+      );
 
       if ("headers" in response && (response as any).headers) {
         reply.headers((response as any).headers);
@@ -341,20 +362,15 @@ export const addRoutes = (fastify: FastifyInstance, routes: Api) => {
     }
   );
 
-  fastify.get<{
-    Headers: AuthorizationHeader;
-  }>(
+  fastify.get<{}>(
     "/users",
     {
       schema: {
-        headers: { $ref: "https://example.com/#getUsers_headers" },
         response: { "200": { $ref: "https://example.com/#getUsers_200" } },
       },
     },
     async (req, reply) => {
-      const response = await routes.getUsers({
-        headers: { ...req.headers },
-      });
+      const response = await options.routes.getUsers({}, (req as any).xyz);
 
       if ("headers" in response && (response as any).headers) {
         reply.headers((response as any).headers);
@@ -386,10 +402,13 @@ export const addRoutes = (fastify: FastifyInstance, routes: Api) => {
       },
     },
     async (req, reply) => {
-      const response = await routes.getUser({
-        params: { ...req.params },
-        query: { ...req.query },
-      });
+      const response = await options.routes.getUser(
+        {
+          params: { ...req.params },
+          query: { ...req.query },
+        },
+        (req as any).xyz
+      );
 
       if ("headers" in response && (response as any).headers) {
         reply.headers((response as any).headers);
@@ -418,9 +437,12 @@ export const addRoutes = (fastify: FastifyInstance, routes: Api) => {
       },
     },
     async (req, reply) => {
-      const response = await routes.postUser({
-        body: { ...req.body },
-      });
+      const response = await options.routes.postUser(
+        {
+          body: { ...req.body },
+        },
+        (req as any).xyz
+      );
 
       if ("headers" in response && (response as any).headers) {
         reply.headers((response as any).headers);
@@ -433,3 +455,4 @@ export const addRoutes = (fastify: FastifyInstance, routes: Api) => {
     }
   );
 };
+export default RestPlugin;

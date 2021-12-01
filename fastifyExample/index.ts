@@ -1,4 +1,6 @@
 import Fastify, { FastifyError } from "fastify";
+import RestPlugin from "./generated";
+import routes from "./routes";
 const fastify = Fastify({
   ajv: {
     customOptions: {
@@ -11,7 +13,26 @@ const fastify = Fastify({
     plugins: [],
   },
 });
-fastify.register(import("./plugin"));
+
+export type Context = {
+  url: string;
+  db: {
+    findUsers: () => (number | undefined)[];
+  };
+};
+
+fastify.register(RestPlugin, {
+  routes: routes,
+  setContext: (req) => {
+    const context: Context = {
+      url: req.url,
+      db: {
+        findUsers: () => [1, 2, 3, undefined, 4, 5],
+      },
+    };
+    return context;
+  },
+});
 fastify.setErrorHandler<FastifyError>((err, _, reply) => {
   const validationContext = (err as any).validationContext;
   const validations = err.validation ?? [];

@@ -42,7 +42,6 @@ login: POST /login {
 } 
 
 getUsers: GET /users {
-  headers: AuthorizationHeader
   200: {
     body: [User]
   }

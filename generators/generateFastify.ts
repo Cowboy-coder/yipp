@@ -104,7 +104,7 @@ const apiDefinition = (d: ApiDefinition) => {
         })
         .filter((x) => !!x)
         .join(",\n")} 
-    }) => ${d.responses
+    }, context: T) => ${d.responses
       .map(({ body, headers, status }) => {
         return `MaybePromise<{
     code: ${status};
@@ -149,7 +149,7 @@ const fastify = (d: ApiDefinition) => {
       .join(",")},
     }
   }, async (req, reply) => {
-    const response = await routes.${d.name}({
+    const response = await options.routes.${d.name}({
     ${[
       d.params ? "params: {...req.params}" : "",
       d.query ? "query: {...req.query}" : "",
@@ -158,7 +158,7 @@ const fastify = (d: ApiDefinition) => {
     ]
       .filter((x) => !!x)
       .join(",")}
-    });
+    }, (req as any).xyz);
 
     if ("headers" in response && (response as any).headers) {
       reply.headers((response as any).headers);
@@ -172,17 +172,10 @@ const fastify = (d: ApiDefinition) => {
   `;
 };
 
-const routes = (definitions: ApiDefinition[]) => {
-  return `export const addRoutes = (fastify:FastifyInstance, routes:Api) => {
-    JsonSchema.forEach(schema => fastify.addSchema(schema))
-    ${definitions.map(fastify).join("\n")}
-  }`;
-};
-
 const generateFastify = (ast: Ast) => {
   return prettier.format(
     `
-    import { FastifyInstance } from "fastify";
+    import { FastifyPluginAsync, FastifyRequest } from "fastify";
 
     export const JsonSchema = ${JSON.stringify(JsonSchema(ast), null, 2)};
 
@@ -200,14 +193,24 @@ const generateFastify = (ast: Ast) => {
         }
       })
       .join("\n")}
-    export type Api = {
+    export type Api<T = any> = {
     ${getApiDefinitions(ast)
       .map((d) => {
         return apiDefinition(d);
       })
       .join("\n")}
     }
-    ${routes(getApiDefinitions(ast))}
+    const RestPlugin: FastifyPluginAsync<{routes:Api; setContext: (req: FastifyRequest) => any;}> = async (fastify, options) => {
+    fastify.decorateRequest("xyz", null);
+
+    fastify.addHook("preHandler", (req, _, done) => {
+      (req as any).xyz = options.setContext(req);
+      done();
+    });
+      JsonSchema.forEach(schema => fastify.addSchema(schema))
+      ${getApiDefinitions(ast).map(fastify).join("\n")}
+    }
+    export default RestPlugin
     `,
     { parser: "typescript" }
   );
