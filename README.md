@@ -70,9 +70,14 @@ export type Api = {
 
 Then the implementation of it is as simple as this
 ```typescript
-addRoutes(fastify, {
-  login: ({ body: { username, password } }) => {
-    return Math.random() > 0.5
+import RestPlugin, {Api} from "./generated";
+
+type Context {
+  db: DbInstance
+}
+const routes: Api<Context> = {
+  login: async ({ body: { username, password } }, { db }) => {
+    return await db.login(username, password)
       ? {
           code: 200,
           body: {
@@ -90,9 +95,39 @@ addRoutes(fastify, {
           },
         };
   },
+}
+
+fastify.register(RestPlugin, {
+  routes: routes,
+  setContext: (req) => ({
+    db: {}
+  }),
 });
 ```
-
 This uses [fastify](https://www.fastify.io/) underneath but could in theory use any framework.
+
+A more complete (but WIP) example can be seen in [fastifyExample](https://github.com/Cowboy-coder/schema-first-rest/tree/master/fastifyExample).
+
+### CLI
+
+```
+Usage: Cli [options] <input-file> <output-file>
+
+generate fastify plugin
+
+Arguments:
+  input-file   api schema file
+  output-file  generated typescript file
+
+Options:
+  -w --watch   watch for changes (default: false)
+  -h, --help   display help for command
+```
+
+For example
+
+```
+./node_modules/.bin/ts-node Cli.ts --watch ./fastifyExample/api.schema ./fastifyExample/generated.ts 
+```
 
 🐄

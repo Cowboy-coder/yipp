@@ -6,7 +6,7 @@ import generateFastify from "./generators/generateFastify";
 program
   .description("generate fastify plugin")
   .argument("<input-file>", "api schema file")
-  .argument("<output-file>", "Output typescript file")
+  .argument("<output-file>", "generated typescript file")
   .option("-w --watch", "watch for changes", false)
   .action(
     async (
