@@ -17,7 +17,13 @@ const fastify = Fastify({
 export type Context = {
   url: string;
   db: {
-    findUsers: () => (number | undefined)[];
+    findUsers: (query: string | undefined) => {
+      id: string;
+      username: string;
+      age: number;
+      type: "admin" | "user";
+    }[];
+    login: (username: string, password: string) => boolean;
   };
 };
 
@@ -27,20 +33,30 @@ fastify.register(RestPlugin, {
     const context: Context = {
       url: req.url,
       db: {
-        findUsers: () => [1, 2, 3, undefined, 4, 5],
+        findUsers: (query: string | undefined) => {
+          return Array.from({ length: 20 }, (value, key) => key)
+            .map((_, ix) => ({
+              id: ix.toString(),
+              username: `username_${ix}`,
+              type: ix % 4 === 0 ? ("admin" as const) : ("user" as const),
+              age: ix + 1,
+            }))
+            .filter((x) => x.username.indexOf(query ?? "") > -1);
+        },
+        login: (username: string, password: string) =>
+          username === "admin" && password === "password",
       },
     };
     return context;
   },
 });
+
 fastify.setErrorHandler<FastifyError>((err, _, reply) => {
-  const validationContext = (err as any).validationContext;
   const validations = err.validation ?? [];
   reply
     .send({
       message: err.message,
-      statusCode: reply.statusCode,
-      errors: validations.map((validation) => {
+      fields: validations.map((validation) => {
         let field = validation.dataPath;
         const missingProperty = validation.params["missingProperty"];
         if (!field && missingProperty) {
@@ -53,7 +69,6 @@ fastify.setErrorHandler<FastifyError>((err, _, reply) => {
         return {
           field,
           message: validation.message,
-          context: validationContext,
         };
       }),
     })

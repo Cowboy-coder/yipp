@@ -2,85 +2,7 @@ import { FastifyPluginAsync, FastifyRequest } from "fastify";
 
 export const JsonSchema = [
   {
-    $id: "https://example.com/#User",
-    type: "object",
-    properties: {
-      id: {
-        type: "string",
-      },
-      address: {
-        type: "object",
-        properties: {
-          street: {
-            type: "string",
-          },
-        },
-        required: [],
-      },
-    },
-    required: ["id"],
-  },
-  {
-    $id: "https://example.com/#Query",
-    type: "object",
-    properties: {
-      filter: {
-        oneOf: [
-          {
-            const: "id",
-          },
-          {
-            const: "address",
-          },
-        ],
-      },
-    },
-    required: [],
-  },
-  {
-    $id: "https://example.com/#FieldError",
-    type: "object",
-    properties: {
-      field: {
-        type: "string",
-      },
-      message: {
-        type: "string",
-      },
-    },
-    required: ["field", "message"],
-  },
-  {
-    $id: "https://example.com/#Error",
-    oneOf: [
-      {
-        type: "object",
-        properties: {
-          message: {
-            type: "string",
-          },
-        },
-        required: ["message"],
-      },
-      {
-        type: "object",
-        properties: {
-          message: {
-            type: "string",
-          },
-          fields: {
-            type: "array",
-            items: {
-              $ref: "https://example.com/#FieldError",
-            },
-          },
-        },
-        required: ["message", "fields"],
-      },
-    ],
-  },
-  {
-    $id: "https://example.com/#AuthorizationHeader",
+    $id: "https://example.com/#AuthenticatedRoute",
     type: "object",
     properties: {
       authorization: {
@@ -88,6 +10,61 @@ export const JsonSchema = [
       },
     },
     required: ["authorization"],
+  },
+  {
+    $id: "https://example.com/#Field",
+    type: "object",
+    properties: {
+      name: {
+        type: "string",
+      },
+      message: {
+        type: "string",
+      },
+    },
+    required: ["name"],
+  },
+  {
+    $id: "https://example.com/#Error",
+    type: "object",
+    properties: {
+      message: {
+        type: "string",
+      },
+      fields: {
+        type: "array",
+        items: {
+          $ref: "https://example.com/#Field",
+        },
+      },
+    },
+    required: ["message", "fields"],
+  },
+  {
+    $id: "https://example.com/#User",
+    type: "object",
+    properties: {
+      id: {
+        type: "string",
+      },
+      username: {
+        type: "string",
+      },
+      age: {
+        type: "number",
+      },
+      type: {
+        oneOf: [
+          {
+            const: "admin",
+          },
+          {
+            const: "user",
+          },
+        ],
+      },
+    },
+    required: ["id", "username", "age", "type"],
   },
   {
     $id: "https://example.com/#login_body",
@@ -110,131 +87,57 @@ export const JsonSchema = [
         type: "string",
       },
     },
-    required: [],
+    required: ["token"],
   },
   {
     $id: "https://example.com/#login_400",
     $ref: "https://example.com/#Error",
   },
   {
+    $id: "https://example.com/#getUsers_query",
+    type: "object",
+    properties: {
+      q: {
+        type: "string",
+      },
+    },
+    required: [],
+  },
+  {
+    $id: "https://example.com/#getUsers_headers",
+    $ref: "https://example.com/#AuthenticatedRoute",
+  },
+  {
     $id: "https://example.com/#getUsers_200",
     type: "array",
     items: {
-      oneOf: [
-        {
-          type: "null",
-        },
-        {
-          $ref: "https://example.com/#User",
-        },
-      ],
+      $ref: "https://example.com/#User",
     },
   },
   {
-    $id: "https://example.com/#getUser_params",
-    type: "object",
-    properties: {
-      id: {
-        type: "array",
-        items: {
-          type: "number",
-        },
-      },
-    },
-    required: ["id"],
-  },
-  {
-    $id: "https://example.com/#getUser_query",
-    $ref: "https://example.com/#Query",
-  },
-  {
-    $id: "https://example.com/#getUser_200",
-    type: "object",
-    properties: {
-      id: {
-        type: "string",
-      },
-      name: {
-        type: "string",
-      },
-      address: {
-        type: "object",
-        properties: {
-          city: {
-            type: "string",
-          },
-          street: {
-            type: "string",
-          },
-          country: {
-            oneOf: [
-              {
-                const: "Sweden",
-              },
-              {
-                const: "UK",
-              },
-            ],
-          },
-        },
-        required: ["city", "street", "country"],
-      },
-    },
-    required: ["id"],
-  },
-  {
-    $id: "https://example.com/#getUser_204",
-    type: "null",
-  },
-  {
-    $id: "https://example.com/#getUser_404",
-    $ref: "https://example.com/#Error",
-  },
-  {
-    $id: "https://example.com/#postUser_body",
-    type: "object",
-    properties: {
-      user: {
-        $ref: "https://example.com/#User",
-      },
-    },
-    required: ["user"],
-  },
-  {
-    $id: "https://example.com/#postUser_200",
-    $ref: "https://example.com/#User",
-  },
-  {
-    $id: "https://example.com/#postUser_404",
+    $id: "https://example.com/#getUsers_400",
     $ref: "https://example.com/#Error",
   },
 ];
 
 type MaybePromise<T> = Promise<T> | T;
 
+export type AuthenticatedRoute = {
+  authorization: string;
+};
+export type Field = {
+  name: string;
+  message?: string;
+};
+export type Error = {
+  message: string;
+  fields: Field[];
+};
 export type User = {
   id: string;
-  address?: {
-    street?: string;
-  };
-};
-export type Query = {
-  filter?: "id" | "address";
-};
-export type FieldError = {
-  field: string;
-  message: string;
-};
-export type Error =
-  | {
-      message: string;
-    }
-  | {
-      message: string;
-      fields: FieldError[];
-    };
-export type AuthorizationHeader = {
-  authorization: string;
+  username: string;
+  age: number;
+  type: "admin" | "user";
 };
 export type Api<T = any> = {
   login: (
@@ -249,7 +152,7 @@ export type Api<T = any> = {
     | MaybePromise<{
         code: 200;
         body: {
-          token?: string;
+          token: string;
         };
       }>
     | MaybePromise<{
@@ -258,59 +161,20 @@ export type Api<T = any> = {
       }>;
 
   getUsers: (
-    req: {},
-    context: T
-  ) => MaybePromise<{
-    code: 200;
-    body: (User | null)[];
-  }>;
-
-  getUser: (
     req: {
-      params: {
-        id: number[];
+      query: {
+        q?: string;
       };
-      query: Query;
+      headers: AuthenticatedRoute;
     },
     context: T
   ) =>
     | MaybePromise<{
         code: 200;
-        body: {
-          id: string;
-          name?: string;
-          address?: {
-            city: string;
-            street: string;
-            country: "Sweden" | "UK";
-          };
-        };
-        headers: {
-          authorization: string;
-        };
+        body: User[];
       }>
     | MaybePromise<{
-        code: 204;
-      }>
-    | MaybePromise<{
-        code: 404;
-        body: Error;
-      }>;
-
-  postUser: (
-    req: {
-      body: {
-        user: User;
-      };
-    },
-    context: T
-  ) =>
-    | MaybePromise<{
-        code: 200;
-        body: User;
-      }>
-    | MaybePromise<{
-        code: 404;
+        code: 400;
         body: Error;
       }>;
 };
@@ -361,84 +225,28 @@ const RestPlugin: FastifyPluginAsync<{
     }
   );
 
-  fastify.get<{}>(
-    "/users",
-    {
-      schema: {
-        response: { "200": { $ref: "https://example.com/#getUsers_200" } },
-      },
-    },
-    async (req, reply) => {
-      const response = await options.routes.getUsers({}, (req as any).xyz);
-
-      if ("headers" in response && (response as any).headers) {
-        reply.headers((response as any).headers);
-      }
-
-      reply.code(response.code);
-      if ("body" in response && (response as any).body) {
-        reply.send(response.body);
-      }
-    }
-  );
-
   fastify.get<{
-    Params: {
-      id: number[];
+    Querystring: {
+      q?: string;
     };
-    Querystring: Query;
-  }>(
-    "/users/:id",
-    {
-      schema: {
-        params: { $ref: "https://example.com/#getUser_params" },
-        querystring: { $ref: "https://example.com/#getUser_query" },
-        response: {
-          "200": { $ref: "https://example.com/#getUser_200" },
-          "204": { $ref: "https://example.com/#getUser_204" },
-          "404": { $ref: "https://example.com/#getUser_404" },
-        },
-      },
-    },
-    async (req, reply) => {
-      const response = await options.routes.getUser(
-        {
-          params: { ...req.params },
-          query: { ...req.query },
-        },
-        (req as any).xyz
-      );
-
-      if ("headers" in response && (response as any).headers) {
-        reply.headers((response as any).headers);
-      }
-
-      reply.code(response.code);
-      if ("body" in response && (response as any).body) {
-        reply.send(response.body);
-      }
-    }
-  );
-
-  fastify.post<{
-    Body: {
-      user: User;
-    };
+    Headers: AuthenticatedRoute;
   }>(
     "/users",
     {
       schema: {
-        body: { $ref: "https://example.com/#postUser_body" },
+        querystring: { $ref: "https://example.com/#getUsers_query" },
+        headers: { $ref: "https://example.com/#getUsers_headers" },
         response: {
-          "200": { $ref: "https://example.com/#postUser_200" },
-          "404": { $ref: "https://example.com/#postUser_404" },
+          "200": { $ref: "https://example.com/#getUsers_200" },
+          "400": { $ref: "https://example.com/#getUsers_400" },
         },
       },
     },
     async (req, reply) => {
-      const response = await options.routes.postUser(
+      const response = await options.routes.getUsers(
         {
-          body: { ...req.body },
+          query: { ...req.query },
+          headers: { ...req.headers },
         },
         (req as any).xyz
       );
