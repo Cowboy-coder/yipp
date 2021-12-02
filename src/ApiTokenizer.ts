@@ -27,7 +27,7 @@ const Spec = [
   [/^\|/, '|'],
 
   // Comments
-  [/^\#.+/, null],
+  [/^#.+/, null],
   // Whitespace
   [/\s+/, null],
 ] as const;
@@ -53,7 +53,7 @@ export default class ApiTokenizer {
 
     const str = this.str.slice(this.cursor);
 
-    for (const [regExp, tokenType] of Spec as any) {
+    for (const [regExp, tokenType] of Spec) {
       const tokenValue = this.match(regExp, str);
       // No match, try next
       if (tokenValue === null) {
@@ -74,7 +74,7 @@ export default class ApiTokenizer {
   }
 
   private match(regExp: RegExp, str: string) {
-    let matched = regExp.exec(str);
+    const matched = regExp.exec(str);
     if (matched === null) {
       return null;
     }

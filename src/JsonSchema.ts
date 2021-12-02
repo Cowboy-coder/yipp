@@ -137,7 +137,7 @@ const JsonSchema = (ast: Ast): JSONSchema7[] => {
       }
       throw new Error(`Json Schema unsupported declaration`);
     }),
-    ...(apis
+    ...apis
       .map((api) => {
         return [
           ...(['params', 'query', 'body', 'headers'] as const)
@@ -157,7 +157,7 @@ const JsonSchema = (ast: Ast): JSONSchema7[] => {
           }),
         ];
       })
-      .flat() as any),
+      .flat(),
   ];
 };
 

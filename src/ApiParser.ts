@@ -370,7 +370,7 @@ export default class ApiParser {
           this.lookahead.type,
         )
       ) {
-        let value = this.lookahead.value;
+        const value = this.lookahead.value;
         if ((this.lookahead as Token)?.type === 'VARIABLE_TYPE') {
           this.eat('VARIABLE_TYPE');
           const isRequired = (this.lookahead as Token)?.type === '!';

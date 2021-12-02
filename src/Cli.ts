@@ -26,10 +26,12 @@ program
         console.log(err);
       }
       for await (const event of watcher) {
-        try {
-          generate();
-        } catch (err) {
-          console.log(err);
+        if (event.eventType === 'change') {
+          try {
+            generate();
+          } catch (err) {
+            console.log(err);
+          }
         }
       }
     } else {
