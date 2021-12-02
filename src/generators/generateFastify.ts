@@ -193,7 +193,7 @@ const generateFastify = (ast: Ast) => {
         }
       })
       .join("\n")}
-    export type Api<T = undefined> = {
+    export type Api<T = any> = {
     ${getApiDefinitions(ast)
       .map((d) => {
         return apiDefinition(d);

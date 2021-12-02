@@ -1,6 +1,6 @@
 import { spawnSync } from "child_process";
 import { randomBytes } from "crypto";
-import { writeFileSync } from "fs";
+import fs from "fs";
 import path from "path";
 import ApiParser from "../ApiParser";
 import generateFastify from "./generateFastify";
@@ -15,7 +15,8 @@ const generateToFile = (str: string) => {
     `${randomBytes(4).readUInt32LE(0).toString()}-generateFastify.ts`
   );
 
-  writeFileSync(filename, data, "utf8");
+  fs.mkdirSync(path.dirname(filename), { recursive: true });
+  fs.writeFileSync(filename, data, "utf8");
   return filename;
 };
 

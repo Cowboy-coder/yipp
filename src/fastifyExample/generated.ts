@@ -139,7 +139,7 @@ export type User = {
   age: number;
   type: "admin" | "user";
 };
-export type Api<T = undefined> = {
+export type Api<T = any> = {
   login: (
     req: {
       body: {
