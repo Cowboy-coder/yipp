@@ -1,12 +1,12 @@
-import Fastify, { FastifyError } from "fastify";
-import RestPlugin from "./generated";
-import routes from "./routes";
+import Fastify, { FastifyError } from 'fastify';
+import RestPlugin from './generated';
+import routes from './routes';
 const fastify = Fastify({
   ajv: {
     customOptions: {
       removeAdditional: true,
       useDefaults: true,
-      coerceTypes: "array",
+      coerceTypes: 'array',
       allErrors: true,
       nullable: true,
     },
@@ -21,7 +21,7 @@ export type Context = {
       id: string;
       username: string;
       age: number;
-      type: "admin" | "user";
+      type: 'admin' | 'user';
     }[];
     login: (username: string, password: string) => boolean;
   };
@@ -38,13 +38,12 @@ fastify.register(RestPlugin, {
             .map((_, ix) => ({
               id: ix.toString(),
               username: `username_${ix}`,
-              type: ix % 4 === 0 ? ("admin" as const) : ("user" as const),
+              type: ix % 4 === 0 ? ('admin' as const) : ('user' as const),
               age: ix + 1,
             }))
-            .filter((x) => x.username.indexOf(query ?? "") > -1);
+            .filter((x) => x.username.indexOf(query ?? '') > -1);
         },
-        login: (username: string, password: string) =>
-          username === "admin" && password === "password",
+        login: (username: string, password: string) => username === 'admin' && password === 'password',
       },
     };
     return context;
@@ -58,13 +57,9 @@ fastify.setErrorHandler<FastifyError>((err, _, reply) => {
       message: err.message,
       fields: validations.map((validation) => {
         let field = validation.dataPath;
-        const missingProperty = validation.params["missingProperty"];
+        const missingProperty = validation.params['missingProperty'];
         if (!field && missingProperty) {
-          field = `.${
-            Array.isArray(missingProperty)
-              ? missingProperty[0]
-              : missingProperty
-          }`;
+          field = `.${Array.isArray(missingProperty) ? missingProperty[0] : missingProperty}`;
         }
         return {
           field,

@@ -1,122 +1,122 @@
-import { FastifyPluginAsync, FastifyRequest } from "fastify";
+import { FastifyPluginAsync, FastifyRequest } from 'fastify';
 
 export const JsonSchema = [
   {
-    $id: "https://example.com/#AuthenticatedRoute",
-    type: "object",
+    $id: 'https://example.com/#AuthenticatedRoute',
+    type: 'object',
     properties: {
       authorization: {
-        type: "string",
+        type: 'string',
       },
     },
-    required: ["authorization"],
+    required: ['authorization'],
   },
   {
-    $id: "https://example.com/#Field",
-    type: "object",
+    $id: 'https://example.com/#Field',
+    type: 'object',
     properties: {
       name: {
-        type: "string",
+        type: 'string',
       },
       message: {
-        type: "string",
+        type: 'string',
       },
     },
-    required: ["name"],
+    required: ['name'],
   },
   {
-    $id: "https://example.com/#Error",
-    type: "object",
+    $id: 'https://example.com/#Error',
+    type: 'object',
     properties: {
       message: {
-        type: "string",
+        type: 'string',
       },
       fields: {
-        type: "array",
+        type: 'array',
         items: {
-          $ref: "https://example.com/#Field",
+          $ref: 'https://example.com/#Field',
         },
       },
     },
-    required: ["message", "fields"],
+    required: ['message', 'fields'],
   },
   {
-    $id: "https://example.com/#User",
-    type: "object",
+    $id: 'https://example.com/#User',
+    type: 'object',
     properties: {
       id: {
-        type: "string",
+        type: 'string',
       },
       username: {
-        type: "string",
+        type: 'string',
       },
       age: {
-        type: "number",
+        type: 'number',
       },
       type: {
         oneOf: [
           {
-            const: "admin",
+            const: 'admin',
           },
           {
-            const: "user",
+            const: 'user',
           },
         ],
       },
     },
-    required: ["id", "username", "age", "type"],
+    required: ['id', 'username', 'age', 'type'],
   },
   {
-    $id: "https://example.com/#login_body",
-    type: "object",
+    $id: 'https://example.com/#login_body',
+    type: 'object',
     properties: {
       username: {
-        type: "string",
+        type: 'string',
       },
       password: {
-        type: "string",
+        type: 'string',
       },
     },
-    required: ["username", "password"],
+    required: ['username', 'password'],
   },
   {
-    $id: "https://example.com/#login_200",
-    type: "object",
+    $id: 'https://example.com/#login_200',
+    type: 'object',
     properties: {
       token: {
-        type: "string",
+        type: 'string',
       },
     },
-    required: ["token"],
+    required: ['token'],
   },
   {
-    $id: "https://example.com/#login_400",
-    $ref: "https://example.com/#Error",
+    $id: 'https://example.com/#login_400',
+    $ref: 'https://example.com/#Error',
   },
   {
-    $id: "https://example.com/#getUsers_query",
-    type: "object",
+    $id: 'https://example.com/#getUsers_query',
+    type: 'object',
     properties: {
       q: {
-        type: "string",
+        type: 'string',
       },
     },
     required: [],
   },
   {
-    $id: "https://example.com/#getUsers_headers",
-    $ref: "https://example.com/#AuthenticatedRoute",
+    $id: 'https://example.com/#getUsers_headers',
+    $ref: 'https://example.com/#AuthenticatedRoute',
   },
   {
-    $id: "https://example.com/#getUsers_200",
-    type: "array",
+    $id: 'https://example.com/#getUsers_200',
+    type: 'array',
     items: {
-      $ref: "https://example.com/#User",
+      $ref: 'https://example.com/#User',
     },
   },
   {
-    $id: "https://example.com/#getUsers_400",
-    $ref: "https://example.com/#Error",
+    $id: 'https://example.com/#getUsers_400',
+    $ref: 'https://example.com/#Error',
   },
 ];
 
@@ -137,7 +137,7 @@ export type User = {
   id: string;
   username: string;
   age: number;
-  type: "admin" | "user";
+  type: 'admin' | 'user';
 };
 export type Api<T = any> = {
   login: (
@@ -147,7 +147,7 @@ export type Api<T = any> = {
         password: string;
       };
     },
-    context: T
+    context: T,
   ) =>
     | MaybePromise<{
         code: 200;
@@ -167,7 +167,7 @@ export type Api<T = any> = {
       };
       headers: AuthenticatedRoute;
     },
-    context: T
+    context: T,
   ) =>
     | MaybePromise<{
         code: 200;
@@ -182,9 +182,9 @@ const RestPlugin: FastifyPluginAsync<{
   routes: Api;
   setContext: (req: FastifyRequest) => any;
 }> = async (fastify, options) => {
-  fastify.decorateRequest("restplugin_context", null);
+  fastify.decorateRequest('restplugin_context', null);
 
-  fastify.addHook("preHandler", (req, _, done) => {
+  fastify.addHook('preHandler', (req, _, done) => {
     (req as any).restplugin_context = options.setContext(req);
     done();
   });
@@ -196,13 +196,13 @@ const RestPlugin: FastifyPluginAsync<{
       password: string;
     };
   }>(
-    "/login",
+    '/login',
     {
       schema: {
-        body: { $ref: "https://example.com/#login_body" },
+        body: { $ref: 'https://example.com/#login_body' },
         response: {
-          "200": { $ref: "https://example.com/#login_200" },
-          "400": { $ref: "https://example.com/#login_400" },
+          '200': { $ref: 'https://example.com/#login_200' },
+          '400': { $ref: 'https://example.com/#login_400' },
         },
       },
     },
@@ -211,18 +211,18 @@ const RestPlugin: FastifyPluginAsync<{
         {
           body: { ...req.body },
         },
-        (req as any).restplugin_context
+        (req as any).restplugin_context,
       );
 
-      if ("headers" in response && (response as any).headers) {
+      if ('headers' in response && (response as any).headers) {
         reply.headers((response as any).headers);
       }
 
       reply.code(response.code);
-      if ("body" in response && (response as any).body) {
+      if ('body' in response && (response as any).body) {
         reply.send(response.body);
       }
-    }
+    },
   );
 
   fastify.get<{
@@ -231,14 +231,14 @@ const RestPlugin: FastifyPluginAsync<{
     };
     Headers: AuthenticatedRoute;
   }>(
-    "/users",
+    '/users',
     {
       schema: {
-        querystring: { $ref: "https://example.com/#getUsers_query" },
-        headers: { $ref: "https://example.com/#getUsers_headers" },
+        querystring: { $ref: 'https://example.com/#getUsers_query' },
+        headers: { $ref: 'https://example.com/#getUsers_headers' },
         response: {
-          "200": { $ref: "https://example.com/#getUsers_200" },
-          "400": { $ref: "https://example.com/#getUsers_400" },
+          '200': { $ref: 'https://example.com/#getUsers_200' },
+          '400': { $ref: 'https://example.com/#getUsers_400' },
         },
       },
     },
@@ -248,18 +248,18 @@ const RestPlugin: FastifyPluginAsync<{
           query: { ...req.query },
           headers: { ...req.headers },
         },
-        (req as any).restplugin_context
+        (req as any).restplugin_context,
       );
 
-      if ("headers" in response && (response as any).headers) {
+      if ('headers' in response && (response as any).headers) {
         reply.headers((response as any).headers);
       }
 
       reply.code(response.code);
-      if ("body" in response && (response as any).body) {
+      if ('body' in response && (response as any).body) {
         reply.send(response.body);
       }
-    }
+    },
   );
 };
 export default RestPlugin;

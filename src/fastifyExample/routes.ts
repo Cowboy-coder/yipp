@@ -1,5 +1,5 @@
-import { Context } from ".";
-import { Api } from "./generated";
+import { Context } from '.';
+import { Api } from './generated';
 
 const routes: Api<Context> = {
   login: ({ body: { username, password } }, { db }) => {
@@ -7,7 +7,7 @@ const routes: Api<Context> = {
       return {
         code: 200,
         body: {
-          token: "secret",
+          token: 'secret',
         },
       };
     }
@@ -15,22 +15,22 @@ const routes: Api<Context> = {
     return {
       code: 400,
       body: {
-        message: "bad username and password",
+        message: 'bad username and password',
         fields: [
           {
-            name: "username",
-            message: "Bad username",
+            name: 'username',
+            message: 'Bad username',
           },
           {
-            name: "password",
-            message: "Bad password",
+            name: 'password',
+            message: 'Bad password',
           },
         ],
       },
     };
   },
   getUsers: ({ query: { q }, headers }, { db }) => {
-    if (headers.authorization === "Bearer secret") {
+    if (headers.authorization === 'Bearer secret') {
       return {
         code: 200,
         body: db.findUsers(q),
@@ -40,7 +40,7 @@ const routes: Api<Context> = {
     return {
       code: 400,
       body: {
-        message: "invalid token",
+        message: 'invalid token',
         fields: [],
       },
     };

@@ -1,19 +1,11 @@
-import { JSONSchema7, JSONSchema7Definition } from "json-schema";
-import {
-  ApiFieldDefinition,
-  ArrayItem,
-  Ast,
-  ObjectField,
-  UnionItem,
-} from "./ApiParser";
-import { getDeclarations, getApiDefinitions } from "./AstQuery";
+import { JSONSchema7, JSONSchema7Definition } from 'json-schema';
+import { ApiFieldDefinition, ArrayItem, Ast, ObjectField, UnionItem } from './ApiParser';
+import { getDeclarations, getApiDefinitions } from './AstQuery';
 
 export const schemaId = (str: string) => `https://example.com/#${str}`;
 
-const fieldSchema = (
-  field: ObjectField | UnionItem | ArrayItem
-): JSONSchema7Definition => {
-  if (field.variableType === "Object") {
+const fieldSchema = (field: ObjectField | UnionItem | ArrayItem): JSONSchema7Definition => {
+  if (field.variableType === 'Object') {
     const properties: {
       [key: string]: JSONSchema7Definition;
     } = {};
@@ -21,58 +13,56 @@ const fieldSchema = (
       properties[field.name] = fieldSchema(field);
     });
     return {
-      type: "object",
+      type: 'object',
       properties,
-      required: (field.fields ?? [])
-        .filter((f) => f.isRequired)
-        .map((f) => f.name),
+      required: (field.fields ?? []).filter((f) => f.isRequired).map((f) => f.name),
     };
   }
-  if (field.variableType === "IntLiteral") {
+  if (field.variableType === 'IntLiteral') {
     return { const: field.value };
   }
 
-  if (field.variableType === "StringLiteral") {
+  if (field.variableType === 'StringLiteral') {
     return { const: field.value };
   }
 
-  if (field.variableType === "Int") {
-    return { type: "number" };
+  if (field.variableType === 'Int') {
+    return { type: 'number' };
   }
 
-  if (field.variableType === "String") {
-    return { type: "string" };
+  if (field.variableType === 'String') {
+    return { type: 'string' };
   }
 
-  if (field.variableType === "Boolean") {
-    return { type: "boolean" };
+  if (field.variableType === 'Boolean') {
+    return { type: 'boolean' };
   }
 
-  if (field.variableType === "BooleanLiteral") {
+  if (field.variableType === 'BooleanLiteral') {
     return { const: field.value };
   }
 
-  if (field.variableType === "Float") {
-    return { const: "number" };
+  if (field.variableType === 'Float') {
+    return { const: 'number' };
   }
 
-  if (field.variableType === "FloatLiteral") {
+  if (field.variableType === 'FloatLiteral') {
     return { const: field.value };
   }
 
-  if (field.variableType === "TypeReference") {
+  if (field.variableType === 'TypeReference') {
     return { $ref: schemaId(field.value) };
   }
 
-  if (field.variableType === "Array") {
+  if (field.variableType === 'Array') {
     return {
-      type: "array",
+      type: 'array',
       items: field.items.isRequired
         ? fieldSchema(field.items)
-        : { oneOf: [{ type: "null" }, fieldSchema(field.items)] },
+        : { oneOf: [{ type: 'null' }, fieldSchema(field.items)] },
     };
   }
-  if (field.variableType === "Union") {
+  if (field.variableType === 'Union') {
     return {
       oneOf: field.unions.map((union) => {
         return fieldSchema(union);
@@ -82,17 +72,14 @@ const fieldSchema = (
   throw new Error(`Unsupported field`);
 };
 
-const apiFieldDefinitionSchema = (
-  $id: string,
-  d: ApiFieldDefinition | undefined
-): JSONSchema7 => {
+const apiFieldDefinitionSchema = ($id: string, d: ApiFieldDefinition | undefined): JSONSchema7 => {
   if (d === undefined) {
     return {
       $id,
-      type: "null",
+      type: 'null',
     };
   }
-  if (d.variableType === "Object") {
+  if (d.variableType === 'Object') {
     const properties: {
       [key: string]: JSONSchema7Definition;
     } = {};
@@ -101,25 +88,23 @@ const apiFieldDefinitionSchema = (
     });
     return {
       $id,
-      type: "object",
+      type: 'object',
       properties,
       required: (d.fields ?? []).filter((f) => f.isRequired).map((f) => f.name),
     } as JSONSchema7;
-  } else if (d.variableType === "Array") {
+  } else if (d.variableType === 'Array') {
     return {
       $id,
-      type: "array",
-      items: d.items.isRequired
-        ? fieldSchema(d.items)
-        : { oneOf: [{ type: "null" }, fieldSchema(d.items)] },
+      type: 'array',
+      items: d.items.isRequired ? fieldSchema(d.items) : { oneOf: [{ type: 'null' }, fieldSchema(d.items)] },
     };
-  } else if (d.variableType === "TypeReference") {
+  } else if (d.variableType === 'TypeReference') {
     return {
       $id,
       $ref: schemaId(d.value),
     } as JSONSchema7;
   }
-  throw new Error("unsupported variableType in apiFieldDefinitionSchema");
+  throw new Error('unsupported variableType in apiFieldDefinitionSchema');
 };
 
 const JsonSchema = (ast: Ast): JSONSchema7[] => {
@@ -129,7 +114,7 @@ const JsonSchema = (ast: Ast): JSONSchema7[] => {
   return [
     ...declarations.map((d) => {
       const $id = schemaId(d.name);
-      if (d.variableType === "Object") {
+      if (d.variableType === 'Object') {
         const properties: {
           [key: string]: JSONSchema7Definition;
         } = {};
@@ -138,11 +123,11 @@ const JsonSchema = (ast: Ast): JSONSchema7[] => {
         });
         return {
           $id,
-          type: "object",
+          type: 'object',
           properties,
           required: d.fields.filter((f) => f.isRequired).map((f) => f.name),
         } as JSONSchema7;
-      } else if (d.variableType === "Union") {
+      } else if (d.variableType === 'Union') {
         return {
           $id,
           oneOf: d.unions.map((union) => {
@@ -155,7 +140,7 @@ const JsonSchema = (ast: Ast): JSONSchema7[] => {
     ...(apis
       .map((api) => {
         return [
-          ...(["params", "query", "body", "headers"] as const)
+          ...(['params', 'query', 'body', 'headers'] as const)
             .map((key) => {
               const current = api[key];
               if (!current) {

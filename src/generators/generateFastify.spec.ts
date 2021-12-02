@@ -1,27 +1,23 @@
-import { spawnSync } from "child_process";
-import { randomBytes } from "crypto";
-import fs from "fs";
-import path from "path";
-import ApiParser from "../ApiParser";
-import generateFastify from "./generateFastify";
+import { spawnSync } from 'child_process';
+import { randomBytes } from 'crypto';
+import fs from 'fs';
+import path from 'path';
+import ApiParser from '../ApiParser';
+import generateFastify from './generateFastify';
 
 const generateToFile = (str: string) => {
   const parser = new ApiParser();
   const data = generateFastify(parser.parse(str));
 
-  const filename = path.join(
-    __dirname,
-    "../build",
-    `${randomBytes(4).readUInt32LE(0).toString()}-generateFastify.ts`
-  );
+  const filename = path.join(__dirname, '../build', `${randomBytes(4).readUInt32LE(0).toString()}-generateFastify.ts`);
 
   fs.mkdirSync(path.dirname(filename), { recursive: true });
-  fs.writeFileSync(filename, data, "utf8");
+  fs.writeFileSync(filename, data, 'utf8');
   return filename;
 };
 
 describe(generateFastify, () => {
-  it("should not fail with any typescript errors", () => {
+  it('should not fail with any typescript errors', () => {
     const filename = generateToFile(`
       type AuthorizationHeader {
         authorization: String!
@@ -106,14 +102,11 @@ describe(generateFastify, () => {
     `);
 
     // TODO: Figure out a better and faster(!) way to validate the output.
-    const result = spawnSync(`../node_modules/.bin/tsc`, [
-      "--noEmit",
-      filename,
-    ]);
+    const result = spawnSync(`../node_modules/.bin/tsc`, ['--noEmit', filename]);
 
     expect(result.error).toEqual(undefined);
-    expect(result.stderr.toString()).toEqual("");
-    expect(result.stdout.toString()).toEqual("");
+    expect(result.stderr.toString()).toEqual('');
+    expect(result.stdout.toString()).toEqual('');
     expect(result.status).toEqual(0);
   });
 });

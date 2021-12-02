@@ -6,11 +6,17 @@
   "author": "Fredrik Lindin <fredriklindin@gmail.com>",
   "scripts": {
     "test": "jest",
-    "build": "tsc"
+    "build": "tsc",
+    "prettier": "prettier --write src/**"
   },
   "files": [
     "lib/**/*"
   ],
+  "prettier": {
+    "printWidth": 120,
+    "trailingComma": "all",
+    "singleQuote": true
+  },
   "dependencies": {
     "@types/json-schema": "^7.0.9",
     "commander": "^8.3.0",

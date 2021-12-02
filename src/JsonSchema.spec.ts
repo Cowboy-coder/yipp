@@ -1,9 +1,9 @@
-import { JSONSchema7 } from "json-schema";
-import ApiParser from "./ApiParser";
-import JsonSchema from "./JsonSchema";
+import { JSONSchema7 } from 'json-schema';
+import ApiParser from './ApiParser';
+import JsonSchema from './JsonSchema';
 
 describe(JsonSchema, () => {
-  it("Different types", () => {
+  it('Different types', () => {
     const parser = new ApiParser();
     const program = `
     type Foo {
@@ -21,26 +21,26 @@ describe(JsonSchema, () => {
     `;
     expect(JsonSchema(parser.parse(program))).toEqual<JSONSchema7[]>([
       {
-        $id: "https://example.com/#Foo",
-        type: "object",
+        $id: 'https://example.com/#Foo',
+        type: 'object',
         properties: {
-          a: { const: "foo" },
-          b: { type: "string" },
+          a: { const: 'foo' },
+          b: { type: 'string' },
           c: { const: -42 },
           d: { const: 42 },
-          e: { type: "number" },
-          f: { type: "boolean" },
+          e: { type: 'number' },
+          f: { type: 'boolean' },
           g: { const: true },
           h: { const: false },
           i: { const: 32.0 },
           j: { const: -12.042 },
         },
-        required: ["a", "c", "d"],
+        required: ['a', 'c', 'd'],
       },
     ]);
   });
 
-  it("Nested type", () => {
+  it('Nested type', () => {
     const parser = new ApiParser();
     const program = `
     type Foo {
@@ -54,29 +54,29 @@ describe(JsonSchema, () => {
 
     expect(JsonSchema(parser.parse(program))).toEqual<JSONSchema7[]>([
       {
-        $id: "https://example.com/#Foo",
-        type: "object",
+        $id: 'https://example.com/#Foo',
+        type: 'object',
         properties: {
           a: {
-            type: "object",
+            type: 'object',
             properties: {
               b: {
-                type: "object",
+                type: 'object',
                 properties: {
-                  c: { type: "string" },
+                  c: { type: 'string' },
                 },
-                required: ["c"],
+                required: ['c'],
               },
             },
             required: [],
           },
         },
-        required: ["a"],
+        required: ['a'],
       },
     ]);
   });
 
-  it("Arrays", () => {
+  it('Arrays', () => {
     const parser = new ApiParser();
     const program = `
     type Foo {
@@ -89,40 +89,40 @@ describe(JsonSchema, () => {
 
     expect(JsonSchema(parser.parse(program))).toEqual<JSONSchema7[]>([
       {
-        $id: "https://example.com/#Foo",
-        type: "object",
+        $id: 'https://example.com/#Foo',
+        type: 'object',
         properties: {
           a: {
-            type: "array",
+            type: 'array',
             items: {
-              oneOf: [{ type: "null" }, { $ref: "https://example.com/#Test" }],
+              oneOf: [{ type: 'null' }, { $ref: 'https://example.com/#Test' }],
             },
           },
           b: {
-            type: "array",
+            type: 'array',
             items: {
-              $ref: "https://example.com/#Test",
+              $ref: 'https://example.com/#Test',
             },
           },
           c: {
-            type: "array",
+            type: 'array',
             items: {
-              $ref: "https://example.com/#Test",
+              $ref: 'https://example.com/#Test',
             },
           },
           d: {
-            type: "array",
+            type: 'array',
             items: {
-              oneOf: [{ type: "null" }, { $ref: "https://example.com/#Test" }],
+              oneOf: [{ type: 'null' }, { $ref: 'https://example.com/#Test' }],
             },
           },
         },
-        required: ["a", "c"],
+        required: ['a', 'c'],
       },
     ]);
   });
 
-  it("Union type", () => {
+  it('Union type', () => {
     const parser = new ApiParser();
     const program = `
     type Foo
@@ -139,14 +139,14 @@ describe(JsonSchema, () => {
     `;
     expect(JsonSchema(parser.parse(program))).toEqual<JSONSchema7[]>([
       {
-        $id: "https://example.com/#Foo",
+        $id: 'https://example.com/#Foo',
         oneOf: [
-          { const: "foo" },
-          { type: "string" },
+          { const: 'foo' },
+          { type: 'string' },
           { const: -42 },
           { const: 42 },
-          { type: "number" },
-          { type: "boolean" },
+          { type: 'number' },
+          { type: 'boolean' },
           { const: true },
           { const: false },
           { const: 32.0 },
@@ -156,7 +156,7 @@ describe(JsonSchema, () => {
     ]);
   });
 
-  it("Complex Union type", () => {
+  it('Complex Union type', () => {
     const parser = new ApiParser();
     const program = `
     type Error
@@ -167,26 +167,26 @@ describe(JsonSchema, () => {
     `;
     expect(JsonSchema(parser.parse(program))).toEqual<JSONSchema7[]>([
       {
-        $id: "https://example.com/#Error",
+        $id: 'https://example.com/#Error',
         oneOf: [
           {
-            type: "object",
-            properties: { message: { type: "string" } },
-            required: ["message"],
+            type: 'object',
+            properties: { message: { type: 'string' } },
+            required: ['message'],
           },
           {
-            type: "object",
-            properties: { code: { const: 404 }, message: { const: "testing" } },
+            type: 'object',
+            properties: { code: { const: 404 }, message: { const: 'testing' } },
             required: [],
           },
-          { const: "Foo" },
+          { const: 'Foo' },
           { const: 42 },
         ],
       },
     ]);
   });
 
-  it("Api definition with type reference", () => {
+  it('Api definition with type reference', () => {
     const parser = new ApiParser();
     const program = `
     type User {
@@ -214,45 +214,45 @@ describe(JsonSchema, () => {
     `;
     expect(JsonSchema(parser.parse(program))).toEqual<JSONSchema7[]>([
       {
-        $id: "https://example.com/#User",
-        type: "object",
-        properties: { id: { type: "string" } },
-        required: ["id"],
+        $id: 'https://example.com/#User',
+        type: 'object',
+        properties: { id: { type: 'string' } },
+        required: ['id'],
       },
       {
-        $id: "https://example.com/#Headers",
-        type: "object",
-        properties: { "x-header": { const: "yo" } },
-        required: ["x-header"],
+        $id: 'https://example.com/#Headers',
+        type: 'object',
+        properties: { 'x-header': { const: 'yo' } },
+        required: ['x-header'],
       },
       {
-        $id: "https://example.com/#getUser_params",
-        type: "object",
-        properties: { id: { type: "string" } },
-        required: ["id"],
+        $id: 'https://example.com/#getUser_params',
+        type: 'object',
+        properties: { id: { type: 'string' } },
+        required: ['id'],
       },
       {
-        $id: "https://example.com/#getUser_headers",
-        $ref: "https://example.com/#Headers",
+        $id: 'https://example.com/#getUser_headers',
+        $ref: 'https://example.com/#Headers',
       },
       {
-        $id: "https://example.com/#getUser_200",
-        type: "object",
+        $id: 'https://example.com/#getUser_200',
+        type: 'object',
         properties: {
           user: {
-            $ref: "https://example.com/#User",
+            $ref: 'https://example.com/#User',
           },
         },
-        required: ["user"],
+        required: ['user'],
       },
       {
-        $id: "https://example.com/#getUser_400",
-        $ref: "https://example.com/#User",
+        $id: 'https://example.com/#getUser_400',
+        $ref: 'https://example.com/#User',
       },
     ]);
   });
 
-  it("Complex Api definition with type reference, unions etc", () => {
+  it('Complex Api definition with type reference, unions etc', () => {
     const parser = new ApiParser();
     const program = `
     type UserType
@@ -293,71 +293,68 @@ describe(JsonSchema, () => {
     `;
     expect(JsonSchema(parser.parse(program))).toEqual<JSONSchema7[]>([
       {
-        $id: "https://example.com/#UserType",
-        oneOf: [{ const: "Admin" }, { const: "User" }],
+        $id: 'https://example.com/#UserType',
+        oneOf: [{ const: 'Admin' }, { const: 'User' }],
       },
       {
-        $id: "https://example.com/#User",
-        type: "object",
+        $id: 'https://example.com/#User',
+        type: 'object',
         properties: {
           id: {
-            type: "string",
+            type: 'string',
           },
           userType: {
-            type: "array",
+            type: 'array',
             items: {
-              oneOf: [
-                { type: "null" },
-                { $ref: "https://example.com/#UserType" },
-              ],
+              oneOf: [{ type: 'null' }, { $ref: 'https://example.com/#UserType' }],
             },
           },
         },
-        required: ["id"],
+        required: ['id'],
       },
       {
-        $id: "https://example.com/#getUser_params",
-        type: "object",
-        properties: { id: { type: "string" } },
-        required: ["id"],
+        $id: 'https://example.com/#getUser_params',
+        type: 'object',
+        properties: { id: { type: 'string' } },
+        required: ['id'],
       },
       {
-        $id: "https://example.com/#getUser_headers",
-        type: "object",
-        properties: { x: { type: "string" } },
-        required: ["x"],
+        $id: 'https://example.com/#getUser_headers',
+        type: 'object',
+        properties: { x: { type: 'string' } },
+        required: ['x'],
       },
       {
-        $id: "https://example.com/#getUser_200",
-        type: "object",
+        $id: 'https://example.com/#getUser_200',
+        type: 'object',
         properties: {
           user: {
-            $ref: "https://example.com/#User",
+            $ref: 'https://example.com/#User',
           },
         },
-        required: ["user"],
+        required: ['user'],
       },
       {
-        $id: "https://example.com/#getUser_400",
-        $ref: "https://example.com/#User",
+        $id: 'https://example.com/#getUser_400',
+        $ref: 'https://example.com/#User',
       },
       {
-        $id: "https://example.com/#getUser_404",
-        type: "object",
+        $id: 'https://example.com/#getUser_404',
+        type: 'object',
         properties: {
           userType: {
-            $ref: "https://example.com/#UserType",
+            $ref: 'https://example.com/#UserType',
           },
           user: {
-            $ref: "https://example.com/#User",
+            $ref: 'https://example.com/#User',
           },
           nested: {
-            type: "object",
+            type: 'object',
             properties: {
-              a: { type: "string" },
-              b: { type: "number" },
+              a: { type: 'string' },
+              b: { type: 'number' },
             },
-            required: ["a"],
+            required: ['a'],
           },
         },
         required: [],

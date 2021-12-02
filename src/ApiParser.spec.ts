@@ -1,7 +1,7 @@
-import ApiParser, { Ast } from "./ApiParser";
+import ApiParser, { Ast } from './ApiParser';
 
 describe(ApiParser, () => {
-  it("ApiDefinition with different types", () => {
+  it('ApiDefinition with different types', () => {
     const parser = new ApiParser();
     const program = `getUser: GET /users/:id {
       body: {
@@ -24,81 +24,81 @@ describe(ApiParser, () => {
       } # and even more
     }`;
     expect(parser.parse(program)).toEqual<Ast>({
-      type: "Document",
+      type: 'Document',
       definitions: [
         {
-          type: "ApiDefinition",
-          name: "getUser",
-          method: "GET",
-          path: "/users/:id",
+          type: 'ApiDefinition',
+          name: 'getUser',
+          method: 'GET',
+          path: '/users/:id',
           body: {
-            type: "ApiFieldDefinition",
-            variableType: "Object",
+            type: 'ApiFieldDefinition',
+            variableType: 'Object',
             fields: [
               {
-                type: "ObjectField",
-                name: "a",
-                variableType: "StringLiteral",
-                value: "foo",
+                type: 'ObjectField',
+                name: 'a',
+                variableType: 'StringLiteral',
+                value: 'foo',
                 isRequired: true,
               },
               {
-                type: "ObjectField",
-                name: "b",
-                variableType: "String",
+                type: 'ObjectField',
+                name: 'b',
+                variableType: 'String',
                 isRequired: false,
               },
               {
-                type: "ObjectField",
-                name: "c",
-                variableType: "IntLiteral",
+                type: 'ObjectField',
+                name: 'c',
+                variableType: 'IntLiteral',
                 value: -42,
                 isRequired: true,
               },
               {
-                type: "ObjectField",
-                name: "d",
-                variableType: "IntLiteral",
+                type: 'ObjectField',
+                name: 'd',
+                variableType: 'IntLiteral',
                 value: 42,
                 isRequired: true,
               },
               {
-                type: "ObjectField",
-                name: "e",
-                variableType: "Int",
+                type: 'ObjectField',
+                name: 'e',
+                variableType: 'Int',
                 isRequired: false,
               },
               {
-                type: "ObjectField",
-                name: "f",
-                variableType: "Boolean",
+                type: 'ObjectField',
+                name: 'f',
+                variableType: 'Boolean',
                 isRequired: false,
               },
               {
-                type: "ObjectField",
-                name: "g",
-                variableType: "BooleanLiteral",
+                type: 'ObjectField',
+                name: 'g',
+                variableType: 'BooleanLiteral',
                 value: true,
                 isRequired: false,
               },
               {
-                type: "ObjectField",
-                name: "h",
-                variableType: "BooleanLiteral",
+                type: 'ObjectField',
+                name: 'h',
+                variableType: 'BooleanLiteral',
                 value: false,
                 isRequired: false,
               },
               {
-                type: "ObjectField",
-                name: "i",
-                variableType: "FloatLiteral",
+                type: 'ObjectField',
+                name: 'i',
+                variableType: 'FloatLiteral',
                 value: 32.0,
                 isRequired: false,
               },
               {
-                type: "ObjectField",
-                name: "j",
-                variableType: "FloatLiteral",
+                type: 'ObjectField',
+                name: 'j',
+                variableType: 'FloatLiteral',
                 value: -12.042,
                 isRequired: false,
               },
@@ -106,16 +106,16 @@ describe(ApiParser, () => {
           },
           responses: [
             {
-              type: "ApiResponseDefinition",
+              type: 'ApiResponseDefinition',
               status: 200,
               body: {
-                type: "ApiFieldDefinition",
-                variableType: "Object",
+                type: 'ApiFieldDefinition',
+                variableType: 'Object',
                 fields: [
                   {
-                    type: "ObjectField",
-                    name: "id",
-                    variableType: "String",
+                    type: 'ObjectField',
+                    name: 'id',
+                    variableType: 'String',
                     isRequired: true,
                   },
                 ],
@@ -127,7 +127,7 @@ describe(ApiParser, () => {
     });
   });
 
-  it("ApiDefinition with no params", () => {
+  it('ApiDefinition with no params', () => {
     const parser = new ApiParser();
     const program = `createUser: POST /users {
       200: {
@@ -137,25 +137,25 @@ describe(ApiParser, () => {
       }
     }`;
     expect(parser.parse(program)).toEqual<Ast>({
-      type: "Document",
+      type: 'Document',
       definitions: [
         {
-          type: "ApiDefinition",
-          name: "createUser",
-          method: "POST",
-          path: "/users",
+          type: 'ApiDefinition',
+          name: 'createUser',
+          method: 'POST',
+          path: '/users',
           responses: [
             {
-              type: "ApiResponseDefinition",
+              type: 'ApiResponseDefinition',
               status: 200,
               body: {
-                type: "ApiFieldDefinition",
-                variableType: "Object",
+                type: 'ApiFieldDefinition',
+                variableType: 'Object',
                 fields: [
                   {
-                    type: "ObjectField",
-                    name: "id",
-                    variableType: "String",
+                    type: 'ObjectField',
+                    name: 'id',
+                    variableType: 'String',
                     isRequired: true,
                   },
                 ],
@@ -167,7 +167,7 @@ describe(ApiParser, () => {
     });
   });
 
-  it("Full Api definition", () => {
+  it('Full Api definition', () => {
     const parser = new ApiParser();
     const program = `
     type Foobar {
@@ -208,29 +208,29 @@ describe(ApiParser, () => {
       }
     }`;
     expect(parser.parse(program)).toEqual<Ast>({
-      type: "Document",
+      type: 'Document',
       definitions: [
         {
-          type: "TypeDeclaration",
-          variableType: "Object",
-          name: "Foobar",
+          type: 'TypeDeclaration',
+          variableType: 'Object',
+          name: 'Foobar',
           fields: [
             {
-              type: "ObjectField",
-              name: "id",
-              variableType: "String",
+              type: 'ObjectField',
+              name: 'id',
+              variableType: 'String',
               isRequired: false,
             },
             {
-              type: "ObjectField",
-              name: "nested",
-              variableType: "Object",
+              type: 'ObjectField',
+              name: 'nested',
+              variableType: 'Object',
               isRequired: false,
               fields: [
                 {
-                  type: "ObjectField",
-                  name: "name",
-                  variableType: "String",
+                  type: 'ObjectField',
+                  name: 'name',
+                  variableType: 'String',
                   isRequired: false,
                 },
               ],
@@ -238,134 +238,134 @@ describe(ApiParser, () => {
           ],
         },
         {
-          type: "ApiDefinition",
-          name: "updateUser",
-          method: "PUT",
-          path: "/users/:id",
+          type: 'ApiDefinition',
+          name: 'updateUser',
+          method: 'PUT',
+          path: '/users/:id',
           params: {
-            type: "ApiFieldDefinition",
-            variableType: "Object",
+            type: 'ApiFieldDefinition',
+            variableType: 'Object',
             fields: [
               {
-                type: "ObjectField",
-                name: "id",
-                variableType: "String",
+                type: 'ObjectField',
+                name: 'id',
+                variableType: 'String',
                 isRequired: true,
               },
               {
-                type: "ObjectField",
-                name: "name",
-                variableType: "String",
+                type: 'ObjectField',
+                name: 'name',
+                variableType: 'String',
                 isRequired: false,
               },
               {
-                type: "ObjectField",
-                name: "Boolean",
-                variableType: "Boolean",
+                type: 'ObjectField',
+                name: 'Boolean',
+                variableType: 'Boolean',
                 isRequired: false,
               },
               {
-                type: "ObjectField",
-                name: "age",
-                variableType: "Int",
+                type: 'ObjectField',
+                name: 'age',
+                variableType: 'Int',
                 isRequired: true,
               },
             ],
           },
           query: {
-            type: "ApiFieldDefinition",
-            variableType: "Object",
+            type: 'ApiFieldDefinition',
+            variableType: 'Object',
             fields: [
               {
-                type: "ObjectField",
-                name: "foo",
-                variableType: "String",
+                type: 'ObjectField',
+                name: 'foo',
+                variableType: 'String',
                 isRequired: true,
               },
             ],
           },
           body: {
-            type: "ApiFieldDefinition",
-            variableType: "Object",
+            type: 'ApiFieldDefinition',
+            variableType: 'Object',
             fields: [
               {
-                type: "ObjectField",
-                name: "id",
-                variableType: "String",
+                type: 'ObjectField',
+                name: 'id',
+                variableType: 'String',
                 isRequired: false,
               },
               {
-                type: "ObjectField",
-                name: "age",
-                variableType: "Int",
+                type: 'ObjectField',
+                name: 'age',
+                variableType: 'Int',
                 isRequired: true,
               },
               {
-                type: "ObjectField",
-                name: "nested",
-                variableType: "Object",
+                type: 'ObjectField',
+                name: 'nested',
+                variableType: 'Object',
                 fields: [
                   {
-                    type: "ObjectField",
-                    name: "id",
-                    variableType: "String",
+                    type: 'ObjectField',
+                    name: 'id',
+                    variableType: 'String',
                     isRequired: true,
                   },
                   {
-                    type: "ObjectField",
-                    name: "foo",
-                    variableType: "String",
+                    type: 'ObjectField',
+                    name: 'foo',
+                    variableType: 'String',
                     isRequired: true,
                   },
                 ],
                 isRequired: true,
               },
               {
-                type: "ObjectField",
-                name: "nested2",
-                variableType: "TypeReference",
-                value: "Nested2",
+                type: 'ObjectField',
+                name: 'nested2',
+                variableType: 'TypeReference',
+                value: 'Nested2',
                 isRequired: true,
               },
             ],
           },
           headers: {
-            type: "ApiFieldDefinition",
-            variableType: "Object",
+            type: 'ApiFieldDefinition',
+            variableType: 'Object',
             fields: [
               {
-                type: "ObjectField",
-                name: "authorization",
-                variableType: "String",
+                type: 'ObjectField',
+                name: 'authorization',
+                variableType: 'String',
                 isRequired: true,
               },
             ],
           },
           responses: [
             {
-              type: "ApiResponseDefinition",
+              type: 'ApiResponseDefinition',
               status: 200,
               body: {
-                type: "ApiFieldDefinition",
-                variableType: "Object",
+                type: 'ApiFieldDefinition',
+                variableType: 'Object',
                 fields: [
                   {
-                    type: "ObjectField",
-                    name: "id",
-                    variableType: "String",
+                    type: 'ObjectField',
+                    name: 'id',
+                    variableType: 'String',
                     isRequired: true,
                   },
                 ],
               },
               headers: {
-                type: "ApiFieldDefinition",
-                variableType: "Object",
+                type: 'ApiFieldDefinition',
+                variableType: 'Object',
                 fields: [
                   {
-                    type: "ObjectField",
-                    name: "content-type",
-                    variableType: "StringLiteral",
-                    value: "application/json",
+                    type: 'ObjectField',
+                    name: 'content-type',
+                    variableType: 'StringLiteral',
+                    value: 'application/json',
                     isRequired: false,
                   },
                 ],
@@ -377,7 +377,7 @@ describe(ApiParser, () => {
     });
   });
 
-  it("Api Definition with Types and Type references", () => {
+  it('Api Definition with Types and Type references', () => {
     const parser = new ApiParser();
     const program = `
     type User {
@@ -399,64 +399,64 @@ describe(ApiParser, () => {
       }
     }`;
     expect(parser.parse(program)).toEqual<Ast>({
-      type: "Document",
+      type: 'Document',
       definitions: [
         {
-          type: "TypeDeclaration",
-          name: "User",
-          variableType: "Object",
+          type: 'TypeDeclaration',
+          name: 'User',
+          variableType: 'Object',
           fields: [
             {
-              type: "ObjectField",
-              name: "id",
-              variableType: "String",
+              type: 'ObjectField',
+              name: 'id',
+              variableType: 'String',
               isRequired: true,
             },
           ],
         },
         {
-          type: "ApiDefinition",
-          name: "deleteUser",
-          method: "DELETE",
-          path: "/users/:id",
+          type: 'ApiDefinition',
+          name: 'deleteUser',
+          method: 'DELETE',
+          path: '/users/:id',
           params: {
-            type: "ApiFieldDefinition",
-            variableType: "Object",
+            type: 'ApiFieldDefinition',
+            variableType: 'Object',
             fields: [
               {
-                type: "ObjectField",
-                name: "id",
-                variableType: "String",
+                type: 'ObjectField',
+                name: 'id',
+                variableType: 'String',
                 isRequired: true,
               },
             ],
           },
           query: {
-            type: "ApiFieldDefinition",
-            variableType: "TypeReference",
-            value: "UserFilterQuery",
+            type: 'ApiFieldDefinition',
+            variableType: 'TypeReference',
+            value: 'UserFilterQuery',
           },
           responses: [
             {
-              type: "ApiResponseDefinition",
+              type: 'ApiResponseDefinition',
               status: 200,
               body: {
-                type: "ApiFieldDefinition",
-                variableType: "TypeReference",
-                value: "User",
+                type: 'ApiFieldDefinition',
+                variableType: 'TypeReference',
+                value: 'User',
               },
             },
             {
-              type: "ApiResponseDefinition",
+              type: 'ApiResponseDefinition',
               status: 404,
               body: {
-                type: "ApiFieldDefinition",
-                variableType: "Object",
+                type: 'ApiFieldDefinition',
+                variableType: 'Object',
                 fields: [
                   {
-                    type: "ObjectField",
-                    name: "error",
-                    variableType: "String",
+                    type: 'ObjectField',
+                    name: 'error',
+                    variableType: 'String',
                     isRequired: true,
                   },
                 ],
@@ -468,7 +468,7 @@ describe(ApiParser, () => {
     });
   });
 
-  it("Api Definition with arrays", () => {
+  it('Api Definition with arrays', () => {
     const parser = new ApiParser();
     const program = `
     randomFunc: HEAD /users/:ids {
@@ -485,24 +485,24 @@ describe(ApiParser, () => {
       }
     }`;
     expect(parser.parse(program)).toEqual<Ast>({
-      type: "Document",
+      type: 'Document',
       definitions: [
         {
-          type: "ApiDefinition",
-          name: "randomFunc",
-          method: "HEAD",
-          path: "/users/:ids",
+          type: 'ApiDefinition',
+          name: 'randomFunc',
+          method: 'HEAD',
+          path: '/users/:ids',
           params: {
-            type: "ApiFieldDefinition",
-            variableType: "Object",
+            type: 'ApiFieldDefinition',
+            variableType: 'Object',
             fields: [
               {
-                type: "ObjectField",
-                name: "ids",
-                variableType: "Array",
+                type: 'ObjectField',
+                name: 'ids',
+                variableType: 'Array',
                 isRequired: true,
                 items: {
-                  variableType: "String",
+                  variableType: 'String',
                   isRequired: true,
                 },
               },
@@ -510,19 +510,19 @@ describe(ApiParser, () => {
           },
           responses: [
             {
-              type: "ApiResponseDefinition",
+              type: 'ApiResponseDefinition',
               status: 200,
               body: {
-                type: "ApiFieldDefinition",
-                variableType: "Object",
+                type: 'ApiFieldDefinition',
+                variableType: 'Object',
                 fields: [
                   {
-                    type: "ObjectField",
-                    name: "id",
+                    type: 'ObjectField',
+                    name: 'id',
                     isRequired: false,
-                    variableType: "Array",
+                    variableType: 'Array',
                     items: {
-                      variableType: "String",
+                      variableType: 'String',
                       isRequired: false,
                     },
                   },
@@ -530,14 +530,14 @@ describe(ApiParser, () => {
               },
             },
             {
-              type: "ApiResponseDefinition",
+              type: 'ApiResponseDefinition',
               status: 404,
               body: {
-                type: "ApiFieldDefinition",
-                variableType: "Array",
+                type: 'ApiFieldDefinition',
+                variableType: 'Array',
                 items: {
-                  variableType: "TypeReference",
-                  value: "Error",
+                  variableType: 'TypeReference',
+                  value: 'Error',
                   isRequired: true,
                 },
               },
@@ -548,7 +548,7 @@ describe(ApiParser, () => {
     });
   });
 
-  it("ApiDefinition with unions", () => {
+  it('ApiDefinition with unions', () => {
     const parser = new ApiParser();
     const program = `
     type UserType
@@ -580,156 +580,156 @@ describe(ApiParser, () => {
       }
     }`;
     expect(parser.parse(program)).toEqual<Ast>({
-      type: "Document",
+      type: 'Document',
       definitions: [
         {
-          type: "TypeDeclaration",
-          variableType: "Union",
-          name: "UserType",
+          type: 'TypeDeclaration',
+          variableType: 'Union',
+          name: 'UserType',
           unions: [
             {
-              type: "UnionItem",
-              variableType: "Object",
+              type: 'UnionItem',
+              variableType: 'Object',
               fields: [
                 {
-                  type: "ObjectField",
-                  name: "q",
-                  variableType: "String",
+                  type: 'ObjectField',
+                  name: 'q',
+                  variableType: 'String',
                   isRequired: false,
                 },
               ],
             },
             {
-              type: "UnionItem",
-              variableType: "StringLiteral",
-              value: "admin",
+              type: 'UnionItem',
+              variableType: 'StringLiteral',
+              value: 'admin',
             },
             {
-              type: "UnionItem",
-              variableType: "StringLiteral",
-              value: "user",
+              type: 'UnionItem',
+              variableType: 'StringLiteral',
+              value: 'user',
             },
             {
-              type: "UnionItem",
-              variableType: "StringLiteral",
-              value: "thug",
+              type: 'UnionItem',
+              variableType: 'StringLiteral',
+              value: 'thug',
             },
             {
-              type: "UnionItem",
-              variableType: "IntLiteral",
+              type: 'UnionItem',
+              variableType: 'IntLiteral',
               value: 49,
             },
             {
-              type: "UnionItem",
+              type: 'UnionItem',
               value: -49,
-              variableType: "IntLiteral",
+              variableType: 'IntLiteral',
             },
             {
-              type: "UnionItem",
+              type: 'UnionItem',
               value: 12.12,
-              variableType: "FloatLiteral",
+              variableType: 'FloatLiteral',
             },
             {
-              type: "UnionItem",
+              type: 'UnionItem',
               value: -32.02,
-              variableType: "FloatLiteral",
+              variableType: 'FloatLiteral',
             },
             {
-              type: "UnionItem",
+              type: 'UnionItem',
               value: true,
-              variableType: "BooleanLiteral",
+              variableType: 'BooleanLiteral',
             },
             {
-              type: "UnionItem",
+              type: 'UnionItem',
               value: false,
-              variableType: "BooleanLiteral",
+              variableType: 'BooleanLiteral',
             },
             {
-              type: "UnionItem",
-              variableType: "String",
+              type: 'UnionItem',
+              variableType: 'String',
             },
             {
-              type: "UnionItem",
-              variableType: "Int",
+              type: 'UnionItem',
+              variableType: 'Int',
             },
             {
-              type: "UnionItem",
-              variableType: "TypeReference",
-              value: "SomeType",
+              type: 'UnionItem',
+              variableType: 'TypeReference',
+              value: 'SomeType',
             },
           ],
         },
         {
-          type: "ApiDefinition",
-          name: "createUser",
-          method: "POST",
-          path: "/users",
+          type: 'ApiDefinition',
+          name: 'createUser',
+          method: 'POST',
+          path: '/users',
           body: {
-            type: "ApiFieldDefinition",
-            variableType: "Object",
+            type: 'ApiFieldDefinition',
+            variableType: 'Object',
             fields: [
               {
-                type: "ObjectField",
-                name: "username",
-                variableType: "String",
+                type: 'ObjectField',
+                name: 'username',
+                variableType: 'String',
                 isRequired: true,
               },
               {
-                type: "ObjectField",
-                name: "userType",
-                variableType: "TypeReference",
-                value: "UserType",
+                type: 'ObjectField',
+                name: 'userType',
+                variableType: 'TypeReference',
+                value: 'UserType',
                 isRequired: true,
               },
             ],
           },
           responses: [
             {
-              type: "ApiResponseDefinition",
+              type: 'ApiResponseDefinition',
               status: 200,
               body: {
-                type: "ApiFieldDefinition",
-                variableType: "Object",
+                type: 'ApiFieldDefinition',
+                variableType: 'Object',
                 fields: [
                   {
-                    type: "ObjectField",
-                    name: "id",
-                    variableType: "String",
+                    type: 'ObjectField',
+                    name: 'id',
+                    variableType: 'String',
                     isRequired: true,
                   },
                   {
-                    type: "ObjectField",
-                    name: "test",
-                    variableType: "Union",
+                    type: 'ObjectField',
+                    name: 'test',
+                    variableType: 'Union',
                     unions: [
                       {
-                        type: "UnionItem",
-                        variableType: "StringLiteral",
-                        value: "foo",
+                        type: 'UnionItem',
+                        variableType: 'StringLiteral',
+                        value: 'foo',
                       },
                       {
-                        type: "UnionItem",
-                        variableType: "StringLiteral",
-                        value: "bar",
+                        type: 'UnionItem',
+                        variableType: 'StringLiteral',
+                        value: 'bar',
                       },
                       {
-                        type: "UnionItem",
-                        variableType: "StringLiteral",
-                        value: "baz",
+                        type: 'UnionItem',
+                        variableType: 'StringLiteral',
+                        value: 'baz',
                       },
                       {
-                        type: "UnionItem",
-                        variableType: "TypeReference",
-                        value: "SomeType",
+                        type: 'UnionItem',
+                        variableType: 'TypeReference',
+                        value: 'SomeType',
                       },
                       {
-                        type: "UnionItem",
-                        variableType: "Object",
+                        type: 'UnionItem',
+                        variableType: 'Object',
                         fields: [
                           {
-                            type: "ObjectField",
-                            name: "a",
-                            variableType: "String",
+                            type: 'ObjectField',
+                            name: 'a',
+                            variableType: 'String',
                             isRequired: false,
                           },
                         ],

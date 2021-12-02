@@ -1,4 +1,4 @@
-import prettier from "prettier";
+import prettier from 'prettier';
 import {
   ApiDefinition,
   ApiFieldDefinition,
@@ -14,9 +14,9 @@ import {
   StringVariable,
   TypeReference,
   UnionItem,
-} from "../ApiParser";
-import JsonSchema, { schemaId } from "../JsonSchema";
-import { getApiDefinitions, getDeclarations } from "../AstQuery";
+} from '../ApiParser';
+import JsonSchema, { schemaId } from '../JsonSchema';
+import { getApiDefinitions, getDeclarations } from '../AstQuery';
 
 const Type = (
   d:
@@ -28,64 +28,62 @@ const Type = (
     | IntLiteral
     | StringLiteral
     | FloatLiteral
-    | TypeReference
+    | TypeReference,
 ): string => {
   switch (d.variableType) {
-    case "Int":
-      return "number";
-    case "IntLiteral":
+    case 'Int':
+      return 'number';
+    case 'IntLiteral':
       return `${d.value}`;
-    case "String":
-      return "string";
-    case "StringLiteral":
+    case 'String':
+      return 'string';
+    case 'StringLiteral':
       return `"${d.value}"`;
-    case "Boolean":
-      return "boolean";
-    case "BooleanLiteral":
+    case 'Boolean':
+      return 'boolean';
+    case 'BooleanLiteral':
       return `${d.value}`;
-    case "Float":
-      return "number";
-    case "FloatLiteral":
+    case 'Float':
+      return 'number';
+    case 'FloatLiteral':
       return `${d.value}`;
-    case "TypeReference":
+    case 'TypeReference':
       return d.value;
     default:
       throw `unsupported type`;
   }
 };
 const union = (union: UnionItem) => {
-  return union.variableType === "Object" ? Fields(union.fields) : Type(union);
+  return union.variableType === 'Object' ? Fields(union.fields) : Type(union);
 };
 
 const field = (field: ObjectField) => {
-  return `${field.name}${field.isRequired ? ":" : "?:"} ${
-    field.variableType === "Object"
+  return `${field.name}${field.isRequired ? ':' : '?:'} ${
+    field.variableType === 'Object'
       ? Fields(field.fields)
-      : field.variableType === "Union"
-      ? field.unions.map(union).join(" | ")
-      : field.variableType === "Array"
-      ? `(${Type(field.items)}${
-          field.items.isRequired === false ? " | null" : ""
-        })[]`
+      : field.variableType === 'Union'
+      ? field.unions.map(union).join(' | ')
+      : field.variableType === 'Array'
+      ? `(${Type(field.items)}${field.items.isRequired === false ? ' | null' : ''})[]`
       : Type(field)
   }`;
 };
 
 const Fields = (fields: ObjectField[]): string => {
   return `{
-    ${fields.map(field).join("\n")}
+    ${fields.map(field).join('\n')}
   }`;
 };
 
 const ApiDefinitionInput = (d: ApiFieldDefinition | undefined) => {
   if (d === undefined) {
-    return "undefined";
+    return 'undefined';
   }
   return `${
-    d.variableType === "Object"
+    d.variableType === 'Object'
       ? Fields(d.fields)
-      : d.variableType === "Array"
-      ? `(${Type(d.items)}${d.items.isRequired === false ? " | null" : ""})[]`
+      : d.variableType === 'Array'
+      ? `(${Type(d.items)}${d.items.isRequired === false ? ' | null' : ''})[]`
       : Type(d)
   }`;
 };
@@ -94,29 +92,26 @@ const apiDefinition = (d: ApiDefinition) => {
   return `
   ${d.name}: (
     req: {
-      ${(["params", "query", "body", "headers"] as const)
+      ${(['params', 'query', 'body', 'headers'] as const)
         .map((t) => {
           const x = d[t];
           if (x === undefined) {
-            return "";
+            return '';
           }
           return `${t}: ${ApiDefinitionInput(x)}`;
         })
         .filter((x) => !!x)
-        .join(",\n")} 
+        .join(',\n')} 
     }, context: T) => ${d.responses
       .map(({ body, headers, status }) => {
         return `MaybePromise<{
     code: ${status};
-    ${[
-      body ? `body: ${ApiDefinitionInput(body)}` : "",
-      headers ? `headers: ${ApiDefinitionInput(headers)}` : "",
-    ]
+    ${[body ? `body: ${ApiDefinitionInput(body)}` : '', headers ? `headers: ${ApiDefinitionInput(headers)}` : '']
       .filter((x) => !!x)
-      .join(";\n")}
+      .join(';\n')}
   }>`;
       })
-      .join(" | ")}
+      .join(' | ')}
   `;
 };
 
@@ -124,13 +119,13 @@ const fastify = (d: ApiDefinition) => {
   return `
   fastify.${d.method.toLowerCase()}<{
     ${[
-      d.params ? `Params: ${ApiDefinitionInput(d.params)}` : "",
-      d.query ? `Querystring: ${ApiDefinitionInput(d.query)}` : "",
-      d.body ? `Body: ${ApiDefinitionInput(d.body)}` : "",
-      d.headers ? `Headers: ${ApiDefinitionInput(d.headers)}` : "",
+      d.params ? `Params: ${ApiDefinitionInput(d.params)}` : '',
+      d.query ? `Querystring: ${ApiDefinitionInput(d.query)}` : '',
+      d.body ? `Body: ${ApiDefinitionInput(d.body)}` : '',
+      d.headers ? `Headers: ${ApiDefinitionInput(d.headers)}` : '',
     ]
       .filter((x) => !!x)
-      .join(",")}
+      .join(',')}
   }>("${d.path}", {
     schema: {
     ${[
@@ -139,25 +134,23 @@ const fastify = (d: ApiDefinition) => {
       d.headers ? `headers: { $ref: "${schemaId(d.name)}_headers"}` : undefined,
       d.body ? `body: { $ref: "${schemaId(d.name)}_body"}` : undefined,
       `response: {${d.responses
-        .map(
-          (r) => `"${r.status}": {$ref: "${schemaId(`${d.name}_${r.status}"}`)}`
-        )
+        .map((r) => `"${r.status}": {$ref: "${schemaId(`${d.name}_${r.status}"}`)}`)
         .filter((x) => !!x)
-        .join(",")}}`,
+        .join(',')}}`,
     ]
       .filter((x) => !!x)
-      .join(",")},
+      .join(',')},
     }
   }, async (req, reply) => {
     const response = await options.routes.${d.name}({
     ${[
-      d.params ? "params: {...req.params}" : "",
-      d.query ? "query: {...req.query}" : "",
-      d.body ? "body: {...req.body}" : "",
-      d.headers ? "headers: {...req.headers}" : "",
+      d.params ? 'params: {...req.params}' : '',
+      d.query ? 'query: {...req.query}' : '',
+      d.body ? 'body: {...req.body}' : '',
+      d.headers ? 'headers: {...req.headers}' : '',
     ]
       .filter((x) => !!x)
-      .join(",")}
+      .join(',')}
     }, (req as any).restplugin_context);
 
     if ("headers" in response && (response as any).headers) {
@@ -183,22 +176,22 @@ const generateFastify = (ast: Ast) => {
 
     ${getDeclarations(ast)
       .map((d) => {
-        if (d.variableType === "Object") {
+        if (d.variableType === 'Object') {
           return `export type ${d.name} = {
-            ${d.fields.map(field).join("\n")}
+            ${d.fields.map(field).join('\n')}
           }`;
         }
-        if (d.variableType === "Union") {
-          return `export type ${d.name} = ${d.unions.map(union).join(" | ")}`;
+        if (d.variableType === 'Union') {
+          return `export type ${d.name} = ${d.unions.map(union).join(' | ')}`;
         }
       })
-      .join("\n")}
+      .join('\n')}
     export type Api<T = any> = {
     ${getApiDefinitions(ast)
       .map((d) => {
         return apiDefinition(d);
       })
-      .join("\n")}
+      .join('\n')}
     }
     const RestPlugin: FastifyPluginAsync<{routes:Api; setContext: (req: FastifyRequest) => any;}> = async (fastify, options) => {
     fastify.decorateRequest("restplugin_context", null);
@@ -208,11 +201,11 @@ const generateFastify = (ast: Ast) => {
       done();
     });
       JsonSchema.forEach(schema => fastify.addSchema(schema))
-      ${getApiDefinitions(ast).map(fastify).join("\n")}
+      ${getApiDefinitions(ast).map(fastify).join('\n')}
     }
     export default RestPlugin
     `,
-    { parser: "typescript" }
+    { parser: 'typescript' },
   );
 };
 

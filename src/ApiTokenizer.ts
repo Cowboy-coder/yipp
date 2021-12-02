@@ -1,30 +1,30 @@
 const Spec = [
-  [/^\b(GET|POST|PATCH|PUT|DELETE|HEAD)\b/, "API_METHOD"],
+  [/^\b(GET|POST|PATCH|PUT|DELETE|HEAD)\b/, 'API_METHOD'],
 
-  [/^\/[^\s]*/, "API_PATH"],
+  [/^\/[^\s]*/, 'API_PATH'],
 
-  [/^\bparams\b:/, "API_PARAMS"],
-  [/^\bquery\b:/, "API_QUERY"],
-  [/^\bbody\b:/, "API_BODY"],
-  [/^\bheaders\b:/, "API_HEADERS"],
-  [/^\d+:/, "API_STATUS"],
-  [/^\btype\b \b[a-zA-Z_]+\b/, "TYPE_DECLARATION"],
+  [/^\bparams\b:/, 'API_PARAMS'],
+  [/^\bquery\b:/, 'API_QUERY'],
+  [/^\bbody\b:/, 'API_BODY'],
+  [/^\bheaders\b:/, 'API_HEADERS'],
+  [/^\d+:/, 'API_STATUS'],
+  [/^\btype\b \b[a-zA-Z_]+\b/, 'TYPE_DECLARATION'],
 
-  [/^\b[a-zA-Z][a-zA-Z_0-9_-]*\b:/, "WORD_WITH_COLON"],
+  [/^\b[a-zA-Z][a-zA-Z_0-9_-]*\b:/, 'WORD_WITH_COLON'],
 
-  [/^-?\d+\.\d+/, "FLOAT_LITERAL"],
-  [/^-?\d+/, "INT_LITERAL"],
-  [/^\b(true|false)\b/, "BOOLEAN_LITERAL"],
-  [/^"([^"\\]*(\\.[^"\\]*)*)"/, "STRING_LITERAL"],
-  [/^\b[a-zA-Z][a-zA-Z_0-9_-]*\b/, "VARIABLE_TYPE"],
+  [/^-?\d+\.\d+/, 'FLOAT_LITERAL'],
+  [/^-?\d+/, 'INT_LITERAL'],
+  [/^\b(true|false)\b/, 'BOOLEAN_LITERAL'],
+  [/^"([^"\\]*(\\.[^"\\]*)*)"/, 'STRING_LITERAL'],
+  [/^\b[a-zA-Z][a-zA-Z_0-9_-]*\b/, 'VARIABLE_TYPE'],
 
-  [/^!/, "!"],
+  [/^!/, '!'],
 
-  [/^{/, "{"],
-  [/^}/, "}"],
-  [/^\[/, "["],
-  [/^\]/, "]"],
-  [/^\|/, "|"],
+  [/^{/, '{'],
+  [/^}/, '}'],
+  [/^\[/, '['],
+  [/^\]/, ']'],
+  [/^\|/, '|'],
 
   // Comments
   [/^\#.+/, null],
