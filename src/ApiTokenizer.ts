@@ -34,6 +34,10 @@ const Spec = [
 
 export type Token = {
   type: typeof Spec[number][1];
+  start: number;
+  end: number;
+  line: number;
+  col: number;
   value: string;
 } | null;
 
@@ -65,9 +69,14 @@ export default class ApiTokenizer {
         return this.getNextToken();
       }
 
+      const lines = this.str.replace(str, '').split('\n');
       return {
         type: tokenType,
         value: tokenValue,
+        start: this.cursor - tokenValue.length,
+        end: this.cursor,
+        line: lines.length,
+        col: lines[lines.length - 1].length,
       };
     }
     throw new SyntaxError(`Unexpected token "${str[0]}"`);
