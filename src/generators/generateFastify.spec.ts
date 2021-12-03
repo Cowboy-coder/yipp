@@ -9,7 +9,11 @@ const generateToFile = (str: string) => {
   const parser = new ApiParser();
   const data = generateFastify(parser.parse(str));
 
-  const filename = path.join(__dirname, '../build', `${randomBytes(4).readUInt32LE(0).toString()}-generateFastify.ts`);
+  const filename = path.join(
+    __dirname,
+    '../../build',
+    `${randomBytes(4).readUInt32LE(0).toString()}-generateFastify.ts`,
+  );
 
   fs.mkdirSync(path.dirname(filename), { recursive: true });
   fs.writeFileSync(filename, data, 'utf8');

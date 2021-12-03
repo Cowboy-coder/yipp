@@ -13,18 +13,23 @@ const fastify = Fastify({
     plugins: [],
   },
 });
+const db = {
+  findUsers: (query: string | undefined) => {
+    return Array.from({ length: 20 }, (value, key) => key)
+      .map((_, ix) => ({
+        id: ix.toString(),
+        username: `username_${ix}`,
+        type: ix % 4 === 0 ? ('admin' as const) : ('user' as const),
+        age: ix + 1,
+      }))
+      .filter((x) => x.username.indexOf(query ?? '') > -1);
+  },
+  login: (username: string, password: string) => username === 'admin' && password === 'password',
+};
 
 export type Context = {
   url: string;
-  db: {
-    findUsers: (query: string | undefined) => {
-      id: string;
-      username: string;
-      age: number;
-      type: 'admin' | 'user';
-    }[];
-    login: (username: string, password: string) => boolean;
-  };
+  db: typeof db;
 };
 
 fastify.register(RestPlugin, {
@@ -32,19 +37,7 @@ fastify.register(RestPlugin, {
   setContext: (req) => {
     const context: Context = {
       url: req.url,
-      db: {
-        findUsers: (query: string | undefined) => {
-          return Array.from({ length: 20 }, (value, key) => key)
-            .map((_, ix) => ({
-              id: ix.toString(),
-              username: `username_${ix}`,
-              type: ix % 4 === 0 ? ('admin' as const) : ('user' as const),
-              age: ix + 1,
-            }))
-            .filter((x) => x.username.indexOf(query ?? '') > -1);
-        },
-        login: (username: string, password: string) => username === 'admin' && password === 'password',
-      },
+      db,
     };
     return context;
   },

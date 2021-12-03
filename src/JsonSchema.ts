@@ -1,6 +1,6 @@
 import { JSONSchema7, JSONSchema7Definition } from 'json-schema';
 import { ApiFieldDefinition, ArrayItem, Ast, ObjectField, UnionItem } from './ApiParser';
-import { getDeclarations, getApiDefinitions } from './AstQuery';
+import { getApiDefinitions, getDeclarations } from './AstQuery';
 
 export const schemaId = (str: string) => `https://example.com/#${str}`;
 

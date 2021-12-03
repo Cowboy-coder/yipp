@@ -178,10 +178,10 @@ export type Api<T = any> = {
         body: Error;
       }>;
 };
-const RestPlugin: FastifyPluginAsync<{
-  routes: Api;
-  setContext: (req: FastifyRequest) => any;
-}> = async (fastify, options) => {
+const RestPlugin: FastifyPluginAsync<{ routes: Api; setContext: (req: FastifyRequest) => any }> = async (
+  fastify,
+  options,
+) => {
   fastify.decorateRequest('restplugin_context', null);
 
   fastify.addHook('preHandler', (req, _, done) => {

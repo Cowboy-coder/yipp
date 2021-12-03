@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import prettier from 'prettier';
 import {
   ApiDefinition,
@@ -15,8 +17,10 @@ import {
   TypeReference,
   UnionItem,
 } from '../ApiParser';
-import JsonSchema, { schemaId } from '../JsonSchema';
 import { getApiDefinitions, getDeclarations } from '../AstQuery';
+import JsonSchema, { schemaId } from '../JsonSchema';
+
+const prettierConfig = JSON.parse(fs.readFileSync(path.join(__dirname, '../../package.json'), 'utf8')).prettier;
 
 const Type = (
   d:
@@ -205,7 +209,10 @@ const generateFastify = (ast: Ast) => {
     }
     export default RestPlugin
     `,
-    { parser: 'typescript' },
+    {
+      parser: 'typescript',
+      ...prettierConfig,
+    },
   );
 };
 
