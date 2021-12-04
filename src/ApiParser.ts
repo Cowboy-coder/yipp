@@ -1,5 +1,19 @@
 import ApiTokenizer, { Token } from './ApiTokenizer';
 
+export class ApiSyntaxError extends Error {
+  token: Token;
+  document: string;
+  constructor(message: string, token: Token, document: string) {
+    super(message);
+
+    this.name = 'ApiSyntaxError';
+    this.message = message;
+    this.token = token;
+    this.document = document;
+    Object.setPrototypeOf(this, ApiSyntaxError.prototype);
+  }
+}
+
 export type IntVariable = { variableType: 'Int' };
 export type FloatVariable = { variableType: 'Float' };
 export type StringVariable = { variableType: 'String' };
@@ -103,12 +117,18 @@ const getArrayItem = (value: string, isRequired: boolean): ArrayItem => {
 export default class ApiParser {
   private tokenizer: ApiTokenizer;
   private lookahead: Token;
+  private str: string;
 
   parse(str: string): Ast {
+    this.str = str;
     this.tokenizer = new ApiTokenizer(str);
 
     this.lookahead = this.tokenizer.getNextToken();
     return this.Document();
+  }
+
+  reportAndExit(token: Token, error: string): never {
+    throw new ApiSyntaxError(error, token, this.str);
   }
 
   Document(): Ast {
@@ -126,11 +146,11 @@ export default class ApiParser {
       } else if (this.lookahead.type === 'TYPE_DECLARATION') {
         definitions.push(this.TypeDeclaration());
       } else {
-        throw new SyntaxError(`TypeDefinition or ApiDefinition required on top-level got ${this.lookahead.type}`);
+        this.reportAndExit(this.lookahead, 'TypeDefinition or ApiDefinition required on top-level');
       }
     }
-    if (this.lookahead && this.lookahead.type !== null) {
-      throw new SyntaxError(`TypeDefinition or ApiDefinition required on top-level got token '${this.lookahead.type}'`);
+    if (definitions.length === 0 || this.lookahead !== null) {
+      this.reportAndExit(this.lookahead, 'TypeDefinition or ApiDefinition required on top-level');
     }
     return definitions;
   }
@@ -138,7 +158,7 @@ export default class ApiParser {
   TypeDeclaration(): TypeDeclaration {
     const value = this.lookahead?.value;
     if (!value) {
-      throw new SyntaxError('TypeDeclaration expected `value`');
+      this.reportAndExit(this.lookahead, 'TypeDefinition or ApiDefinition required on top-level');
     }
     this.eat('TYPE_DECLARATION');
     if (this.lookahead?.type === '{') {
@@ -156,7 +176,7 @@ export default class ApiParser {
         unions: this.Unions(),
       };
     } else {
-      throw new SyntaxError(`Unsupported token found in TypeDeclaration: '${this.lookahead?.type}'`);
+      this.reportAndExit(this.lookahead, '"{" or "|" required');
     }
   }
 
@@ -217,13 +237,16 @@ export default class ApiParser {
         });
       }
     }
+    if (unions.length === 0) {
+      this.reportAndExit(this.lookahead, 'At least one union-item is required');
+    }
     return unions;
   }
 
   ApiDefinition(): ApiDefinition {
     const name = this.lookahead?.value.slice(0, -1);
     if (name === undefined) {
-      throw new SyntaxError('Unexpected name');
+      this.reportAndExit(this.lookahead, `Expected a valid name`);
     }
     this.eat('WORD_WITH_COLON');
 
@@ -233,13 +256,13 @@ export default class ApiParser {
         : undefined
       : undefined;
     if (method === undefined) {
-      throw new SyntaxError(`Unexpected method value ${method}`);
+      this.reportAndExit(this.lookahead, 'Expected a HTTP Method like GET, POST, etc');
     }
     this.eat('API_METHOD');
 
     const path = this.lookahead?.value;
     if (path === undefined) {
-      throw new SyntaxError('Unexpected path');
+      this.reportAndExit(this.lookahead, 'Expected a path /foo');
     }
     this.eat('API_PATH');
 
@@ -297,7 +320,7 @@ export default class ApiParser {
         type: 'ApiFieldDefinition',
         variableType: 'Object',
         fields: this.Fields(),
-      };
+      } as const;
     } else if (this.lookahead?.type === 'VARIABLE_TYPE' || this.lookahead?.type === '[') {
       if (this.lookahead.type === '[') {
         this.eat('[');
@@ -316,20 +339,27 @@ export default class ApiParser {
           type: 'ApiFieldDefinition',
           variableType: 'Array',
           items: getArrayItem(variableType, isItemRequired),
-        };
+        } as const;
       }
       const value = this.lookahead?.value;
       if (value === undefined) {
-        throw new SyntaxError('Could not parse FieldReference value');
+        this.reportAndExit(this.lookahead, 'Unsupported FieldReference value');
       }
       this.eat('VARIABLE_TYPE');
-      return {
+      const result = {
         type: 'ApiFieldDefinition',
         variableType: 'TypeReference',
         value,
-      };
+      } as const;
+      if (this.lookahead.value === '!') {
+        this.reportAndExit(
+          this.lookahead,
+          '! is not allowed because `params`, `body`, `query` or `headers` are always required if specified',
+        );
+      }
+      return result;
     } else {
-      throw new SyntaxError(`Unsupported token found in ApiFieldDefinition: '${this.lookahead?.type}'`);
+      this.reportAndExit(this.lookahead, 'Unsupported token found in ApiFieldDefinition');
     }
   }
 
@@ -448,7 +478,7 @@ export default class ApiParser {
             isRequired,
           });
         } else {
-          throw new SyntaxError(`Unsupported token type in fields '${this.lookahead.type}'`);
+          this.reportAndExit(this.lookahead, 'Unexpected token found in Object field');
         }
       } else if ((this.lookahead as Token)?.type === '{') {
         // nested field
@@ -479,7 +509,7 @@ export default class ApiParser {
           isRequired,
         });
       } else {
-        throw new SyntaxError(`Unsupported token found in Fields: '${this.lookahead.type}'`);
+        this.reportAndExit(this.lookahead, 'Unexpected field variable found');
       }
     }
     this.eat('}');
@@ -488,10 +518,10 @@ export default class ApiParser {
 
   private Responses(): ApiResponseDefinition[] {
     if (this.lookahead?.type !== 'API_STATUS') {
-      throw new SyntaxError(`Expected a HTTP Status Code. Got "${this.lookahead?.value}"`);
+      this.reportAndExit(this.lookahead, 'Expected a HTTP status code');
     }
     const responses: ApiResponseDefinition[] = [];
-    while (this.lookahead.type === 'API_STATUS') {
+    while (this.lookahead?.type === 'API_STATUS') {
       const value = Number(this.lookahead.value.slice(0, -1));
       this.eat('API_STATUS');
       this.eat('{');
@@ -509,6 +539,16 @@ export default class ApiParser {
           headers = this.ApiFieldDefinition();
         }
       }
+      if (!body && !headers) {
+        this.reportAndExit(this.lookahead, 'Expected body and/or headers');
+      }
+
+      if ((this.lookahead as Token)?.type === '!') {
+        this.reportAndExit(
+          this.lookahead,
+          '! is not allowed because `body` or `headers` are always required if specified',
+        );
+      }
       this.eat('}');
 
       responses.push({
@@ -524,10 +564,10 @@ export default class ApiParser {
   private eat(tokenType: string) {
     const token = this.lookahead;
     if (token === null) {
-      throw new SyntaxError(`Unexpected end of input, expected: "${tokenType}"`);
+      this.reportAndExit(this.lookahead, `Expected ${tokenType}`);
     }
     if (token.type !== tokenType) {
-      throw new SyntaxError(`Unexpected token: "${token.value}", expected: "${tokenType}"`);
+      this.reportAndExit(this.lookahead, `Expected ${tokenType}`);
     }
     this.lookahead = this.tokenizer.getNextToken();
     return token;
