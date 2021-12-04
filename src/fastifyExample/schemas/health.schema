@@ -1,0 +1,8 @@
+health: GET /health {
+  200: {
+    body: {
+      ok: "ok"!
+    }
+  }
+}
+

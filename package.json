@@ -11,7 +11,7 @@
     "prettier": "prettier --write src/**",
     "example": "concurrently --raw \"npm:example-server\" \"npm:example-watch-schema\"",
     "example-server": "ts-node-dev ./src/fastifyExample",
-    "example-watch-schema": "ts-node-dev src/Cli.ts --watch src/fastifyExample/api.schema src/fastifyExample/generated.ts"
+    "example-watch-schema": "ts-node-dev src/Cli.ts --watch src/fastifyExample/generated.ts src/fastifyExample/schemas/**.schema"
   },
   "files": [
     "lib/**/*"
