@@ -163,7 +163,7 @@ const fastify = (d: ApiDefinition) => {
 
     reply.code(response.code)
     if ("body" in response && (response as any).body) {
-      reply.send(response.body)
+      reply.send((response as any).body)
     }
   })
   `;

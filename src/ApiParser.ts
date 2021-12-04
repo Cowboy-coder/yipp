@@ -522,7 +522,7 @@ export default class ApiParser {
     }
     const responses: ApiResponseDefinition[] = [];
     while (this.lookahead?.type === 'API_STATUS') {
-      const value = Number(this.lookahead.value.slice(0, -1));
+      const status = Number(this.lookahead.value.slice(0, -1));
       this.eat('API_STATUS');
       this.eat('{');
 
@@ -539,9 +539,6 @@ export default class ApiParser {
           headers = this.ApiFieldDefinition();
         }
       }
-      if (!body && !headers) {
-        this.reportAndExit(this.lookahead, 'Expected body and/or headers');
-      }
 
       if ((this.lookahead as Token)?.type === '!') {
         this.reportAndExit(
@@ -553,7 +550,7 @@ export default class ApiParser {
 
       responses.push({
         type: 'ApiResponseDefinition',
-        status: value,
+        status,
         body,
         headers,
       });

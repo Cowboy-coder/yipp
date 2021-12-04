@@ -41,6 +41,17 @@ export const JsonSchema = [
     required: ['message', 'fields'],
   },
   {
+    $id: 'https://example.com/#UserType',
+    oneOf: [
+      {
+        const: 'admin',
+      },
+      {
+        const: 'user',
+      },
+    ],
+  },
+  {
     $id: 'https://example.com/#User',
     type: 'object',
     properties: {
@@ -54,17 +65,20 @@ export const JsonSchema = [
         type: 'number',
       },
       type: {
-        oneOf: [
-          {
-            const: 'admin',
-          },
-          {
-            const: 'user',
-          },
-        ],
+        $ref: 'https://example.com/#UserType',
       },
     },
     required: ['id', 'username', 'age', 'type'],
+  },
+  {
+    $id: 'https://example.com/#health_200',
+    type: 'object',
+    properties: {
+      ok: {
+        const: 'ok',
+      },
+    },
+    required: ['ok'],
   },
   {
     $id: 'https://example.com/#login_body',
@@ -94,6 +108,10 @@ export const JsonSchema = [
     $ref: 'https://example.com/#Error',
   },
   {
+    $id: 'https://example.com/#logout_204',
+    type: 'null',
+  },
+  {
     $id: 'https://example.com/#getUsers_query',
     type: 'object',
     properties: {
@@ -118,6 +136,73 @@ export const JsonSchema = [
     $id: 'https://example.com/#getUsers_400',
     $ref: 'https://example.com/#Error',
   },
+  {
+    $id: 'https://example.com/#postUser_body',
+    type: 'object',
+    properties: {
+      username: {
+        type: 'string',
+      },
+      age: {
+        type: 'number',
+      },
+      type: {
+        $ref: 'https://example.com/#UserType',
+      },
+    },
+    required: ['username', 'age', 'type'],
+  },
+  {
+    $id: 'https://example.com/#postUser_headers',
+    $ref: 'https://example.com/#AuthenticatedRoute',
+  },
+  {
+    $id: 'https://example.com/#postUser_200',
+    $ref: 'https://example.com/#User',
+  },
+  {
+    $id: 'https://example.com/#postUser_400',
+    $ref: 'https://example.com/#Error',
+  },
+  {
+    $id: 'https://example.com/#updateUser_params',
+    type: 'object',
+    properties: {
+      id: {
+        type: 'string',
+      },
+    },
+    required: ['id'],
+  },
+  {
+    $id: 'https://example.com/#updateUser_body',
+    type: 'object',
+    properties: {
+      username: {
+        type: 'string',
+      },
+      age: {
+        type: 'number',
+      },
+    },
+    required: [],
+  },
+  {
+    $id: 'https://example.com/#updateUser_headers',
+    $ref: 'https://example.com/#AuthenticatedRoute',
+  },
+  {
+    $id: 'https://example.com/#updateUser_200',
+    $ref: 'https://example.com/#User',
+  },
+  {
+    $id: 'https://example.com/#updateUser_400',
+    $ref: 'https://example.com/#Error',
+  },
+  {
+    $id: 'https://example.com/#updateUser_404',
+    $ref: 'https://example.com/#Error',
+  },
 ];
 
 type MaybePromise<T> = Promise<T> | T;
@@ -133,13 +218,24 @@ export type Error = {
   message: string;
   fields: Field[];
 };
+export type UserType = 'admin' | 'user';
 export type User = {
   id: string;
   username: string;
   age: number;
-  type: 'admin' | 'user';
+  type: UserType;
 };
 export type Api<T = any> = {
+  health: (
+    req: {},
+    context: T,
+  ) => MaybePromise<{
+    code: 200;
+    body: {
+      ok: 'ok';
+    };
+  }>;
+
   login: (
     req: {
       body: {
@@ -160,6 +256,13 @@ export type Api<T = any> = {
         body: Error;
       }>;
 
+  logout: (
+    req: {},
+    context: T,
+  ) => MaybePromise<{
+    code: 204;
+  }>;
+
   getUsers: (
     req: {
       query: {
@@ -177,6 +280,52 @@ export type Api<T = any> = {
         code: 400;
         body: Error;
       }>;
+
+  postUser: (
+    req: {
+      body: {
+        username: string;
+        age: number;
+        type: UserType;
+      };
+      headers: AuthenticatedRoute;
+    },
+    context: T,
+  ) =>
+    | MaybePromise<{
+        code: 200;
+        body: User;
+      }>
+    | MaybePromise<{
+        code: 400;
+        body: Error;
+      }>;
+
+  updateUser: (
+    req: {
+      params: {
+        id: string;
+      };
+      body: {
+        username?: string;
+        age?: number;
+      };
+      headers: AuthenticatedRoute;
+    },
+    context: T,
+  ) =>
+    | MaybePromise<{
+        code: 200;
+        body: User;
+      }>
+    | MaybePromise<{
+        code: 400;
+        body: Error;
+      }>
+    | MaybePromise<{
+        code: 404;
+        body: Error;
+      }>;
 };
 const RestPlugin: FastifyPluginAsync<{ routes: Api; setContext: (req: FastifyRequest) => any }> = async (
   fastify,
@@ -189,6 +338,27 @@ const RestPlugin: FastifyPluginAsync<{ routes: Api; setContext: (req: FastifyReq
     done();
   });
   JsonSchema.forEach((schema) => fastify.addSchema(schema));
+
+  fastify.get<{}>(
+    '/health',
+    {
+      schema: {
+        response: { '200': { $ref: 'https://example.com/#health_200' } },
+      },
+    },
+    async (req, reply) => {
+      const response = await options.routes.health({}, (req as any).restplugin_context);
+
+      if ('headers' in response && (response as any).headers) {
+        reply.headers((response as any).headers);
+      }
+
+      reply.code(response.code);
+      if ('body' in response && (response as any).body) {
+        reply.send((response as any).body);
+      }
+    },
+  );
 
   fastify.post<{
     Body: {
@@ -220,7 +390,28 @@ const RestPlugin: FastifyPluginAsync<{ routes: Api; setContext: (req: FastifyReq
 
       reply.code(response.code);
       if ('body' in response && (response as any).body) {
-        reply.send(response.body);
+        reply.send((response as any).body);
+      }
+    },
+  );
+
+  fastify.post<{}>(
+    '/logout',
+    {
+      schema: {
+        response: { '204': { $ref: 'https://example.com/#logout_204' } },
+      },
+    },
+    async (req, reply) => {
+      const response = await options.routes.logout({}, (req as any).restplugin_context);
+
+      if ('headers' in response && (response as any).headers) {
+        reply.headers((response as any).headers);
+      }
+
+      reply.code(response.code);
+      if ('body' in response && (response as any).body) {
+        reply.send((response as any).body);
       }
     },
   );
@@ -257,7 +448,90 @@ const RestPlugin: FastifyPluginAsync<{ routes: Api; setContext: (req: FastifyReq
 
       reply.code(response.code);
       if ('body' in response && (response as any).body) {
-        reply.send(response.body);
+        reply.send((response as any).body);
+      }
+    },
+  );
+
+  fastify.post<{
+    Body: {
+      username: string;
+      age: number;
+      type: UserType;
+    };
+    Headers: AuthenticatedRoute;
+  }>(
+    '/users',
+    {
+      schema: {
+        headers: { $ref: 'https://example.com/#postUser_headers' },
+        body: { $ref: 'https://example.com/#postUser_body' },
+        response: {
+          '200': { $ref: 'https://example.com/#postUser_200' },
+          '400': { $ref: 'https://example.com/#postUser_400' },
+        },
+      },
+    },
+    async (req, reply) => {
+      const response = await options.routes.postUser(
+        {
+          body: { ...req.body },
+          headers: { ...req.headers },
+        },
+        (req as any).restplugin_context,
+      );
+
+      if ('headers' in response && (response as any).headers) {
+        reply.headers((response as any).headers);
+      }
+
+      reply.code(response.code);
+      if ('body' in response && (response as any).body) {
+        reply.send((response as any).body);
+      }
+    },
+  );
+
+  fastify.patch<{
+    Params: {
+      id: string;
+    };
+    Body: {
+      username?: string;
+      age?: number;
+    };
+    Headers: AuthenticatedRoute;
+  }>(
+    '/users/:id',
+    {
+      schema: {
+        params: { $ref: 'https://example.com/#updateUser_params' },
+        headers: { $ref: 'https://example.com/#updateUser_headers' },
+        body: { $ref: 'https://example.com/#updateUser_body' },
+        response: {
+          '200': { $ref: 'https://example.com/#updateUser_200' },
+          '400': { $ref: 'https://example.com/#updateUser_400' },
+          '404': { $ref: 'https://example.com/#updateUser_404' },
+        },
+      },
+    },
+    async (req, reply) => {
+      const response = await options.routes.updateUser(
+        {
+          params: { ...req.params },
+          body: { ...req.body },
+          headers: { ...req.headers },
+        },
+        (req as any).restplugin_context,
+      );
+
+      if ('headers' in response && (response as any).headers) {
+        reply.headers((response as any).headers);
+      }
+
+      reply.code(response.code);
+      if ('body' in response && (response as any).body) {
+        reply.send((response as any).body);
       }
     },
   );

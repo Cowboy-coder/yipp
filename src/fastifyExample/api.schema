@@ -12,13 +12,24 @@ type Error {
   fields: [Field!]!
 }
 
+type UserType
+ | "admin"
+ | "user"
+
+
 type User {
   id: String!
   username: String!
   age: Int!
-  type:
-   | "admin"
-   | "user"!
+  type: UserType!
+}
+
+health: GET /health {
+  200: {
+    body: {
+      ok: "ok"!
+    }
+  }
 }
 
 login: POST /login {
@@ -36,6 +47,10 @@ login: POST /login {
   }
 }
 
+logout: POST /logout {
+  204: {}
+}
+
 getUsers: GET /users {
   headers: AuthenticatedRoute
 
@@ -48,6 +63,49 @@ getUsers: GET /users {
   }
 
   400: {
+    body: Error
+  }
+}
+
+postUser: POST /users {
+  headers: AuthenticatedRoute
+
+  body: {
+    username: String!
+    age: Int!
+    type: UserType!
+  }
+
+  200: {
+    body: User
+  }
+
+  400: {
+    body: Error
+  }
+}
+
+updateUser: PATCH /users/:id {
+  headers: AuthenticatedRoute
+
+  params: {
+    id: String!
+  }
+
+  body: {
+    username: String
+    age: Int
+  }
+
+  200: {
+    body: User
+  }
+
+  400: {
+    body: Error
+  }
+
+  404: {
     body: Error
   }
 }
