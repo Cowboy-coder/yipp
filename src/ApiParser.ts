@@ -140,7 +140,7 @@ export default class ApiParser {
 
   Definitions(): Definition[] {
     const definitions: (TypeDeclaration | ApiDefinition)[] = [];
-    while (this.lookahead?.type === 'WORD_WITH_COLON' || this.lookahead?.type === 'TYPE_DECLARATION') {
+    while (this.lookahead.type === 'WORD_WITH_COLON' || this.lookahead.type === 'TYPE_DECLARATION') {
       if (this.lookahead.type === 'WORD_WITH_COLON') {
         definitions.push(this.ApiDefinition());
       } else if (this.lookahead.type === 'TYPE_DECLARATION') {
@@ -149,26 +149,26 @@ export default class ApiParser {
         this.reportAndExit(this.lookahead, 'TypeDefinition or ApiDefinition required on top-level');
       }
     }
-    if (definitions.length === 0 || this.lookahead !== null) {
+    if (definitions.length === 0 || this.lookahead.type !== 'EOF') {
       this.reportAndExit(this.lookahead, 'TypeDefinition or ApiDefinition required on top-level');
     }
     return definitions;
   }
 
   TypeDeclaration(): TypeDeclaration {
-    const value = this.lookahead?.value;
+    const value = this.lookahead.value;
     if (!value) {
       this.reportAndExit(this.lookahead, 'TypeDefinition or ApiDefinition required on top-level');
     }
     this.eat('TYPE_DECLARATION');
-    if (this.lookahead?.type === '{') {
+    if (this.lookahead.type === '{') {
       return {
         type: 'TypeDeclaration',
         name: value.replace('type ', ''),
         variableType: 'Object',
         fields: this.Fields(),
       };
-    } else if (this.lookahead?.type === '|') {
+    } else if (this.lookahead.type === '|') {
       return {
         type: 'TypeDeclaration',
         name: value.replace('type ', ''),
@@ -183,39 +183,39 @@ export default class ApiParser {
   Unions(): UnionItem[] {
     const unions: UnionItem[] = [];
 
-    while (this.lookahead?.type === '|') {
+    while (this.lookahead.type === '|') {
       this.eat('|');
 
       const value = this.lookahead.value;
-      if ((this.lookahead as Token)?.type === 'STRING_LITERAL') {
+      if ((this.lookahead as Token).type === 'STRING_LITERAL') {
         this.eat('STRING_LITERAL');
         unions.push({
           type: 'UnionItem',
           variableType: 'StringLiteral',
           value: value.slice(0, -1).slice(1),
         });
-      } else if ((this.lookahead as Token)?.type === 'BOOLEAN_LITERAL') {
+      } else if ((this.lookahead as Token).type === 'BOOLEAN_LITERAL') {
         this.eat('BOOLEAN_LITERAL');
         unions.push({
           type: 'UnionItem',
           variableType: 'BooleanLiteral',
           value: value === 'true',
         });
-      } else if ((this.lookahead as Token)?.type === 'INT_LITERAL') {
+      } else if ((this.lookahead as Token).type === 'INT_LITERAL') {
         this.eat('INT_LITERAL');
         unions.push({
           type: 'UnionItem',
           variableType: 'IntLiteral',
           value: Number(value),
         });
-      } else if ((this.lookahead as Token)?.type === 'FLOAT_LITERAL') {
+      } else if ((this.lookahead as Token).type === 'FLOAT_LITERAL') {
         this.eat('FLOAT_LITERAL');
         unions.push({
           type: 'UnionItem',
           variableType: 'FloatLiteral',
           value: Number(value),
         });
-      } else if ((this.lookahead as Token)?.type === 'VARIABLE_TYPE') {
+      } else if ((this.lookahead as Token).type === 'VARIABLE_TYPE') {
         this.eat('VARIABLE_TYPE');
         if (isBuiltIn(value)) {
           unions.push({
@@ -229,7 +229,7 @@ export default class ApiParser {
             value,
           });
         }
-      } else if ((this.lookahead as Token)?.type === '{') {
+      } else if ((this.lookahead as Token).type === '{') {
         unions.push({
           type: 'UnionItem',
           variableType: 'Object',
@@ -244,13 +244,13 @@ export default class ApiParser {
   }
 
   ApiDefinition(): ApiDefinition {
-    const name = this.lookahead?.value.slice(0, -1);
+    const name = this.lookahead.value.slice(0, -1);
     if (name === undefined) {
       this.reportAndExit(this.lookahead, `Expected a valid name`);
     }
     this.eat('WORD_WITH_COLON');
 
-    const method = this.lookahead?.value
+    const method = this.lookahead.value
       ? isApiMethod(this.lookahead.value)
         ? this.lookahead.value
         : undefined
@@ -260,7 +260,7 @@ export default class ApiParser {
     }
     this.eat('API_METHOD');
 
-    const path = this.lookahead?.value;
+    const path = this.lookahead.value;
     if (path === undefined) {
       this.reportAndExit(this.lookahead, 'Expected a path /foo');
     }
@@ -274,7 +274,7 @@ export default class ApiParser {
     let headers = undefined;
 
     while (
-      this.lookahead?.type &&
+      this.lookahead.type &&
       ['API_PARAMS', 'API_QUERY', 'API_BODY', 'API_HEADERS'].includes(this.lookahead.type)
     ) {
       if (this.lookahead.type === 'API_PARAMS') {
@@ -315,20 +315,20 @@ export default class ApiParser {
   }
 
   private ApiFieldDefinition(): ApiFieldDefinition {
-    if (this.lookahead?.type === '{') {
+    if (this.lookahead.type === '{') {
       return {
         type: 'ApiFieldDefinition',
         variableType: 'Object',
         fields: this.Fields(),
       } as const;
-    } else if (this.lookahead?.type === 'VARIABLE_TYPE' || this.lookahead?.type === '[') {
+    } else if (this.lookahead.type === 'VARIABLE_TYPE' || this.lookahead.type === '[') {
       if (this.lookahead.type === '[') {
         this.eat('[');
 
         const variableType = this.lookahead.value;
         this.eat('VARIABLE_TYPE');
 
-        const isItemRequired = (this.lookahead as Token)?.type === '!';
+        const isItemRequired = (this.lookahead as Token).type === '!';
         if (isItemRequired) {
           this.eat('!');
         }
@@ -341,7 +341,7 @@ export default class ApiParser {
           items: getArrayItem(variableType, isItemRequired),
         } as const;
       }
-      const value = this.lookahead?.value;
+      const value = this.lookahead.value;
       if (value === undefined) {
         this.reportAndExit(this.lookahead, 'Unsupported FieldReference value');
       }
@@ -366,23 +366,23 @@ export default class ApiParser {
   private Fields(): ObjectField[] {
     this.eat('{');
     const variables: ObjectField[] = [];
-    while (this.lookahead?.type === 'WORD_WITH_COLON') {
+    while (this.lookahead.type === 'WORD_WITH_COLON') {
       const name = this.lookahead.value.slice(0, -1);
       this.eat('WORD_WITH_COLON');
 
-      if ((this.lookahead as Token)?.type === '[') {
+      if ((this.lookahead as Token).type === '[') {
         this.eat('[');
 
         const variableType = this.lookahead.value;
         this.eat('VARIABLE_TYPE');
 
-        const isItemRequired = (this.lookahead as Token)?.type === '!';
+        const isItemRequired = (this.lookahead as Token).type === '!';
         if (isItemRequired) {
           this.eat('!');
         }
         this.eat(']');
 
-        const isRequired = (this.lookahead as Token)?.type === '!';
+        const isRequired = (this.lookahead as Token).type === '!';
         if (isRequired) {
           this.eat('!');
         }
@@ -401,9 +401,9 @@ export default class ApiParser {
         )
       ) {
         const value = this.lookahead.value;
-        if ((this.lookahead as Token)?.type === 'VARIABLE_TYPE') {
+        if ((this.lookahead as Token).type === 'VARIABLE_TYPE') {
           this.eat('VARIABLE_TYPE');
-          const isRequired = (this.lookahead as Token)?.type === '!';
+          const isRequired = (this.lookahead as Token).type === '!';
           if (isRequired) {
             this.eat('!');
           }
@@ -423,9 +423,9 @@ export default class ApiParser {
               isRequired,
             });
           }
-        } else if ((this.lookahead as Token)?.type === 'STRING_LITERAL') {
+        } else if ((this.lookahead as Token).type === 'STRING_LITERAL') {
           this.eat('STRING_LITERAL');
-          const isRequired = (this.lookahead as Token)?.type === '!';
+          const isRequired = (this.lookahead as Token).type === '!';
           if (isRequired) {
             this.eat('!');
           }
@@ -436,9 +436,9 @@ export default class ApiParser {
             value: value.slice(0, -1).slice(1),
             isRequired,
           });
-        } else if ((this.lookahead as Token)?.type === 'BOOLEAN_LITERAL') {
+        } else if ((this.lookahead as Token).type === 'BOOLEAN_LITERAL') {
           this.eat('BOOLEAN_LITERAL');
-          const isRequired = (this.lookahead as Token)?.type === '!';
+          const isRequired = (this.lookahead as Token).type === '!';
           if (isRequired) {
             this.eat('!');
           }
@@ -449,9 +449,9 @@ export default class ApiParser {
             value: value === 'true',
             isRequired,
           });
-        } else if ((this.lookahead as Token)?.type === 'INT_LITERAL') {
+        } else if ((this.lookahead as Token).type === 'INT_LITERAL') {
           this.eat('INT_LITERAL');
-          const isRequired = (this.lookahead as Token)?.type === '!';
+          const isRequired = (this.lookahead as Token).type === '!';
           if (isRequired) {
             this.eat('!');
           }
@@ -463,9 +463,9 @@ export default class ApiParser {
             value: Number(value),
             isRequired,
           });
-        } else if ((this.lookahead as Token)?.type === 'FLOAT_LITERAL') {
+        } else if ((this.lookahead as Token).type === 'FLOAT_LITERAL') {
           this.eat('FLOAT_LITERAL');
-          const isRequired = (this.lookahead as Token)?.type === '!';
+          const isRequired = (this.lookahead as Token).type === '!';
           if (isRequired) {
             this.eat('!');
           }
@@ -480,10 +480,10 @@ export default class ApiParser {
         } else {
           this.reportAndExit(this.lookahead, 'Unexpected token found in Object field');
         }
-      } else if ((this.lookahead as Token)?.type === '{') {
+      } else if ((this.lookahead as Token).type === '{') {
         // nested field
         const fields = this.Fields();
-        const isRequired = (this.lookahead as Token)?.type === '!';
+        const isRequired = (this.lookahead as Token).type === '!';
         if (isRequired) {
           this.eat('!');
         }
@@ -494,10 +494,10 @@ export default class ApiParser {
           fields,
           isRequired,
         });
-      } else if ((this.lookahead as Token)?.type === '|') {
+      } else if ((this.lookahead as Token).type === '|') {
         // union field
         const unions = this.Unions();
-        const isRequired = (this.lookahead as Token)?.type === '!';
+        const isRequired = (this.lookahead as Token).type === '!';
         if (isRequired) {
           this.eat('!');
         }
@@ -517,11 +517,11 @@ export default class ApiParser {
   }
 
   private Responses(): ApiResponseDefinition[] {
-    if (this.lookahead?.type !== 'API_STATUS') {
+    if (this.lookahead.type !== 'API_STATUS') {
       this.reportAndExit(this.lookahead, 'Expected a HTTP status code');
     }
     const responses: ApiResponseDefinition[] = [];
-    while (this.lookahead?.type === 'API_STATUS') {
+    while (this.lookahead.type === 'API_STATUS') {
       const status = Number(this.lookahead.value.slice(0, -1));
       this.eat('API_STATUS');
       this.eat('{');
@@ -529,18 +529,18 @@ export default class ApiParser {
       let body = undefined;
       let headers = undefined;
       while (['API_BODY', 'API_HEADERS'].includes(this.lookahead.type)) {
-        if ((this.lookahead as Token)?.type === 'API_BODY') {
+        if ((this.lookahead as Token).type === 'API_BODY') {
           this.eat('API_BODY');
           body = this.ApiFieldDefinition();
         }
 
-        if ((this.lookahead as Token)?.type === 'API_HEADERS') {
+        if ((this.lookahead as Token).type === 'API_HEADERS') {
           this.eat('API_HEADERS');
           headers = this.ApiFieldDefinition();
         }
       }
 
-      if ((this.lookahead as Token)?.type === '!') {
+      if ((this.lookahead as Token).type === '!') {
         this.reportAndExit(
           this.lookahead,
           '! is not allowed because `body` or `headers` are always required if specified',
@@ -560,8 +560,8 @@ export default class ApiParser {
 
   private eat(tokenType: string) {
     const token = this.lookahead;
-    if (token === null) {
-      this.reportAndExit(this.lookahead, `Expected ${tokenType}`);
+    if (token.type === 'EOF') {
+      this.reportAndExit(this.lookahead, `Reached EOF, expected ${tokenType}`);
     }
     if (token.type !== tokenType) {
       this.reportAndExit(this.lookahead, `Expected ${tokenType}`);

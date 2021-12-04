@@ -33,13 +33,13 @@ const Spec = [
 ] as const;
 
 export type Token = {
-  type: typeof Spec[number][1];
+  type: Exclude<typeof Spec[number][1], null> | 'EOF';
   start: number;
   end: number;
   line: number;
   col: number;
   value: string;
-} | null;
+};
 
 export default class ApiTokenizer {
   private str: string;
@@ -52,7 +52,15 @@ export default class ApiTokenizer {
 
   getNextToken(): Token {
     if (!this.hasMoreTokens()) {
-      return null;
+      const lines = this.str.split('\n');
+      return {
+        type: 'EOF',
+        start: this.str.length,
+        end: this.str.length,
+        line: lines.length,
+        col: lines[lines.length - 1].length,
+        value: '',
+      };
     }
 
     const str = this.str.slice(this.cursor);

@@ -71,7 +71,9 @@ describe(ApiTokenizer, () => {
       col: 19,
     });
 
-    expect(tokenizer.getNextToken()).toEqual(null);
-    expect(tokenizer.getNextToken()).toEqual(null);
+    const eof = { col: 20, end: 20, line: 1, start: 20, type: 'EOF', value: '' };
+
+    expect(tokenizer.getNextToken()).toEqual(eof);
+    expect(tokenizer.getNextToken()).toEqual(eof);
   });
 });

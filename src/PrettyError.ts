@@ -19,9 +19,6 @@ const PrettyError = ({
   const contextVisible = options?.contextVisible ?? 2;
 
   const errorMsg = color ? chalk.red(errorMessage) : errorMessage;
-  if (!token) {
-    return errorMsg;
-  }
   const allLines = document.split('\n');
 
   const lines = [
