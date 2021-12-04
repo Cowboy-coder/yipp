@@ -17,6 +17,8 @@ describe(JsonSchema, () => {
       h: false
       i: 32.0
       j: -12.042
+      with-dash: String
+      with_underscore: String
     }
     `;
     expect(JsonSchema(parser.parse(program))).toEqual<JSONSchema7[]>([
@@ -34,6 +36,8 @@ describe(JsonSchema, () => {
           h: { const: false },
           i: { const: 32.0 },
           j: { const: -12.042 },
+          'with-dash': { type: 'string' },
+          with_underscore: { type: 'string' },
         },
         required: ['a', 'c', 'd'],
       },

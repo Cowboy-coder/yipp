@@ -15,6 +15,8 @@ describe(ApiParser, () => {
         h: false
         i: 32.0
         j: -12.042
+        with-dash: String
+        with_underscore: String
       }
       200: {
         # with some comments
@@ -100,6 +102,18 @@ describe(ApiParser, () => {
                 name: 'j',
                 variableType: 'FloatLiteral',
                 value: -12.042,
+                isRequired: false,
+              },
+              {
+                type: 'ObjectField',
+                name: 'with-dash',
+                variableType: 'String',
+                isRequired: false,
+              },
+              {
+                type: 'ObjectField',
+                name: 'with_underscore',
+                variableType: 'String',
                 isRequired: false,
               },
             ],

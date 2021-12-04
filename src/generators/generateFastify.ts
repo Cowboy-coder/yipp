@@ -62,7 +62,7 @@ const union = (union: UnionItem) => {
 };
 
 const field = (field: ObjectField) => {
-  return `${field.name}${field.isRequired ? ':' : '?:'} ${
+  return `"${field.name}"${field.isRequired ? ':' : '?:'} ${
     field.variableType === 'Object'
       ? Fields(field.fields)
       : field.variableType === 'Union'
