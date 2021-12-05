@@ -3,7 +3,7 @@ import ApiParser, { Ast } from './ApiParser';
 describe(ApiParser, () => {
   it('ApiDefinition with different types', () => {
     const parser = new ApiParser();
-    const program = `getUser: GET /users/:id {
+    const program = `getUser: GET /users/:id/:id2(Int)/:id3(Float) {
       body: {
         a: "foo"!
         b: String
@@ -32,7 +32,27 @@ describe(ApiParser, () => {
           type: 'ApiDefinition',
           name: 'getUser',
           method: 'GET',
-          path: '/users/:id',
+          path: '/users/:id/:id2/:id3',
+          params: {
+            type: 'ParamsDefinition',
+            fields: [
+              {
+                type: 'ParamsField',
+                name: 'id',
+                variableType: 'String',
+              },
+              {
+                type: 'ParamsField',
+                name: 'id2',
+                variableType: 'Int',
+              },
+              {
+                type: 'ParamsField',
+                name: 'id3',
+                variableType: 'Float',
+              },
+            ],
+          },
           body: {
             type: 'ApiFieldDefinition',
             variableType: 'Object',
@@ -191,12 +211,6 @@ describe(ApiParser, () => {
       }
     }
     updateUser: PUT /users/:id {
-      params: {
-        id: String!
-        name: String
-        Boolean: Boolean
-        age: Int!
-      }
       query: {
         foo: String!
       }
@@ -257,32 +271,12 @@ describe(ApiParser, () => {
           method: 'PUT',
           path: '/users/:id',
           params: {
-            type: 'ApiFieldDefinition',
-            variableType: 'Object',
+            type: 'ParamsDefinition',
             fields: [
               {
-                type: 'ObjectField',
+                type: 'ParamsField',
                 name: 'id',
                 variableType: 'String',
-                isRequired: true,
-              },
-              {
-                type: 'ObjectField',
-                name: 'name',
-                variableType: 'String',
-                isRequired: false,
-              },
-              {
-                type: 'ObjectField',
-                name: 'Boolean',
-                variableType: 'Boolean',
-                isRequired: false,
-              },
-              {
-                type: 'ObjectField',
-                name: 'age',
-                variableType: 'Int',
-                isRequired: true,
               },
             ],
           },
@@ -399,9 +393,6 @@ describe(ApiParser, () => {
     }
 
     deleteUser: DELETE /users/:id {
-      params: {
-        id: String!
-      }
       query: UserFilterQuery
       200: {
         body: User
@@ -434,14 +425,12 @@ describe(ApiParser, () => {
           method: 'DELETE',
           path: '/users/:id',
           params: {
-            type: 'ApiFieldDefinition',
-            variableType: 'Object',
+            type: 'ParamsDefinition',
             fields: [
               {
-                type: 'ObjectField',
+                type: 'ParamsField',
                 name: 'id',
                 variableType: 'String',
-                isRequired: true,
               },
             ],
           },
@@ -486,9 +475,6 @@ describe(ApiParser, () => {
     const parser = new ApiParser();
     const program = `
     randomFunc: HEAD /users/:ids {
-      params: {
-        ids: [String!]!
-      }
       200: {
         body: {
           id: [String]
@@ -507,18 +493,12 @@ describe(ApiParser, () => {
           method: 'HEAD',
           path: '/users/:ids',
           params: {
-            type: 'ApiFieldDefinition',
-            variableType: 'Object',
+            type: 'ParamsDefinition',
             fields: [
               {
-                type: 'ObjectField',
+                type: 'ParamsField',
                 name: 'ids',
-                variableType: 'Array',
-                isRequired: true,
-                items: {
-                  variableType: 'String',
-                  isRequired: true,
-                },
+                variableType: 'String',
               },
             ],
           },

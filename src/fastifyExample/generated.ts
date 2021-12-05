@@ -225,6 +225,7 @@ export type User = {
   age: number;
   type: UserType;
 };
+
 export type Api<T = any> = {
   login: (
     req: {

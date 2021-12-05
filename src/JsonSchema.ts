@@ -1,10 +1,18 @@
 import { JSONSchema7, JSONSchema7Definition } from 'json-schema';
-import { ApiFieldDefinition, ArrayItem, Ast, ObjectField, UnionItem } from './ApiParser';
+import {
+  ApiFieldDefinition,
+  ApiParamsDefinition,
+  ArrayItem,
+  Ast,
+  ObjectField,
+  ParamsField,
+  UnionItem,
+} from './ApiParser';
 import { getApiDefinitions, getDeclarations } from './AstQuery';
 
 export const schemaId = (str: string) => `https://example.com/#${str}`;
 
-const fieldSchema = (field: ObjectField | UnionItem | ArrayItem): JSONSchema7Definition => {
+const fieldSchema = (field: ObjectField | UnionItem | ArrayItem | ParamsField): JSONSchema7Definition => {
   if (field.variableType === 'Object') {
     const properties: {
       [key: string]: JSONSchema7Definition;
@@ -72,14 +80,30 @@ const fieldSchema = (field: ObjectField | UnionItem | ArrayItem): JSONSchema7Def
   throw new Error(`Unsupported field`);
 };
 
-const apiFieldDefinitionSchema = ($id: string, d: ApiFieldDefinition | undefined): JSONSchema7 => {
+const apiFieldDefinitionSchema = (
+  $id: string,
+  d: ApiFieldDefinition | ApiParamsDefinition | undefined,
+): JSONSchema7 => {
   if (d === undefined) {
     return {
       $id,
       type: 'null',
     };
   }
-  if (d.variableType === 'Object') {
+  if (d.type === 'ParamsDefinition') {
+    const properties: {
+      [key: string]: JSONSchema7Definition;
+    } = {};
+    d.fields.forEach((field) => {
+      properties[field.name] = fieldSchema(field);
+    });
+    return {
+      $id,
+      type: 'object',
+      properties,
+      required: d.fields.map((f) => f.name),
+    } as JSONSchema7;
+  } else if (d.variableType === 'Object') {
     const properties: {
       [key: string]: JSONSchema7Definition;
     } = {};
@@ -105,6 +129,10 @@ const apiFieldDefinitionSchema = ($id: string, d: ApiFieldDefinition | undefined
     } as JSONSchema7;
   }
   throw new Error('unsupported variableType in apiFieldDefinitionSchema');
+};
+
+const flat = <T>(arr: T[][]): T[] => {
+  return ([] as T[]).concat(...arr);
 };
 
 const JsonSchema = (ast: Ast): JSONSchema7[] => {
@@ -137,8 +165,8 @@ const JsonSchema = (ast: Ast): JSONSchema7[] => {
       }
       throw new Error(`Json Schema unsupported declaration`);
     }),
-    ...apis
-      .map((api) => {
+    ...flat(
+      apis.map((api) => {
         return [
           ...(['params', 'query', 'body', 'headers'] as const)
             .map((key) => {
@@ -156,8 +184,8 @@ const JsonSchema = (ast: Ast): JSONSchema7[] => {
             return apiFieldDefinitionSchema($id, response.body);
           }),
         ];
-      })
-      .flat(),
+      }),
+    ),
   ];
 };
 

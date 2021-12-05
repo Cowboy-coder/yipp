@@ -45,7 +45,7 @@ describe(ApiTokenizer, () => {
     });
 
     expect(tokenizer.getNextToken()).toEqual({
-      type: 'API_PATH',
+      type: 'API_PATH_SEGMENT',
       value: '/login',
       start: 11,
       end: 17,

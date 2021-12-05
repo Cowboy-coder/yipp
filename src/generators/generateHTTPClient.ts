@@ -3,7 +3,7 @@ import path from 'path';
 import prettier from 'prettier';
 import { Ast } from '../ApiParser';
 import { getApiDefinitions, getDeclarations } from '../AstQuery';
-import { generateApiField, generateDeclarations } from './commonTs';
+import { generateApiField, generateDeclarations, generateType } from './commonTs';
 
 const prettierConfig = JSON.parse(fs.readFileSync(path.join(__dirname, '../../package.json'), 'utf8')).prettier;
 
@@ -24,24 +24,22 @@ const generateHTTPClient = (ast: Ast) => {
     return {
       ${getApiDefinitions(ast)
         .map((d) => {
-          if (d.params && d.params.variableType !== 'Object') {
-            throw new Error('unsupported params');
-          }
           let path = d.path;
           d.params?.fields.forEach((p) => {
-            path = path.replace(`:${p.name}`, `\${req.params.${p.name}}`);
+            path = path.replace(`:${p.name}`, `\${${p.name}}`);
           });
           if (d.query && d.query.variableType !== 'Object') {
             throw new Error('unsupported query');
           }
           return `
-      async "${d.name}"(req: {
-        ${(['params', 'query', 'body', 'headers'] as const)
+      async "${d.name}"(${d.params?.fields.map((f) => `${f.name}:${generateType(f)}`).join(',')}, req: {
+        ${(['query', 'body', 'headers'] as const)
           .map((t) => {
             const x = d[t];
             if (x === undefined) {
               return '';
             }
+
             const isRequired = x.variableType === 'Object' && x.fields.every((f) => f.isRequired);
             return `${isRequired ? t : `${t}?`}: ${generateApiField(x)}`;
           })
@@ -72,8 +70,7 @@ const generateHTTPClient = (ast: Ast) => {
 
   const api = createApiClient({ baseURL: 'x' });
   async () => {
-    const user = await api.user({
-      params: {id: 1},
+    const user = await api.user(1, {
       body: { x: '' },
     });
   };

@@ -1,5 +1,4 @@
 import { spawnSync } from 'child_process';
-import { randomBytes } from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import ApiParser from '../ApiParser';
@@ -9,11 +8,7 @@ const generateToFile = (str: string) => {
   const parser = new ApiParser();
   const data = generateHTTPClient(parser.parse(str));
 
-  const filename = path.join(
-    __dirname,
-    '../../build',
-    `${randomBytes(4).readUInt32LE(0).toString()}-generateHTTPClient.ts`,
-  );
+  const filename = path.join(__dirname, '../../build', `generateHTTPClient-${new Date().getTime()}.ts`);
 
   fs.mkdirSync(path.dirname(filename), { recursive: true });
   fs.writeFileSync(filename, data, 'utf8');
@@ -26,12 +21,9 @@ describe(generateHTTPClient, () => {
       type User {
         id: String!
       }
-      user: GET /user/:id {
+      getUser: GET /user/:id(Int) {
         headers: {
           content-type: "application/json"
-        }
-        params: {
-          id: Int!
         }
         body: {
           x: String!

@@ -1,9 +1,11 @@
 const Spec = [
   [/^\b(GET|POST|PATCH|PUT|DELETE|HEAD)\b/, 'API_METHOD'],
 
-  [/^\/[^\s]*/, 'API_PATH'],
+  [/^\/:\w+\(Int\)/, 'API_PATH_INT'],
+  [/^\/:\w+\(Float\)/, 'API_PATH_FLOAT'],
+  [/^\/:\w+/, 'API_PATH_STRING'],
+  [/^\/[^/\s]*/, 'API_PATH_SEGMENT'],
 
-  [/^\bparams\b:/, 'API_PARAMS'],
   [/^\bquery\b:/, 'API_QUERY'],
   [/^\bbody\b:/, 'API_BODY'],
   [/^\bheaders\b:/, 'API_HEADERS'],

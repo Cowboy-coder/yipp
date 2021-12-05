@@ -1,5 +1,6 @@
 import {
   ApiFieldDefinition,
+  ApiParamsDefinition,
   BooleanLiteral,
   BooleanVariable,
   FloatLiteral,
@@ -7,6 +8,7 @@ import {
   IntLiteral,
   IntVariable,
   ObjectField,
+  ParamsField,
   StringLiteral,
   StringVariable,
   TypeDeclaration,
@@ -14,7 +16,7 @@ import {
   UnionItem,
 } from '../ApiParser';
 
-const generateType = (
+export const generateType = (
   d:
     | BooleanVariable
     | IntVariable
@@ -54,7 +56,10 @@ const generateUnionItem = (union: UnionItem) => {
   return union.variableType === 'Object' ? generateFields(union.fields) : generateType(union);
 };
 
-const field = (field: ObjectField) => {
+const field = (field: ObjectField | ParamsField) => {
+  if (field.type === 'ParamsField') {
+    return `"${field.name}":${generateType(field)}`;
+  }
   return `"${field.name}"${field.isRequired ? ':' : '?:'} ${
     field.variableType === 'Object'
       ? generateFields(field.fields)
@@ -66,15 +71,18 @@ const field = (field: ObjectField) => {
   }`;
 };
 
-const generateFields = (fields: ObjectField[]): string => {
+const generateFields = (fields: ObjectField[] | ParamsField[]): string => {
   return `{
     ${fields.map(field).join('\n')}
   }`;
 };
 
-export const generateApiField = (d: ApiFieldDefinition | undefined) => {
+export const generateApiField = (d: ApiFieldDefinition | ApiParamsDefinition | undefined) => {
   if (d === undefined) {
     return 'undefined';
+  }
+  if (d.type === 'ParamsDefinition') {
+    return generateFields(d.fields);
   }
   return `${
     d.variableType === 'Object'

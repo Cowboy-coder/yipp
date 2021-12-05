@@ -3,7 +3,7 @@ import ApiParser from './ApiParser';
 import JsonSchema from './JsonSchema';
 
 describe(JsonSchema, () => {
-  it('Different types', () => {
+  it.only('Different types', () => {
     const parser = new ApiParser();
     const program = `
     type Foo {
@@ -202,9 +202,6 @@ describe(JsonSchema, () => {
     } 
 
     getUser: GET /user/:id {
-      params: {
-        id: String!
-      }
       headers: Headers
       200: {
         body: {
@@ -269,9 +266,6 @@ describe(JsonSchema, () => {
     } 
 
     getUser: GET /user/:id {
-      params: {
-        id: String!
-      }
       headers: {
         x: String!
       }

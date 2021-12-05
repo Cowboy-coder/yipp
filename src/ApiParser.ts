@@ -67,13 +67,23 @@ export type ApiResponseDefinition = {
   headers?: ApiFieldDefinition;
 };
 
+export type ParamsField = {
+  type: 'ParamsField';
+  name: string;
+} & (IntVariable | FloatVariable | StringVariable);
+
+export type ApiParamsDefinition = {
+  type: 'ParamsDefinition';
+  fields: ParamsField[];
+};
+
 export type ApiMethod = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE' | 'HEAD';
 export type ApiDefinition = {
   type: 'ApiDefinition';
   name: string;
   method: ApiMethod;
   path: string;
-  params?: ApiFieldDefinition;
+  params?: ApiParamsDefinition;
   query?: ApiFieldDefinition;
   body?: ApiFieldDefinition;
   headers?: ApiFieldDefinition;
@@ -260,39 +270,71 @@ export default class ApiParser {
     }
     this.eat('API_METHOD');
 
-    const path = this.lookahead.value;
-    if (path === undefined) {
+    let path = '';
+    let params: ApiParamsDefinition | undefined = undefined;
+    const paramFields: ParamsField[] = [];
+
+    while (['API_PATH_INT', 'API_PATH_FLOAT', 'API_PATH_STRING', 'API_PATH_SEGMENT'].includes(this.lookahead.type)) {
+      if (this.lookahead.type === 'API_PATH_SEGMENT') {
+        path += this.lookahead.value;
+        this.eat('API_PATH_SEGMENT');
+      } else if (this.lookahead.type === 'API_PATH_STRING') {
+        path += this.lookahead.value;
+        paramFields.push({
+          type: 'ParamsField',
+          name: this.lookahead.value.replace('/:', ''),
+          variableType: 'String',
+        });
+        this.eat('API_PATH_STRING');
+      } else if (this.lookahead.type === 'API_PATH_INT') {
+        const name = this.lookahead.value.replace(/\/:(\w+)\(Int\)/, '$1');
+        path += `/:${name}`;
+        paramFields.push({
+          type: 'ParamsField',
+          name: name,
+          variableType: 'Int',
+        });
+        this.eat('API_PATH_INT');
+      } else if (this.lookahead.type === 'API_PATH_FLOAT') {
+        const name = this.lookahead.value.replace(/\/:(\w+)\(Float\)/, '$1');
+        path += `/:${name}`;
+        paramFields.push({
+          type: 'ParamsField',
+          name,
+          variableType: 'Float',
+        });
+        this.eat('API_PATH_FLOAT');
+      }
+    }
+    if (paramFields.length > 0) {
+      params = {
+        type: 'ParamsDefinition',
+        fields: paramFields,
+      };
+    }
+
+    if (path === '') {
       this.reportAndExit(this.lookahead, 'Expected a path /foo');
     }
-    this.eat('API_PATH');
 
     this.eat('{');
 
-    let params = undefined;
     let query = undefined;
     let body = undefined;
     let headers = undefined;
 
-    while (
-      this.lookahead.type &&
-      ['API_PARAMS', 'API_QUERY', 'API_BODY', 'API_HEADERS'].includes(this.lookahead.type)
-    ) {
-      if (this.lookahead.type === 'API_PARAMS') {
-        this.eat('API_PARAMS');
-        params = this.ApiFieldDefinition();
-      }
-
-      if (this.lookahead.type === 'API_QUERY') {
+    while (this.lookahead.type && ['API_QUERY', 'API_BODY', 'API_HEADERS'].includes(this.lookahead.type)) {
+      if ((this.lookahead as Token).type === 'API_QUERY') {
         this.eat('API_QUERY');
         query = this.ApiFieldDefinition();
       }
 
-      if (this.lookahead.type === 'API_BODY') {
+      if ((this.lookahead as Token).type === 'API_BODY') {
         this.eat('API_BODY');
         body = this.ApiFieldDefinition();
       }
 
-      if (this.lookahead.type === 'API_HEADERS') {
+      if ((this.lookahead as Token).type === 'API_HEADERS') {
         this.eat('API_HEADERS');
         headers = this.ApiFieldDefinition();
       }
@@ -558,7 +600,7 @@ export default class ApiParser {
     return responses;
   }
 
-  private eat(tokenType: string) {
+  private eat(tokenType: Token['type']) {
     const token = this.lookahead;
     if (token.type === 'EOF') {
       this.reportAndExit(this.lookahead, `Reached EOF, expected ${tokenType}`);

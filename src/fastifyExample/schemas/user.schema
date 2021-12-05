@@ -47,10 +47,6 @@ postUser: POST /users {
 updateUser: PATCH /users/:id {
   headers: AuthenticatedRoute
 
-  params: {
-    id: String!
-  }
-
   body: {
     username: String
     age: Int
