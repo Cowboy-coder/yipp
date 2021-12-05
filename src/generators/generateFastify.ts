@@ -1,96 +1,12 @@
 import fs from 'fs';
 import path from 'path';
 import prettier from 'prettier';
-import {
-  ApiDefinition,
-  ApiFieldDefinition,
-  Ast,
-  BooleanLiteral,
-  BooleanVariable,
-  FloatLiteral,
-  FloatVariable,
-  IntLiteral,
-  IntVariable,
-  ObjectField,
-  StringLiteral,
-  StringVariable,
-  TypeReference,
-  UnionItem,
-} from '../ApiParser';
+import { ApiDefinition, Ast } from '../ApiParser';
 import { getApiDefinitions, getDeclarations } from '../AstQuery';
 import JsonSchema, { schemaId } from '../JsonSchema';
+import { generateApiField, generateDeclarations } from './commonTs';
 
 const prettierConfig = JSON.parse(fs.readFileSync(path.join(__dirname, '../../package.json'), 'utf8')).prettier;
-
-const Type = (
-  d:
-    | BooleanVariable
-    | IntVariable
-    | StringVariable
-    | FloatVariable
-    | BooleanLiteral
-    | IntLiteral
-    | StringLiteral
-    | FloatLiteral
-    | TypeReference,
-): string => {
-  switch (d.variableType) {
-    case 'Int':
-      return 'number';
-    case 'IntLiteral':
-      return `${d.value}`;
-    case 'String':
-      return 'string';
-    case 'StringLiteral':
-      return `"${d.value}"`;
-    case 'Boolean':
-      return 'boolean';
-    case 'BooleanLiteral':
-      return `${d.value}`;
-    case 'Float':
-      return 'number';
-    case 'FloatLiteral':
-      return `${d.value}`;
-    case 'TypeReference':
-      return d.value;
-    default:
-      throw `unsupported type`;
-  }
-};
-const union = (union: UnionItem) => {
-  return union.variableType === 'Object' ? Fields(union.fields) : Type(union);
-};
-
-const field = (field: ObjectField) => {
-  return `"${field.name}"${field.isRequired ? ':' : '?:'} ${
-    field.variableType === 'Object'
-      ? Fields(field.fields)
-      : field.variableType === 'Union'
-      ? field.unions.map(union).join(' | ')
-      : field.variableType === 'Array'
-      ? `(${Type(field.items)}${field.items.isRequired === false ? ' | null' : ''})[]`
-      : Type(field)
-  }`;
-};
-
-const Fields = (fields: ObjectField[]): string => {
-  return `{
-    ${fields.map(field).join('\n')}
-  }`;
-};
-
-const ApiDefinitionInput = (d: ApiFieldDefinition | undefined) => {
-  if (d === undefined) {
-    return 'undefined';
-  }
-  return `${
-    d.variableType === 'Object'
-      ? Fields(d.fields)
-      : d.variableType === 'Array'
-      ? `(${Type(d.items)}${d.items.isRequired === false ? ' | null' : ''})[]`
-      : Type(d)
-  }`;
-};
 
 const apiDefinition = (d: ApiDefinition) => {
   return `
@@ -102,7 +18,7 @@ const apiDefinition = (d: ApiDefinition) => {
           if (x === undefined) {
             return '';
           }
-          return `${t}: ${ApiDefinitionInput(x)}`;
+          return `${t}: ${generateApiField(x)}`;
         })
         .filter((x) => !!x)
         .join(',\n')} 
@@ -110,7 +26,7 @@ const apiDefinition = (d: ApiDefinition) => {
       .map(({ body, headers, status }) => {
         return `MaybePromise<{
     code: ${status};
-    ${[body ? `body: ${ApiDefinitionInput(body)}` : '', headers ? `headers: ${ApiDefinitionInput(headers)}` : '']
+    ${[body ? `body: ${generateApiField(body)}` : '', headers ? `headers: ${generateApiField(headers)}` : '']
       .filter((x) => !!x)
       .join(';\n')}
   }>`;
@@ -123,10 +39,10 @@ const fastify = (d: ApiDefinition) => {
   return `
   fastify.${d.method.toLowerCase()}<{
     ${[
-      d.params ? `Params: ${ApiDefinitionInput(d.params)}` : '',
-      d.query ? `Querystring: ${ApiDefinitionInput(d.query)}` : '',
-      d.body ? `Body: ${ApiDefinitionInput(d.body)}` : '',
-      d.headers ? `Headers: ${ApiDefinitionInput(d.headers)}` : '',
+      d.params ? `Params: ${generateApiField(d.params)}` : '',
+      d.query ? `Querystring: ${generateApiField(d.query)}` : '',
+      d.body ? `Body: ${generateApiField(d.body)}` : '',
+      d.headers ? `Headers: ${generateApiField(d.headers)}` : '',
     ]
       .filter((x) => !!x)
       .join(',')}
@@ -178,18 +94,8 @@ const generateFastify = (ast: Ast) => {
 
     type MaybePromise<T> = Promise<T> | T;
 
-    ${getDeclarations(ast)
-      .map((d) => {
-        if (d.variableType === 'Object') {
-          return `export type ${d.name} = {
-            ${d.fields.map(field).join('\n')}
-          }`;
-        }
-        if (d.variableType === 'Union') {
-          return `export type ${d.name} = ${d.unions.map(union).join(' | ')}`;
-        }
-      })
-      .join('\n')}
+    ${generateDeclarations(getDeclarations(ast))}
+
     export type Api<T = any> = {
     ${getApiDefinitions(ast)
       .map((d) => {
