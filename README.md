@@ -106,28 +106,18 @@ fastify.register(RestPlugin, {
 ```
 This uses [fastify](https://www.fastify.io/) underneath but could in theory use any framework.
 
-A more complete (but WIP) example can be seen in [fastifyExample](https://github.com/Cowboy-coder/schema-first-rest/tree/master/fastifyExample).
+A more complete (but WIP) example can be seen in [fastifyExample](https://github.com/Cowboy-coder/schema-first-rest/tree/master/src/fastifyExample).
 
 ### CLI
 
-```
-Usage: Cli [options] <input-file> <output-file>
-
-generate fastify plugin
-
-Arguments:
-  input-file   api schema file
-  output-file  generated typescript file
-
-Options:
-  -w --watch   watch for changes (default: false)
-  -h, --help   display help for command
-```
+Can be used to generate a Fastify Plugin. Also supports merging multiple schemas into one, if needed. Supports watch-mode.
 
 For example
 
 ```
-./node_modules/.bin/ts-node Cli.ts --watch ./fastifyExample/api.schema ./fastifyExample/generated.ts 
+./node_modules/.bin/ts-node-dev src/Cli.ts --watch src/fastifyExample/generated.ts src/fastifyExample/schemas/**.schema
 ```
+
+Would start a watch process on all schema files in `./src/fastifyExample/schemas` and generate a FastifyPlugin `./src/fastifyExample/generated.ts`.
 
 🐄

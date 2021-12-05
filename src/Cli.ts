@@ -9,7 +9,7 @@ import PrettyError from './PrettyError';
 program
   .description('generate fastify plugin')
   .argument('<output-file>', 'generated typescript file')
-  .argument('<input-file...>', '1 or more api schema files. Will be merged into 1.')
+  .argument('<input-file...>', 'One or more api schema files. Will be merged into one schema if several files.')
   .option('-w --watch', 'watch for changes', false)
   .action(async (outputFile: string, inputFiles: string[], { watch }: { watch: boolean }) => {
     const generate = (exit = false) => {
