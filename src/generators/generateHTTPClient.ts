@@ -70,7 +70,7 @@ const generateHTTPClient = (ast: Ast) => {
 
   const api = createApiClient({ baseURL: 'x' });
   async () => {
-    const user = await api.user(1, {
+    const user = await api.getUser(1, {
       body: { x: '' },
     });
   };

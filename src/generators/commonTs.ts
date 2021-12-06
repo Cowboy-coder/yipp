@@ -1,6 +1,5 @@
 import {
   ApiFieldDefinition,
-  ApiParamsDefinition,
   BooleanLiteral,
   BooleanVariable,
   FloatLiteral,
@@ -8,7 +7,6 @@ import {
   IntLiteral,
   IntVariable,
   ObjectField,
-  ParamsField,
   StringLiteral,
   StringVariable,
   TypeDeclaration,
@@ -56,10 +54,9 @@ const generateUnionItem = (union: UnionItem) => {
   return union.variableType === 'Object' ? generateFields(union.fields) : generateType(union);
 };
 
-const field = (field: ObjectField | ParamsField) => {
-  if (field.type === 'ParamsField') {
-    return `"${field.name}":${generateType(field)}`;
-  }
+const field = (field: ObjectField) => {
+  field.variableType;
+
   return `"${field.name}"${field.isRequired ? ':' : '?:'} ${
     field.variableType === 'Object'
       ? generateFields(field.fields)
@@ -71,18 +68,15 @@ const field = (field: ObjectField | ParamsField) => {
   }`;
 };
 
-const generateFields = (fields: ObjectField[] | ParamsField[]): string => {
+const generateFields = (fields: ObjectField[]): string => {
   return `{
     ${fields.map(field).join('\n')}
   }`;
 };
 
-export const generateApiField = (d: ApiFieldDefinition | ApiParamsDefinition | undefined) => {
+export const generateApiField = (d: ApiFieldDefinition) => {
   if (d === undefined) {
     return 'undefined';
-  }
-  if (d.type === 'ParamsDefinition') {
-    return generateFields(d.fields);
   }
   return `${
     d.variableType === 'Object'

@@ -34,27 +34,29 @@ describe(ApiParser, () => {
           method: 'GET',
           path: '/users/:id/:id2/:id3',
           params: {
-            type: 'ParamsDefinition',
+            variableType: 'Object',
             fields: [
               {
-                type: 'ParamsField',
+                type: 'ObjectField',
                 name: 'id',
                 variableType: 'String',
+                isRequired: true,
               },
               {
-                type: 'ParamsField',
+                type: 'ObjectField',
                 name: 'id2',
                 variableType: 'Int',
+                isRequired: true,
               },
               {
-                type: 'ParamsField',
+                type: 'ObjectField',
                 name: 'id3',
                 variableType: 'Float',
+                isRequired: true,
               },
             ],
           },
           body: {
-            type: 'ApiFieldDefinition',
             variableType: 'Object',
             fields: [
               {
@@ -143,7 +145,6 @@ describe(ApiParser, () => {
               type: 'ApiResponseDefinition',
               status: 200,
               body: {
-                type: 'ApiFieldDefinition',
                 variableType: 'Object',
                 fields: [
                   {
@@ -183,7 +184,6 @@ describe(ApiParser, () => {
               type: 'ApiResponseDefinition',
               status: 200,
               body: {
-                type: 'ApiFieldDefinition',
                 variableType: 'Object',
                 fields: [
                   {
@@ -271,17 +271,17 @@ describe(ApiParser, () => {
           method: 'PUT',
           path: '/users/:id',
           params: {
-            type: 'ParamsDefinition',
+            variableType: 'Object',
             fields: [
               {
-                type: 'ParamsField',
+                type: 'ObjectField',
                 name: 'id',
                 variableType: 'String',
+                isRequired: true,
               },
             ],
           },
           query: {
-            type: 'ApiFieldDefinition',
             variableType: 'Object',
             fields: [
               {
@@ -293,7 +293,6 @@ describe(ApiParser, () => {
             ],
           },
           body: {
-            type: 'ApiFieldDefinition',
             variableType: 'Object',
             fields: [
               {
@@ -338,7 +337,6 @@ describe(ApiParser, () => {
             ],
           },
           headers: {
-            type: 'ApiFieldDefinition',
             variableType: 'Object',
             fields: [
               {
@@ -354,7 +352,6 @@ describe(ApiParser, () => {
               type: 'ApiResponseDefinition',
               status: 200,
               body: {
-                type: 'ApiFieldDefinition',
                 variableType: 'Object',
                 fields: [
                   {
@@ -366,7 +363,6 @@ describe(ApiParser, () => {
                 ],
               },
               headers: {
-                type: 'ApiFieldDefinition',
                 variableType: 'Object',
                 fields: [
                   {
@@ -425,17 +421,17 @@ describe(ApiParser, () => {
           method: 'DELETE',
           path: '/users/:id',
           params: {
-            type: 'ParamsDefinition',
+            variableType: 'Object',
             fields: [
               {
-                type: 'ParamsField',
+                type: 'ObjectField',
                 name: 'id',
                 variableType: 'String',
+                isRequired: true,
               },
             ],
           },
           query: {
-            type: 'ApiFieldDefinition',
             variableType: 'TypeReference',
             value: 'UserFilterQuery',
           },
@@ -444,7 +440,6 @@ describe(ApiParser, () => {
               type: 'ApiResponseDefinition',
               status: 200,
               body: {
-                type: 'ApiFieldDefinition',
                 variableType: 'TypeReference',
                 value: 'User',
               },
@@ -453,7 +448,6 @@ describe(ApiParser, () => {
               type: 'ApiResponseDefinition',
               status: 404,
               body: {
-                type: 'ApiFieldDefinition',
                 variableType: 'Object',
                 fields: [
                   {
@@ -493,12 +487,13 @@ describe(ApiParser, () => {
           method: 'HEAD',
           path: '/users/:ids',
           params: {
-            type: 'ParamsDefinition',
+            variableType: 'Object',
             fields: [
               {
-                type: 'ParamsField',
+                type: 'ObjectField',
                 name: 'ids',
                 variableType: 'String',
+                isRequired: true,
               },
             ],
           },
@@ -507,7 +502,6 @@ describe(ApiParser, () => {
               type: 'ApiResponseDefinition',
               status: 200,
               body: {
-                type: 'ApiFieldDefinition',
                 variableType: 'Object',
                 fields: [
                   {
@@ -527,7 +521,6 @@ describe(ApiParser, () => {
               type: 'ApiResponseDefinition',
               status: 404,
               body: {
-                type: 'ApiFieldDefinition',
                 variableType: 'Array',
                 items: {
                   variableType: 'TypeReference',
@@ -659,7 +652,6 @@ describe(ApiParser, () => {
           method: 'POST',
           path: '/users',
           body: {
-            type: 'ApiFieldDefinition',
             variableType: 'Object',
             fields: [
               {
@@ -682,7 +674,6 @@ describe(ApiParser, () => {
               type: 'ApiResponseDefinition',
               status: 200,
               body: {
-                type: 'ApiFieldDefinition',
                 variableType: 'Object',
                 fields: [
                   {

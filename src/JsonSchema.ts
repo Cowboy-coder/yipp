@@ -1,18 +1,22 @@
 import { JSONSchema7, JSONSchema7Definition } from 'json-schema';
 import {
   ApiFieldDefinition,
-  ApiParamsDefinition,
   ArrayItem,
+  ArrayVariable,
   Ast,
   ObjectField,
-  ParamsField,
+  ObjectVariable,
+  TypeReference,
   UnionItem,
+  UnionVariable,
 } from './ApiParser';
 import { getApiDefinitions, getDeclarations } from './AstQuery';
 
 export const schemaId = (str: string) => `https://example.com/#${str}`;
 
-const fieldSchema = (field: ObjectField | UnionItem | ArrayItem | ParamsField): JSONSchema7Definition => {
+const fieldSchema = (
+  field: ObjectField | ObjectVariable | TypeReference | ArrayVariable | ArrayItem | UnionVariable | UnionItem,
+): JSONSchema7Definition => {
   if (field.variableType === 'Object') {
     const properties: {
       [key: string]: JSONSchema7Definition;
@@ -80,30 +84,14 @@ const fieldSchema = (field: ObjectField | UnionItem | ArrayItem | ParamsField): 
   throw new Error(`Unsupported field`);
 };
 
-const apiFieldDefinitionSchema = (
-  $id: string,
-  d: ApiFieldDefinition | ApiParamsDefinition | undefined,
-): JSONSchema7 => {
+const apiFieldDefinitionSchema = ($id: string, d: ApiFieldDefinition): JSONSchema7 => {
   if (d === undefined) {
     return {
       $id,
       type: 'null',
     };
   }
-  if (d.type === 'ParamsDefinition') {
-    const properties: {
-      [key: string]: JSONSchema7Definition;
-    } = {};
-    d.fields.forEach((field) => {
-      properties[field.name] = fieldSchema(field);
-    });
-    return {
-      $id,
-      type: 'object',
-      properties,
-      required: d.fields.map((f) => f.name),
-    } as JSONSchema7;
-  } else if (d.variableType === 'Object') {
+  if (d.variableType === 'Object') {
     const properties: {
       [key: string]: JSONSchema7Definition;
     } = {};

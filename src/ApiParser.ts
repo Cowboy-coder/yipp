@@ -22,71 +22,82 @@ export type IntLiteral = { variableType: 'IntLiteral'; value: number };
 export type FloatLiteral = { variableType: 'FloatLiteral'; value: number };
 export type StringLiteral = { variableType: 'StringLiteral'; value: string };
 export type BooleanLiteral = { variableType: 'BooleanLiteral'; value: boolean };
-export type TypeReference = { variableType: 'TypeReference'; value: string };
 export type Builtin =
-  | IntVariable
-  | FloatVariable
-  | StringVariable
-  | BooleanVariable
-  | IntLiteral
-  | FloatLiteral
-  | StringLiteral
   | BooleanLiteral
-  | TypeReference;
+  | BooleanVariable
+  | FloatLiteral
+  | FloatVariable
+  | IntLiteral
+  | IntVariable
+  | StringLiteral
+  | StringVariable;
 
-export type ObjectField = {
-  type: 'ObjectField';
-  name: string;
-  isRequired: boolean;
-} & (Builtin | UnionVariable | ArrayVariable | ObjectVariable);
-
-export type ObjectVariable = { variableType: 'Object'; fields: ObjectField[] };
-
-export type UnionItem = {
+type defaultUnion = Builtin | TypeReference | ObjectVariable;
+export type UnionItem<T = defaultUnion> = {
   type: 'UnionItem';
-} & (Builtin | ObjectVariable);
+} & T;
 
-export type UnionVariable = {
+export type UnionVariable<T = defaultUnion> = {
   variableType: 'Union';
-  unions: UnionItem[];
+  unions: UnionItem<T>[];
 };
 
-export type ArrayItem = {
+export type ArrayItem<T = Builtin | TypeReference> = {
   isRequired: boolean;
-} & Builtin;
-export type ArrayVariable = { variableType: 'Array'; items: ArrayItem };
+} & T;
 
-export type ApiFieldDefinition = {
-  type: 'ApiFieldDefinition';
-} & (ObjectVariable | ArrayVariable | TypeReference);
+export type ArrayVariable<T = Builtin | TypeReference> = { variableType: 'Array'; items: ArrayItem<T> };
 
 export type ApiResponseDefinition = {
   type: 'ApiResponseDefinition';
   status: number;
-  body?: ApiFieldDefinition;
-  headers?: ApiFieldDefinition;
+  body?: BodyType;
+  headers?: HeaderType;
 };
 
-export type ParamsField = {
-  type: 'ParamsField';
+type defaultFields = Builtin | TypeReference | UnionVariable | ArrayVariable;
+
+export type ObjectField<T = RecursiveObject<defaultFields>> = {
+  type: 'ObjectField';
   name: string;
-} & (IntVariable | FloatVariable | StringVariable);
+  isRequired: boolean;
+} & T;
 
-export type ApiParamsDefinition = {
-  type: 'ParamsDefinition';
-  fields: ParamsField[];
-};
+export interface ObjectVariable<T = RecursiveObject<defaultFields>> {
+  variableType: 'Object';
+  fields: ObjectField<T>[];
+}
+
+type ObjectOrTypeReference<T> = ObjectVariable<T> | TypeReference;
 
 export type ApiMethod = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE' | 'HEAD';
+
+type ParamsFieldType = ObjectField<IntVariable | FloatVariable | StringVariable>;
+type ParamsType = ObjectVariable<IntVariable | FloatVariable | StringVariable>;
+
+type RecursiveObject<T> = T | ObjectVariable<RecursiveObject<T>>;
+
+export type TypeReference = {
+  variableType: 'TypeReference';
+  value: string;
+};
+
+type QueryType = ObjectOrTypeReference<IntVariable | FloatVariable | StringVariable>;
+type HeaderType = ObjectOrTypeReference<StringVariable | StringLiteral>;
+
+export type ApiFieldDefinition = HeaderType | QueryType | ParamsType | BodyType | undefined;
+
+type BodyType = TypeReference | ArrayVariable | ObjectVariable;
+
 export type ApiDefinition = {
   type: 'ApiDefinition';
   name: string;
   method: ApiMethod;
   path: string;
-  params?: ApiParamsDefinition;
-  query?: ApiFieldDefinition;
-  body?: ApiFieldDefinition;
-  headers?: ApiFieldDefinition;
+  params?: ParamsType;
+  query?: QueryType;
+  headers?: HeaderType;
+  body?: BodyType;
   responses: ApiResponseDefinition[];
 };
 
@@ -108,20 +119,6 @@ const isBuiltIn = (value: string): value is 'Int' | 'Float' | 'String' | 'Boolea
 
 const isApiMethod = (value: string): value is ApiMethod => {
   return ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'HEAD'].includes(value);
-};
-
-const getArrayItem = (value: string, isRequired: boolean): ArrayItem => {
-  if (isBuiltIn(value)) {
-    return {
-      variableType: value,
-      isRequired,
-    };
-  }
-  return {
-    variableType: 'TypeReference',
-    value,
-    isRequired,
-  };
 };
 
 export default class ApiParser {
@@ -172,11 +169,14 @@ export default class ApiParser {
     }
     this.eat('TYPE_DECLARATION');
     if (this.lookahead.type === '{') {
+      const x = this.simpleObjectOrTypeReference();
+      if (x.variableType !== 'Object') {
+        this.reportAndExit(this.lookahead, 'Type declarations can only be of Object type');
+      }
       return {
         type: 'TypeDeclaration',
         name: value.replace('type ', ''),
-        variableType: 'Object',
-        fields: this.Fields(),
+        ...x,
       };
     } else if (this.lookahead.type === '|') {
       return {
@@ -240,10 +240,13 @@ export default class ApiParser {
           });
         }
       } else if ((this.lookahead as Token).type === '{') {
+        const x = this.simpleObjectOrTypeReference();
+        if (x.variableType === 'Array') {
+          this.reportAndExit(this.lookahead, 'Arrays are not allowed inside of a union');
+        }
         unions.push({
           type: 'UnionItem',
-          variableType: 'Object',
-          fields: this.Fields(),
+          ...x,
         });
       }
     }
@@ -271,8 +274,8 @@ export default class ApiParser {
     this.eat('API_METHOD');
 
     let path = '';
-    let params: ApiParamsDefinition | undefined = undefined;
-    const paramFields: ParamsField[] = [];
+    let params: ParamsType | undefined = undefined;
+    const paramFields: ParamsFieldType[] = [];
 
     while (['API_PATH_INT', 'API_PATH_FLOAT', 'API_PATH_STRING', 'API_PATH_SEGMENT'].includes(this.lookahead.type)) {
       if (this.lookahead.type === 'API_PATH_SEGMENT') {
@@ -281,34 +284,37 @@ export default class ApiParser {
       } else if (this.lookahead.type === 'API_PATH_STRING') {
         path += this.lookahead.value;
         paramFields.push({
-          type: 'ParamsField',
+          type: 'ObjectField',
           name: this.lookahead.value.replace('/:', ''),
           variableType: 'String',
+          isRequired: true,
         });
         this.eat('API_PATH_STRING');
       } else if (this.lookahead.type === 'API_PATH_INT') {
         const name = this.lookahead.value.replace(/\/:(\w+)\(Int\)/, '$1');
         path += `/:${name}`;
         paramFields.push({
-          type: 'ParamsField',
+          type: 'ObjectField',
           name: name,
           variableType: 'Int',
+          isRequired: true,
         });
         this.eat('API_PATH_INT');
       } else if (this.lookahead.type === 'API_PATH_FLOAT') {
         const name = this.lookahead.value.replace(/\/:(\w+)\(Float\)/, '$1');
         path += `/:${name}`;
         paramFields.push({
-          type: 'ParamsField',
+          type: 'ObjectField',
           name,
           variableType: 'Float',
+          isRequired: true,
         });
         this.eat('API_PATH_FLOAT');
       }
     }
     if (paramFields.length > 0) {
       params = {
-        type: 'ParamsDefinition',
+        variableType: 'Object',
         fields: paramFields,
       };
     }
@@ -319,24 +325,24 @@ export default class ApiParser {
 
     this.eat('{');
 
-    let query = undefined;
-    let body = undefined;
-    let headers = undefined;
+    let query: QueryType | undefined = undefined;
+    let body: BodyType | undefined = undefined;
+    let headers: HeaderType | undefined = undefined;
 
     while (this.lookahead.type && ['API_QUERY', 'API_BODY', 'API_HEADERS'].includes(this.lookahead.type)) {
       if ((this.lookahead as Token).type === 'API_QUERY') {
         this.eat('API_QUERY');
-        query = this.ApiFieldDefinition();
+        query = this.simpleObjectOrTypeReference() as QueryType; // could possible be invalid but will be after the whole AST is parsed
       }
 
       if ((this.lookahead as Token).type === 'API_BODY') {
         this.eat('API_BODY');
-        body = this.ApiFieldDefinition();
+        body = this.simpleObjectOrTypeReference();
       }
 
       if ((this.lookahead as Token).type === 'API_HEADERS') {
         this.eat('API_HEADERS');
-        headers = this.ApiFieldDefinition();
+        headers = this.simpleObjectOrTypeReference() as HeaderType; // could possible be invalid but will be after the whole AST is parsed
       }
     }
 
@@ -356,206 +362,161 @@ export default class ApiParser {
     };
   }
 
-  private ApiFieldDefinition(): ApiFieldDefinition {
-    if (this.lookahead.type === '{') {
-      return {
-        type: 'ApiFieldDefinition',
-        variableType: 'Object',
-        fields: this.Fields(),
-      } as const;
-    } else if (this.lookahead.type === 'VARIABLE_TYPE' || this.lookahead.type === '[') {
-      if (this.lookahead.type === '[') {
-        this.eat('[');
-
-        const variableType = this.lookahead.value;
-        this.eat('VARIABLE_TYPE');
-
-        const isItemRequired = (this.lookahead as Token).type === '!';
-        if (isItemRequired) {
-          this.eat('!');
-        }
-
-        this.eat(']');
-
-        return {
-          type: 'ApiFieldDefinition',
-          variableType: 'Array',
-          items: getArrayItem(variableType, isItemRequired),
-        } as const;
-      }
-      const value = this.lookahead.value;
-      if (value === undefined) {
-        this.reportAndExit(this.lookahead, 'Unsupported FieldReference value');
-      }
-      this.eat('VARIABLE_TYPE');
-      const result = {
-        type: 'ApiFieldDefinition',
-        variableType: 'TypeReference',
-        value,
-      } as const;
-      if (this.lookahead.value === '!') {
-        this.reportAndExit(
-          this.lookahead,
-          '! is not allowed because `params`, `body`, `query` or `headers` are always required if specified',
-        );
-      }
-      return result;
+  private isRequired(): boolean {
+    if (this.lookahead.type === '!') {
+      this.eat('!');
+      return true;
     } else {
-      this.reportAndExit(this.lookahead, 'Unsupported token found in ApiFieldDefinition');
+      return false;
     }
   }
-
-  private Fields(): ObjectField[] {
+  private simpleObjectOrTypeReference(): ObjectVariable | ArrayVariable | TypeReference {
+    if (this.lookahead.type === '[') {
+      this.eat('[');
+      const value = this.lookahead.value;
+      this.eat('VARIABLE_TYPE');
+      const isRequired = this.isRequired();
+      this.eat(']');
+      if (isBuiltIn(value)) {
+        return {
+          variableType: 'Array',
+          items: {
+            variableType: value,
+            isRequired,
+          },
+        };
+      } else {
+        return {
+          variableType: 'Array',
+          items: {
+            variableType: 'TypeReference',
+            value,
+            isRequired,
+          },
+        };
+      }
+    }
+    if (this.lookahead.type === 'VARIABLE_TYPE') {
+      const value = this.lookahead.value;
+      this.eat('VARIABLE_TYPE');
+      return {
+        variableType: 'TypeReference',
+        value,
+      };
+    }
     this.eat('{');
-    const variables: ObjectField[] = [];
+    const fields: ObjectField[] = [];
     while (this.lookahead.type === 'WORD_WITH_COLON') {
       const name = this.lookahead.value.slice(0, -1);
       this.eat('WORD_WITH_COLON');
 
-      if ((this.lookahead as Token).type === '[') {
-        this.eat('[');
-
-        const variableType = this.lookahead.value;
-        this.eat('VARIABLE_TYPE');
-
-        const isItemRequired = (this.lookahead as Token).type === '!';
-        if (isItemRequired) {
-          this.eat('!');
+      switch ((this.lookahead as Token).type) {
+        case '|': {
+          const u = this.Unions();
+          u.filter((x) => x.variableType);
+          fields.push({
+            type: 'ObjectField',
+            name,
+            variableType: 'Union',
+            unions: u,
+            isRequired: this.isRequired(),
+          });
+          break;
         }
-        this.eat(']');
-
-        const isRequired = (this.lookahead as Token).type === '!';
-        if (isRequired) {
-          this.eat('!');
-        }
-
-        variables.push({
-          type: 'ObjectField',
-          name,
-          variableType: 'Array',
-          isRequired,
-          items: getArrayItem(variableType, isItemRequired),
-        });
-      } else if (
-        this.lookahead &&
-        ['VARIABLE_TYPE', 'STRING_LITERAL', 'BOOLEAN_LITERAL', 'INT_LITERAL', 'FLOAT_LITERAL'].includes(
-          this.lookahead.type,
-        )
-      ) {
-        const value = this.lookahead.value;
-        if ((this.lookahead as Token).type === 'VARIABLE_TYPE') {
-          this.eat('VARIABLE_TYPE');
-          const isRequired = (this.lookahead as Token).type === '!';
-          if (isRequired) {
-            this.eat('!');
-          }
-          if (isBuiltIn(value)) {
-            variables.push({
-              type: 'ObjectField',
-              name,
-              variableType: value,
-              isRequired,
-            });
-          } else {
-            variables.push({
-              type: 'ObjectField',
-              name,
-              variableType: 'TypeReference',
-              value: value,
-              isRequired,
-            });
-          }
-        } else if ((this.lookahead as Token).type === 'STRING_LITERAL') {
+        case 'STRING_LITERAL': {
+          const value = this.lookahead.value.slice(0, -1).slice(1);
           this.eat('STRING_LITERAL');
-          const isRequired = (this.lookahead as Token).type === '!';
-          if (isRequired) {
-            this.eat('!');
-          }
-          variables.push({
+          fields.push({
             type: 'ObjectField',
             name,
             variableType: 'StringLiteral',
-            value: value.slice(0, -1).slice(1),
-            isRequired,
+            value,
+            isRequired: this.isRequired(),
           });
-        } else if ((this.lookahead as Token).type === 'BOOLEAN_LITERAL') {
-          this.eat('BOOLEAN_LITERAL');
-          const isRequired = (this.lookahead as Token).type === '!';
-          if (isRequired) {
-            this.eat('!');
-          }
-          variables.push({
-            type: 'ObjectField',
-            name,
-            variableType: 'BooleanLiteral',
-            value: value === 'true',
-            isRequired,
-          });
-        } else if ((this.lookahead as Token).type === 'INT_LITERAL') {
+          break;
+        }
+        case 'INT_LITERAL': {
+          const value = Number(this.lookahead.value);
           this.eat('INT_LITERAL');
-          const isRequired = (this.lookahead as Token).type === '!';
-          if (isRequired) {
-            this.eat('!');
-          }
-
-          variables.push({
+          fields.push({
             type: 'ObjectField',
             name,
             variableType: 'IntLiteral',
-            value: Number(value),
-            isRequired,
+            value,
+            isRequired: this.isRequired(),
           });
-        } else if ((this.lookahead as Token).type === 'FLOAT_LITERAL') {
+          break;
+        }
+        case 'FLOAT_LITERAL': {
+          const value = Number(this.lookahead.value);
           this.eat('FLOAT_LITERAL');
-          const isRequired = (this.lookahead as Token).type === '!';
-          if (isRequired) {
-            this.eat('!');
-          }
-
-          variables.push({
+          fields.push({
             type: 'ObjectField',
             name,
             variableType: 'FloatLiteral',
-            value: Number(value),
-            isRequired,
+            value,
+            isRequired: this.isRequired(),
           });
-        } else {
-          this.reportAndExit(this.lookahead, 'Unexpected token found in Object field');
+          break;
         }
-      } else if ((this.lookahead as Token).type === '{') {
-        // nested field
-        const fields = this.Fields();
-        const isRequired = (this.lookahead as Token).type === '!';
-        if (isRequired) {
-          this.eat('!');
+        case 'BOOLEAN_LITERAL': {
+          const value = this.lookahead.value === 'true';
+          this.eat('BOOLEAN_LITERAL');
+          fields.push({
+            type: 'ObjectField',
+            name,
+            variableType: 'BooleanLiteral',
+            value,
+            isRequired: this.isRequired(),
+          });
+          break;
         }
-        variables.push({
-          type: 'ObjectField',
-          name,
-          variableType: 'Object',
-          fields,
-          isRequired,
-        });
-      } else if ((this.lookahead as Token).type === '|') {
-        // union field
-        const unions = this.Unions();
-        const isRequired = (this.lookahead as Token).type === '!';
-        if (isRequired) {
-          this.eat('!');
+        case 'VARIABLE_TYPE': {
+          const value = this.lookahead.value;
+          this.eat('VARIABLE_TYPE');
+          if (isBuiltIn(value)) {
+            fields.push({
+              type: 'ObjectField',
+              name,
+              variableType: value,
+              isRequired: this.isRequired(),
+            });
+          } else {
+            fields.push({
+              type: 'ObjectField',
+              name,
+              variableType: 'TypeReference',
+              value,
+              isRequired: this.isRequired(),
+            });
+          }
+          break;
         }
-        variables.push({
-          type: 'ObjectField',
-          name,
-          variableType: 'Union',
-          unions,
-          isRequired,
-        });
-      } else {
-        this.reportAndExit(this.lookahead, 'Unexpected field variable found');
+        case '{': {
+          fields.push({
+            type: 'ObjectField',
+            name,
+            ...this.simpleObjectOrTypeReference(),
+            isRequired: this.isRequired(),
+          });
+          break;
+        }
+        case '[': {
+          fields.push({
+            type: 'ObjectField',
+            name,
+            ...this.simpleObjectOrTypeReference(),
+            isRequired: this.isRequired(),
+          });
+          break;
+        }
       }
     }
     this.eat('}');
-    return variables;
+    return {
+      variableType: 'Object',
+      fields,
+    };
   }
 
   private Responses(): ApiResponseDefinition[] {
@@ -568,17 +529,17 @@ export default class ApiParser {
       this.eat('API_STATUS');
       this.eat('{');
 
-      let body = undefined;
-      let headers = undefined;
+      let body: BodyType | undefined = undefined;
+      let headers: HeaderType | undefined = undefined;
       while (['API_BODY', 'API_HEADERS'].includes(this.lookahead.type)) {
         if ((this.lookahead as Token).type === 'API_BODY') {
           this.eat('API_BODY');
-          body = this.ApiFieldDefinition();
+          body = this.simpleObjectOrTypeReference();
         }
 
         if ((this.lookahead as Token).type === 'API_HEADERS') {
           this.eat('API_HEADERS');
-          headers = this.ApiFieldDefinition();
+          headers = this.simpleObjectOrTypeReference() as HeaderType; // could possible be invalid but will be after the whole AST is parsed
         }
       }
 

@@ -3,7 +3,7 @@ import ApiParser from './ApiParser';
 import JsonSchema from './JsonSchema';
 
 describe(JsonSchema, () => {
-  it.only('Different types', () => {
+  it('Different types', () => {
     const parser = new ApiParser();
     const program = `
     type Foo {
