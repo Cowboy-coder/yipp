@@ -71,6 +71,16 @@ export const JsonSchema = [
     required: ['id', 'username', 'age', 'type'],
   },
   {
+    $id: 'https://example.com/#health_200',
+    type: 'object',
+    properties: {
+      ok: {
+        const: 'ok',
+      },
+    },
+    required: ['ok'],
+  },
+  {
     $id: 'https://example.com/#login_body',
     type: 'object',
     properties: {
@@ -100,16 +110,6 @@ export const JsonSchema = [
   {
     $id: 'https://example.com/#logout_204',
     type: 'null',
-  },
-  {
-    $id: 'https://example.com/#health_200',
-    type: 'object',
-    properties: {
-      ok: {
-        const: 'ok',
-      },
-    },
-    required: ['ok'],
   },
   {
     $id: 'https://example.com/#getUsers_query',
@@ -227,6 +227,16 @@ export type User = {
 };
 
 export type Api<T = any> = {
+  health: (
+    req: {},
+    context: T,
+  ) => MaybePromise<{
+    code: 200;
+    body: {
+      ok: 'ok';
+    };
+  }>;
+
   login: (
     req: {
       body: {
@@ -252,16 +262,6 @@ export type Api<T = any> = {
     context: T,
   ) => MaybePromise<{
     code: 204;
-  }>;
-
-  health: (
-    req: {},
-    context: T,
-  ) => MaybePromise<{
-    code: 200;
-    body: {
-      ok: 'ok';
-    };
   }>;
 
   getUsers: (
@@ -340,6 +340,27 @@ const RestPlugin: FastifyPluginAsync<{ routes: Api; setContext: (req: FastifyReq
   });
   JsonSchema.forEach((schema) => fastify.addSchema(schema));
 
+  fastify.get<{}>(
+    '/health',
+    {
+      schema: {
+        response: { '200': { $ref: 'https://example.com/#health_200' } },
+      },
+    },
+    async (req, reply) => {
+      const response = await options.routes.health({}, (req as any).restplugin_context);
+
+      if ('headers' in response && (response as any).headers) {
+        reply.headers((response as any).headers);
+      }
+
+      reply.code(response.code);
+      if ('body' in response && (response as any).body) {
+        reply.send((response as any).body);
+      }
+    },
+  );
+
   fastify.post<{
     Body: {
       username: string;
@@ -384,27 +405,6 @@ const RestPlugin: FastifyPluginAsync<{ routes: Api; setContext: (req: FastifyReq
     },
     async (req, reply) => {
       const response = await options.routes.logout({}, (req as any).restplugin_context);
-
-      if ('headers' in response && (response as any).headers) {
-        reply.headers((response as any).headers);
-      }
-
-      reply.code(response.code);
-      if ('body' in response && (response as any).body) {
-        reply.send((response as any).body);
-      }
-    },
-  );
-
-  fastify.get<{}>(
-    '/health',
-    {
-      schema: {
-        response: { '200': { $ref: 'https://example.com/#health_200' } },
-      },
-    },
-    async (req, reply) => {
-      const response = await options.routes.health({}, (req as any).restplugin_context);
 
       if ('headers' in response && (response as any).headers) {
         reply.headers((response as any).headers);

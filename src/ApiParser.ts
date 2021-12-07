@@ -1,3 +1,4 @@
+import AnalyzeAst from './AnalyzeAst';
 import ApiTokenizer, { Token } from './ApiTokenizer';
 
 export class ApiSyntaxError extends Error {
@@ -14,14 +15,14 @@ export class ApiSyntaxError extends Error {
   }
 }
 
-export type IntVariable = { variableType: 'Int' };
-export type FloatVariable = { variableType: 'Float' };
-export type StringVariable = { variableType: 'String' };
-export type BooleanVariable = { variableType: 'Boolean' };
-export type IntLiteral = { variableType: 'IntLiteral'; value: number };
-export type FloatLiteral = { variableType: 'FloatLiteral'; value: number };
-export type StringLiteral = { variableType: 'StringLiteral'; value: string };
-export type BooleanLiteral = { variableType: 'BooleanLiteral'; value: boolean };
+export type IntVariable = { variableType: 'Int'; token: Token };
+export type FloatVariable = { variableType: 'Float'; token: Token };
+export type StringVariable = { variableType: 'String'; token: Token };
+export type BooleanVariable = { variableType: 'Boolean'; token: Token };
+export type IntLiteral = { variableType: 'IntLiteral'; value: number; token: Token };
+export type FloatLiteral = { variableType: 'FloatLiteral'; value: number; token: Token };
+export type StringLiteral = { variableType: 'StringLiteral'; value: string; token: Token };
+export type BooleanLiteral = { variableType: 'BooleanLiteral'; value: boolean; token: Token };
 export type Builtin =
   | BooleanLiteral
   | BooleanVariable
@@ -35,24 +36,32 @@ export type Builtin =
 type defaultUnion = Builtin | TypeReference | ObjectVariable;
 export type UnionItem<T = defaultUnion> = {
   type: 'UnionItem';
+  token: Token;
 } & T;
 
 export type UnionVariable<T = defaultUnion> = {
   variableType: 'Union';
   unions: UnionItem<T>[];
+  token: Token;
 };
 
 export type ArrayItem<T = Builtin | TypeReference> = {
   isRequired: boolean;
+  token: Token;
 } & T;
 
-export type ArrayVariable<T = Builtin | TypeReference> = { variableType: 'Array'; items: ArrayItem<T> };
+export type ArrayVariable<T = Builtin | TypeReference> = {
+  variableType: 'Array';
+  items: ArrayItem<T>;
+  token: Token;
+};
 
 export type ApiResponseDefinition = {
   type: 'ApiResponseDefinition';
   status: number;
   body?: BodyType;
   headers?: HeaderType;
+  token: Token;
 };
 
 type defaultFields = Builtin | TypeReference | UnionVariable | ArrayVariable;
@@ -61,11 +70,13 @@ export type ObjectField<T = RecursiveObject<defaultFields>> = {
   type: 'ObjectField';
   name: string;
   isRequired: boolean;
+  token: Token;
 } & T;
 
 export interface ObjectVariable<T = RecursiveObject<defaultFields>> {
   variableType: 'Object';
   fields: ObjectField<T>[];
+  token: Token;
 }
 
 type ObjectOrTypeReference<T> = ObjectVariable<T> | TypeReference;
@@ -80,14 +91,15 @@ type RecursiveObject<T> = T | ObjectVariable<RecursiveObject<T>>;
 export type TypeReference = {
   variableType: 'TypeReference';
   value: string;
+  token: Token;
 };
 
-type QueryType = ObjectOrTypeReference<IntVariable | FloatVariable | StringVariable>;
-type HeaderType = ObjectOrTypeReference<StringVariable | StringLiteral>;
+export type QueryType = ObjectOrTypeReference<IntVariable | FloatVariable | StringVariable>;
+export type HeaderType = ObjectOrTypeReference<StringVariable | StringLiteral>;
 
 export type ApiFieldDefinition = HeaderType | QueryType | ParamsType | BodyType | undefined;
 
-type BodyType = TypeReference | ArrayVariable | ObjectVariable;
+export type BodyType = TypeReference | ArrayVariable | ObjectVariable;
 
 export type ApiDefinition = {
   type: 'ApiDefinition';
@@ -139,10 +151,13 @@ export default class ApiParser {
   }
 
   Document(): Ast {
-    return {
-      type: 'Document',
-      definitions: this.Definitions(),
-    };
+    return AnalyzeAst(
+      {
+        type: 'Document',
+        definitions: this.Definitions(),
+      },
+      this.str,
+    );
   }
 
   Definitions(): Definition[] {
@@ -184,6 +199,7 @@ export default class ApiParser {
         name: value.replace('type ', ''),
         variableType: 'Union',
         unions: this.Unions(),
+        token: this.lookahead,
       };
     } else {
       this.reportAndExit(this.lookahead, '"{" or "|" required');
@@ -198,45 +214,56 @@ export default class ApiParser {
 
       const value = this.lookahead.value;
       if ((this.lookahead as Token).type === 'STRING_LITERAL') {
+        const token = this.lookahead;
         this.eat('STRING_LITERAL');
         unions.push({
           type: 'UnionItem',
           variableType: 'StringLiteral',
           value: value.slice(0, -1).slice(1),
+          token,
         });
       } else if ((this.lookahead as Token).type === 'BOOLEAN_LITERAL') {
+        const token = this.lookahead;
         this.eat('BOOLEAN_LITERAL');
         unions.push({
           type: 'UnionItem',
           variableType: 'BooleanLiteral',
           value: value === 'true',
+          token,
         });
       } else if ((this.lookahead as Token).type === 'INT_LITERAL') {
+        const token = this.lookahead;
         this.eat('INT_LITERAL');
         unions.push({
           type: 'UnionItem',
           variableType: 'IntLiteral',
           value: Number(value),
+          token,
         });
       } else if ((this.lookahead as Token).type === 'FLOAT_LITERAL') {
+        const token = this.lookahead;
         this.eat('FLOAT_LITERAL');
         unions.push({
           type: 'UnionItem',
           variableType: 'FloatLiteral',
           value: Number(value),
+          token,
         });
       } else if ((this.lookahead as Token).type === 'VARIABLE_TYPE') {
+        const token = this.lookahead;
         this.eat('VARIABLE_TYPE');
         if (isBuiltIn(value)) {
           unions.push({
             type: 'UnionItem',
             variableType: value,
+            token,
           });
         } else {
           unions.push({
             type: 'UnionItem',
             variableType: 'TypeReference',
             value,
+            token,
           });
         }
       } else if ((this.lookahead as Token).type === '{') {
@@ -277,6 +304,7 @@ export default class ApiParser {
     let params: ParamsType | undefined = undefined;
     const paramFields: ParamsFieldType[] = [];
 
+    const pathToken = this.lookahead;
     while (['API_PATH_INT', 'API_PATH_FLOAT', 'API_PATH_STRING', 'API_PATH_SEGMENT'].includes(this.lookahead.type)) {
       if (this.lookahead.type === 'API_PATH_SEGMENT') {
         path += this.lookahead.value;
@@ -288,6 +316,7 @@ export default class ApiParser {
           name: this.lookahead.value.replace('/:', ''),
           variableType: 'String',
           isRequired: true,
+          token: this.lookahead,
         });
         this.eat('API_PATH_STRING');
       } else if (this.lookahead.type === 'API_PATH_INT') {
@@ -298,6 +327,7 @@ export default class ApiParser {
           name: name,
           variableType: 'Int',
           isRequired: true,
+          token: this.lookahead,
         });
         this.eat('API_PATH_INT');
       } else if (this.lookahead.type === 'API_PATH_FLOAT') {
@@ -308,6 +338,7 @@ export default class ApiParser {
           name,
           variableType: 'Float',
           isRequired: true,
+          token: this.lookahead,
         });
         this.eat('API_PATH_FLOAT');
       }
@@ -316,6 +347,7 @@ export default class ApiParser {
       params = {
         variableType: 'Object',
         fields: paramFields,
+        token: pathToken,
       };
     }
 
@@ -372,7 +404,9 @@ export default class ApiParser {
   }
   private simpleObjectOrTypeReference(): ObjectVariable | ArrayVariable | TypeReference {
     if (this.lookahead.type === '[') {
+      const token = this.lookahead;
       this.eat('[');
+      const itemToken = this.lookahead;
       const value = this.lookahead.value;
       this.eat('VARIABLE_TYPE');
       const isRequired = this.isRequired();
@@ -383,7 +417,9 @@ export default class ApiParser {
           items: {
             variableType: value,
             isRequired,
+            token: itemToken,
           },
+          token,
         };
       } else {
         return {
@@ -392,18 +428,23 @@ export default class ApiParser {
             variableType: 'TypeReference',
             value,
             isRequired,
+            token: itemToken,
           },
+          token,
         };
       }
     }
     if (this.lookahead.type === 'VARIABLE_TYPE') {
       const value = this.lookahead.value;
+      const token = this.lookahead;
       this.eat('VARIABLE_TYPE');
       return {
         variableType: 'TypeReference',
         value,
+        token,
       };
     }
+    const token = this.lookahead;
     this.eat('{');
     const fields: ObjectField[] = [];
     while (this.lookahead.type === 'WORD_WITH_COLON') {
@@ -412,6 +453,7 @@ export default class ApiParser {
 
       switch ((this.lookahead as Token).type) {
         case '|': {
+          const token = this.lookahead;
           const u = this.Unions();
           u.filter((x) => x.variableType);
           fields.push({
@@ -420,11 +462,13 @@ export default class ApiParser {
             variableType: 'Union',
             unions: u,
             isRequired: this.isRequired(),
+            token,
           });
           break;
         }
         case 'STRING_LITERAL': {
           const value = this.lookahead.value.slice(0, -1).slice(1);
+          const token = this.lookahead;
           this.eat('STRING_LITERAL');
           fields.push({
             type: 'ObjectField',
@@ -432,11 +476,13 @@ export default class ApiParser {
             variableType: 'StringLiteral',
             value,
             isRequired: this.isRequired(),
+            token,
           });
           break;
         }
         case 'INT_LITERAL': {
           const value = Number(this.lookahead.value);
+          const token = this.lookahead;
           this.eat('INT_LITERAL');
           fields.push({
             type: 'ObjectField',
@@ -444,11 +490,13 @@ export default class ApiParser {
             variableType: 'IntLiteral',
             value,
             isRequired: this.isRequired(),
+            token,
           });
           break;
         }
         case 'FLOAT_LITERAL': {
           const value = Number(this.lookahead.value);
+          const token = this.lookahead;
           this.eat('FLOAT_LITERAL');
           fields.push({
             type: 'ObjectField',
@@ -456,11 +504,13 @@ export default class ApiParser {
             variableType: 'FloatLiteral',
             value,
             isRequired: this.isRequired(),
+            token,
           });
           break;
         }
         case 'BOOLEAN_LITERAL': {
           const value = this.lookahead.value === 'true';
+          const token = this.lookahead;
           this.eat('BOOLEAN_LITERAL');
           fields.push({
             type: 'ObjectField',
@@ -468,11 +518,13 @@ export default class ApiParser {
             variableType: 'BooleanLiteral',
             value,
             isRequired: this.isRequired(),
+            token,
           });
           break;
         }
         case 'VARIABLE_TYPE': {
           const value = this.lookahead.value;
+          const token = this.lookahead;
           this.eat('VARIABLE_TYPE');
           if (isBuiltIn(value)) {
             fields.push({
@@ -480,6 +532,7 @@ export default class ApiParser {
               name,
               variableType: value,
               isRequired: this.isRequired(),
+              token,
             });
           } else {
             fields.push({
@@ -488,6 +541,7 @@ export default class ApiParser {
               variableType: 'TypeReference',
               value,
               isRequired: this.isRequired(),
+              token,
             });
           }
           break;
@@ -516,6 +570,7 @@ export default class ApiParser {
     return {
       variableType: 'Object',
       fields,
+      token,
     };
   }
 
@@ -525,6 +580,7 @@ export default class ApiParser {
     }
     const responses: ApiResponseDefinition[] = [];
     while (this.lookahead.type === 'API_STATUS') {
+      const token = this.lookahead;
       const status = Number(this.lookahead.value.slice(0, -1));
       this.eat('API_STATUS');
       this.eat('{');
@@ -556,6 +612,7 @@ export default class ApiParser {
         status,
         body,
         headers,
+        token,
       });
     }
     return responses;

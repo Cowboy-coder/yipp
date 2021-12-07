@@ -1,4 +1,4 @@
-import ApiParser, { Ast } from './ApiParser';
+import ApiParser from './ApiParser';
 
 describe(ApiParser, () => {
   it('ApiDefinition with different types', () => {
@@ -25,7 +25,7 @@ describe(ApiParser, () => {
         } 
       } # and even more
     }`;
-    expect(parser.parse(program)).toEqual<Ast>({
+    expect(parser.parse(program)).toMatchObject({
       type: 'Document',
       definitions: [
         {
@@ -171,7 +171,7 @@ describe(ApiParser, () => {
         }
       }
     }`;
-    expect(parser.parse(program)).toEqual<Ast>({
+    expect(parser.parse(program)).toMatchObject({
       type: 'Document',
       definitions: [
         {
@@ -235,7 +235,7 @@ describe(ApiParser, () => {
         }
       }
     }`;
-    expect(parser.parse(program)).toEqual<Ast>({
+    expect(parser.parse(program)).toMatchObject({
       type: 'Document',
       definitions: [
         {
@@ -387,6 +387,9 @@ describe(ApiParser, () => {
     type User {
       id: String!
     }
+    type UserFilterQuery {
+      filter: Float
+    }
 
     deleteUser: DELETE /users/:id {
       query: UserFilterQuery
@@ -399,7 +402,7 @@ describe(ApiParser, () => {
         }
       }
     }`;
-    expect(parser.parse(program)).toEqual<Ast>({
+    expect(parser.parse(program)).toMatchObject({
       type: 'Document',
       definitions: [
         {
@@ -412,6 +415,19 @@ describe(ApiParser, () => {
               name: 'id',
               variableType: 'String',
               isRequired: true,
+            },
+          ],
+        },
+        {
+          type: 'TypeDeclaration',
+          name: 'UserFilterQuery',
+          variableType: 'Object',
+          fields: [
+            {
+              type: 'ObjectField',
+              name: 'filter',
+              variableType: 'Float',
+              isRequired: false,
             },
           ],
         },
@@ -478,7 +494,7 @@ describe(ApiParser, () => {
         body: [Error!]
       }
     }`;
-    expect(parser.parse(program)).toEqual<Ast>({
+    expect(parser.parse(program)).toMatchObject({
       type: 'Document',
       definitions: [
         {
@@ -566,7 +582,7 @@ describe(ApiParser, () => {
         }
       }
     }`;
-    expect(parser.parse(program)).toEqual<Ast>({
+    expect(parser.parse(program)).toMatchObject({
       type: 'Document',
       definitions: [
         {

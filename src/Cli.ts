@@ -14,6 +14,7 @@ program
   .action(async (outputFile: string, inputFiles: string[], { watch }: { watch: boolean }) => {
     const generate = (exit = false) => {
       const measure = new Date().getTime();
+      // TODO: figure out how to do a merged AST
       const mergedAst: Ast = {
         type: 'Document',
         definitions: [],

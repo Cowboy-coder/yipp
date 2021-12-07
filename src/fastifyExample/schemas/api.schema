@@ -1,3 +1,17 @@
+type AuthenticatedRoute {
+  authorization: String!
+}
+
+type Field {
+  name: String!
+  message: String
+}
+
+type Error {
+  message: String!
+  fields: [Field!]!
+}
+
 type UserType
  | "admin"
  | "user"
@@ -9,6 +23,34 @@ type User {
   age: Int!
   type: UserType!
 }
+
+health: GET /health {
+  200: {
+    body: {
+      ok: "ok"!
+    }
+  }
+}
+
+login: POST /login {
+  body: {
+    username: String!
+    password: String!
+  }
+  200: {
+    body: {
+      token: String!
+    }
+  }
+  400: {
+    body: Error
+  }
+}
+
+logout: POST /logout {
+  204: {}
+}
+
 
 getUsers: GET /users {
   headers: AuthenticatedRoute

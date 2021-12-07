@@ -21,6 +21,9 @@ describe(generateHTTPClient, () => {
       type User {
         id: String!
       }
+      type Error {
+        message: String!
+      }
       getUser: GET /user/:id(Int) {
         headers: {
           content-type: "application/json"
