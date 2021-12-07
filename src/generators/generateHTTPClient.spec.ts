@@ -8,7 +8,7 @@ const generateToFile = (str: string) => {
   const parser = new ApiParser();
   const data = generateHTTPClient(parser.parse(str));
 
-  const filename = path.join(__dirname, '../../build', `generateHTTPClient-${new Date().getTime()}.ts`);
+  const filename = path.join(__dirname, '../../build', `generateHTTPClient.ts`);
 
   fs.mkdirSync(path.dirname(filename), { recursive: true });
   fs.writeFileSync(filename, data, 'utf8');
@@ -20,11 +20,13 @@ describe(generateHTTPClient, () => {
     const filename = generateToFile(`
       type User {
         id: String!
+        username: String!
+        age: Int
       }
       type Error {
         message: String!
       }
-      getUser: GET /user/:id(Int) {
+      getUser: GET /users/:id(Int) {
         headers: {
           content-type: "application/json"
         }
@@ -36,11 +38,7 @@ describe(generateHTTPClient, () => {
           type: Int
         }
         200: {
-          body: {
-            id: String!
-            username: String!
-            age: Int
-          }
+          body: User
         }
         404: {
           body: {

@@ -8,15 +8,13 @@ import { generateApiField, generateDeclarations, generateType } from './commonTs
 const prettierConfig = JSON.parse(fs.readFileSync(path.join(__dirname, '../../package.json'), 'utf8')).prettier;
 
 const generateHTTPClient = (ast: Ast) => {
-  // getDeclarations(ast).map(d => {
-  //   d.name
-  // })
+  const declarations = getDeclarations(ast);
   return prettier.format(
     `
   import Axios, { AxiosResponse, AxiosRequestConfig } from 'axios'
 
 
-  ${generateDeclarations(getDeclarations(ast))}
+  ${generateDeclarations(declarations)}
 
   const createApiClient = (config: AxiosRequestConfig) => {
     const axios = Axios.create(config);
@@ -39,8 +37,16 @@ const generateHTTPClient = (ast: Ast) => {
             if (x === undefined) {
               return '';
             }
+            let isRequired = false;
 
-            const isRequired = x.variableType === 'Object' && x.fields.every((f) => f.isRequired);
+            if (x.variableType === 'Object') {
+              isRequired = x.fields.every((f) => f.isRequired);
+            } else if (x.variableType === 'TypeReference') {
+              const declaration = declarations.find((declaration) => declaration.name === x.value);
+              if (declaration?.variableType === 'Object') {
+                isRequired = declaration?.fields.every((f) => f.isRequired);
+              }
+            }
             return `${isRequired ? t : `${t}?`}: ${generateApiField(x)}`;
           })
           .filter((x) => !!x)
@@ -57,7 +63,7 @@ const generateHTTPClient = (ast: Ast) => {
           method: '${d.method}',
           url: \`${path}\`,
           params: req.query,
-          ${d.headers ? 'headers: (req.headers as any),' : ''}
+          ${d.headers ? 'headers: req.headers,' : ''}
           ${d.body ? 'data: req.body,' : ''}
         })
         return response
@@ -68,12 +74,13 @@ const generateHTTPClient = (ast: Ast) => {
     }
   }
 
-  const api = createApiClient({ baseURL: 'x' });
-  async () => {
+  const api = createApiClient({ baseURL: 'http://localhost:3000/' });
+  (async () => {
     const user = await api.getUser(1, {
       body: { x: '' },
     });
-  };
+    console.log(user)
+  })();
 
   export default createApiClient
   `,
@@ -83,10 +90,4 @@ const generateHTTPClient = (ast: Ast) => {
     },
   );
 };
-// const a = fetch({})
-// fetch({
-//   url: ''
-//   query: {}
-// })
-
 export default generateHTTPClient;

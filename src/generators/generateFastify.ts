@@ -22,17 +22,17 @@ const apiDefinition = (d: ApiDefinition) => {
         })
         .filter((x) => !!x)
         .join(',\n')} 
-    }, context: T) => ${d.responses
+    }, context: T) => MaybePromise< ${d.responses
       .map(({ body, headers, status }) => {
-        return `MaybePromise<{
+        return `{
     code: ${status};
     ${[body ? `body: ${generateApiField(body)}` : '', headers ? `headers: ${generateApiField(headers)}` : '']
       .filter((x) => !!x)
       .join(';\n')}
-  }>`;
+  }`;
       })
       .join(' | ')}
-  `;
+  >`;
 };
 
 const fastify = (d: ApiDefinition) => {

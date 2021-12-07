@@ -112,6 +112,24 @@ export const JsonSchema = [
     type: 'null',
   },
   {
+    $id: 'https://example.com/#getUser_params',
+    type: 'object',
+    properties: {
+      id: {
+        type: 'number',
+      },
+    },
+    required: ['id'],
+  },
+  {
+    $id: 'https://example.com/#getUser_200',
+    $ref: 'https://example.com/#User',
+  },
+  {
+    $id: 'https://example.com/#getUser_400',
+    $ref: 'https://example.com/#Error',
+  },
+  {
     $id: 'https://example.com/#getUsers_query',
     type: 'object',
     properties: {
@@ -245,17 +263,18 @@ export type Api<T = any> = {
       };
     },
     context: T,
-  ) =>
-    | MaybePromise<{
+  ) => MaybePromise<
+    | {
         code: 200;
         body: {
           token: string;
         };
-      }>
-    | MaybePromise<{
+      }
+    | {
         code: 400;
         body: Error;
-      }>;
+      }
+  >;
 
   logout: (
     req: {},
@@ -263,6 +282,24 @@ export type Api<T = any> = {
   ) => MaybePromise<{
     code: 204;
   }>;
+
+  getUser: (
+    req: {
+      params: {
+        id: number;
+      };
+    },
+    context: T,
+  ) => MaybePromise<
+    | {
+        code: 200;
+        body: User;
+      }
+    | {
+        code: 400;
+        body: Error;
+      }
+  >;
 
   getUsers: (
     req: {
@@ -272,15 +309,16 @@ export type Api<T = any> = {
       headers: AuthenticatedRoute;
     },
     context: T,
-  ) =>
-    | MaybePromise<{
+  ) => MaybePromise<
+    | {
         code: 200;
         body: User[];
-      }>
-    | MaybePromise<{
+      }
+    | {
         code: 400;
         body: Error;
-      }>;
+      }
+  >;
 
   postUser: (
     req: {
@@ -292,15 +330,16 @@ export type Api<T = any> = {
       headers: AuthenticatedRoute;
     },
     context: T,
-  ) =>
-    | MaybePromise<{
+  ) => MaybePromise<
+    | {
         code: 200;
         body: User;
-      }>
-    | MaybePromise<{
+      }
+    | {
         code: 400;
         body: Error;
-      }>;
+      }
+  >;
 
   updateUser: (
     req: {
@@ -314,19 +353,20 @@ export type Api<T = any> = {
       headers: AuthenticatedRoute;
     },
     context: T,
-  ) =>
-    | MaybePromise<{
+  ) => MaybePromise<
+    | {
         code: 200;
         body: User;
-      }>
-    | MaybePromise<{
+      }
+    | {
         code: 400;
         body: Error;
-      }>
-    | MaybePromise<{
+      }
+    | {
         code: 404;
         body: Error;
-      }>;
+      }
+  >;
 };
 const RestPlugin: FastifyPluginAsync<{ routes: Api; setContext: (req: FastifyRequest) => any }> = async (
   fastify,
@@ -405,6 +445,40 @@ const RestPlugin: FastifyPluginAsync<{ routes: Api; setContext: (req: FastifyReq
     },
     async (req, reply) => {
       const response = await options.routes.logout({}, (req as any).restplugin_context);
+
+      if ('headers' in response && (response as any).headers) {
+        reply.headers((response as any).headers);
+      }
+
+      reply.code(response.code);
+      if ('body' in response && (response as any).body) {
+        reply.send((response as any).body);
+      }
+    },
+  );
+
+  fastify.get<{
+    Params: {
+      id: number;
+    };
+  }>(
+    '/users/:id',
+    {
+      schema: {
+        params: { $ref: 'https://example.com/#getUser_params' },
+        response: {
+          '200': { $ref: 'https://example.com/#getUser_200' },
+          '400': { $ref: 'https://example.com/#getUser_400' },
+        },
+      },
+    },
+    async (req, reply) => {
+      const response = await options.routes.getUser(
+        {
+          params: { ...req.params },
+        },
+        (req as any).restplugin_context,
+      );
 
       if ('headers' in response && (response as any).headers) {
         reply.headers((response as any).headers);

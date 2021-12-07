@@ -31,6 +31,12 @@ const routes: Api<Context> = {
     };
   },
   logout: () => ({ code: 204 }),
+  getUser: (_, { db }) => {
+    return {
+      code: 200,
+      body: db.findUsers(undefined)[0],
+    };
+  },
   getUsers: ({ query: { q }, headers }, { db }) => {
     if (headers.authorization === 'Bearer secret') {
       return {

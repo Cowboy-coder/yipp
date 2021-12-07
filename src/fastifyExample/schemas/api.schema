@@ -52,6 +52,17 @@ logout: POST /logout {
 }
 
 
+getUser: GET /users/:id(Int) {
+
+  200: {
+    body: User
+  }
+
+  400: {
+    body: Error
+  }
+}
+
 getUsers: GET /users {
   headers: AuthenticatedRoute
 
