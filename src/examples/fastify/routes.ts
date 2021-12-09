@@ -12,7 +12,6 @@ const routes: Api<Context> = {
         },
       };
     }
-
     return {
       code: 400,
       body: {
@@ -34,7 +33,7 @@ const routes: Api<Context> = {
   getUser: (_, { db }) => {
     return {
       code: 200,
-      body: db.findUsers(undefined)[0],
+      body: db.findUsers(undefined)[1],
     };
   },
   getUsers: ({ query: { q }, headers }, { db }) => {
@@ -56,10 +55,11 @@ const routes: Api<Context> = {
   postUser: ({ body, headers }) => {
     if (headers.authorization === 'Bearer secret') {
       const user: User = {
-        id: '1',
+        id: 999,
         username: body.username,
         age: body.age,
         type: 'user',
+        isCool: body.isCool,
       };
       return {
         code: 200,
@@ -88,10 +88,14 @@ const routes: Api<Context> = {
         };
       }
 
-      if (body.username) {
+      if (body.username !== undefined) {
         user.username = body.username;
-      } else if (body.age) {
+      }
+      if (body.age !== undefined) {
         user.age = body.age;
+      }
+      if (body.isCool !== undefined) {
+        user.isCool = body.isCool;
       }
 
       return {

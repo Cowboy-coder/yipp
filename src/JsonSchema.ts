@@ -63,7 +63,7 @@ const fieldSchema = (
   }
 
   if (field.variableType === 'TypeReference') {
-    return { $ref: schemaId(field.value) };
+    return { $ref: `#/definitions/${field.value}` };
   }
 
   if (field.variableType === 'Array') {
@@ -84,10 +84,9 @@ const fieldSchema = (
   throw new Error(`Unsupported field`);
 };
 
-const apiFieldDefinitionSchema = ($id: string, d: ApiFieldDefinition): JSONSchema7 => {
+const apiFieldDefinitionSchema = (d: ApiFieldDefinition): JSONSchema7 => {
   if (d === undefined) {
     return {
-      $id,
       type: 'null',
     };
   }
@@ -99,21 +98,18 @@ const apiFieldDefinitionSchema = ($id: string, d: ApiFieldDefinition): JSONSchem
       properties[field.name] = fieldSchema(field);
     });
     return {
-      $id,
       type: 'object',
       properties,
       required: (d.fields ?? []).filter((f) => f.isRequired).map((f) => f.name),
     } as JSONSchema7;
   } else if (d.variableType === 'Array') {
     return {
-      $id,
       type: 'array',
       items: d.items.isRequired ? fieldSchema(d.items) : { oneOf: [{ type: 'null' }, fieldSchema(d.items)] },
     };
   } else if (d.variableType === 'TypeReference') {
     return {
-      $id,
-      $ref: schemaId(d.value),
+      $ref: `#/definitions/${d.value}`,
     } as JSONSchema7;
   }
   throw new Error('unsupported variableType in apiFieldDefinitionSchema');
@@ -123,58 +119,73 @@ const flat = <T>(arr: T[][]): T[] => {
   return ([] as T[]).concat(...arr);
 };
 
-const JsonSchema = (ast: Ast): JSONSchema7[] => {
+const JsonSchema = (ast: Ast): JSONSchema7 => {
   const declarations = getDeclarations(ast);
   const apis = getApiDefinitions(ast);
 
-  return [
-    ...declarations.map((d) => {
-      const $id = schemaId(d.name);
-      if (d.variableType === 'Object') {
-        const properties: {
-          [key: string]: JSONSchema7Definition;
-        } = {};
-        d.fields.forEach((field) => {
-          properties[field.name] = fieldSchema(field);
-        });
-        return {
-          $id,
-          type: 'object',
-          properties,
-          required: d.fields.filter((f) => f.isRequired).map((f) => f.name),
-        } as JSONSchema7;
-      } else if (d.variableType === 'Union') {
-        return {
-          $id,
-          oneOf: d.unions.map((union) => {
-            return fieldSchema(union);
-          }),
-        };
-      }
-      throw new Error(`Json Schema unsupported declaration`);
-    }),
-    ...flat(
-      apis.map((api) => {
-        return [
-          ...(['params', 'query', 'body', 'headers'] as const)
-            .map((key) => {
-              const current = api[key];
-              if (!current) {
-                return undefined;
-              }
+  const schema: JSONSchema7 = {
+    $id: 'schema',
+    type: 'object',
+    definitions: {
+      ...declarations.reduce((acc, d) => {
+        if (d.variableType === 'Object') {
+          const properties: {
+            [key: string]: JSONSchema7Definition;
+          } = {};
+          d.fields.forEach((field) => {
+            properties[field.name] = fieldSchema(field);
+          });
+          return {
+            ...acc,
+            [d.name]: {
+              type: 'object',
+              properties,
+              required: d.fields.filter((f) => f.isRequired).map((f) => f.name),
+            },
+          };
+        } else if (d.variableType === 'Union') {
+          return {
+            ...acc,
+            [d.name]: {
+              oneOf: d.unions.map((union) => {
+                return fieldSchema(union);
+              }),
+            },
+          };
+        }
+        throw new Error(`Json Schema unsupported declaration`);
+      }, {} as { [key: string]: JSONSchema7Definition }),
+      ...apis.reduce((acc, api) => {
+        const obj: { [key: string]: JSONSchema7Definition } = {};
+        const params = ['params', 'query', 'body', 'headers'] as const;
+        params.forEach((key) => {
+          const current = api[key];
+          if (!current) {
+            return undefined;
+          }
 
-              const $id = schemaId(`${api.name}_${key}`);
-              return apiFieldDefinitionSchema($id, current);
-            })
-            .filter((x): x is JSONSchema7 => !!x),
-          ...api.responses.map((response) => {
-            const $id = schemaId(`${api.name}_${response.status}`);
-            return apiFieldDefinitionSchema($id, response.body);
-          }),
-        ];
-      }),
-    ),
-  ];
+          obj[`${api.name}_${key}`] = apiFieldDefinitionSchema(current);
+        });
+        api.responses.forEach((response) => {
+          obj[`${api.name}_${response.status}`] = apiFieldDefinitionSchema(response.body);
+        });
+
+        return {
+          ...acc,
+          ...obj,
+        };
+        // return [
+        //   ...)
+        //     .filter((x): x is JSONSchema7 => !!x),
+        //   ...api.responses.map((response) => {
+        //     const $id = schemaId(`${api.name}_${response.status}`);
+        //     return apiFieldDefinitionSchema($id, response.body);
+        //   }),
+        // ];
+      }, {} as { [key: string]: JSONSchema7Definition }),
+    },
+  };
+  return schema;
 };
 
 export default JsonSchema;

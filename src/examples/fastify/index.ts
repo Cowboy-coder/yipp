@@ -17,10 +17,11 @@ const db = {
   findUsers: (query: string | undefined) => {
     return Array.from({ length: 20 }, (value, key) => key)
       .map((_, ix) => ({
-        id: ix.toString(),
+        id: ix,
         username: `username_${ix}`,
         type: ix % 4 === 0 ? ('admin' as const) : ('user' as const),
         age: ix + 1,
+        isCool: ix % 2 === 0,
       }))
       .filter((x) => x.username.indexOf(query ?? '') > -1);
   },
@@ -55,7 +56,7 @@ fastify.setErrorHandler<FastifyError>((err, _, reply) => {
           field = `.${Array.isArray(missingProperty) ? missingProperty[0] : missingProperty}`;
         }
         return {
-          field,
+          name: field,
           message: validation.message,
         };
       }),

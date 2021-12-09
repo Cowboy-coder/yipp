@@ -9,9 +9,10 @@
     "build": "tsc",
     "lint": "eslint src/",
     "prettier": "prettier --write src/**",
-    "example": "concurrently --raw \"npm:example-server\" \"npm:example-watch-schema\"",
-    "example-server": "ts-node-dev ./src/fastifyExample",
-    "example-watch-schema": "ts-node-dev src/Cli.ts --watch src/fastifyExample/generated.ts src/fastifyExample/schemas/**.schema"
+    "example": "concurrently --raw \"npm:example-server\" \"npm:example-watch-fastify-plugin\" \"npm:example-watch-http-client\"",
+    "example-server": "ts-node-dev ./src/examples/fastify",
+    "example-watch-fastify-plugin": "ts-node-dev src/Cli.ts fastify-plugin --watch src/examples/fastify/generated.ts src/examples/schemas/**.schema",
+    "example-watch-http-client": "ts-node-dev src/Cli.ts http-client --watch src/examples/httpClient/generated.ts src/examples/schemas/**.schema"
   },
   "files": [
     "lib/**/*"

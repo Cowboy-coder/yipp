@@ -17,41 +17,7 @@ const generateToFile = (str: string) => {
 
 describe(generateHTTPClient, () => {
   it('works', () => {
-    const filename = generateToFile(`
-      type User {
-        id: String!
-        username: String!
-        age: Int
-      }
-      type Error {
-        message: String!
-      }
-      getUser: GET /users/:id(Int) {
-        headers: {
-          content-type: "application/json"
-        }
-        body: {
-          x: String!
-        }
-        query: {
-          filter: String
-          type: Int
-        }
-        200: {
-          body: User
-        }
-        404: {
-          body: {
-            id: String!
-            username: String!
-            age: Int
-          }
-        }
-        500: {
-          body: Error
-        }
-      }
-   `);
+    const filename = generateToFile(fs.readFileSync(path.join(__dirname, './test.schema'), 'utf8'));
 
     // TODO: Figure out a better and faster(!) way to validate the output.
     const result = spawnSync(`../node_modules/.bin/tsc`, ['--noEmit', filename]);

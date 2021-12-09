@@ -4,7 +4,7 @@ type AuthenticatedRoute {
 
 type Field {
   name: String!
-  message: String
+  message: String!
 }
 
 type Error {
@@ -18,10 +18,11 @@ type UserType
 
 
 type User {
-  id: String!
+  id: Int!
   username: String!
   age: Int!
   type: UserType!
+  isCool: Boolean!
 }
 
 health: GET /health {
@@ -86,6 +87,7 @@ postUser: POST /users {
     username: String!
     age: Int!
     type: UserType!
+    isCool: Boolean!
   }
 
   200: {
@@ -97,12 +99,13 @@ postUser: POST /users {
   }
 }
 
-updateUser: PATCH /users/:id {
+updateUser: PATCH /users/:id(Int) {
   headers: AuthenticatedRoute
 
   body: {
     username: String
     age: Int
+    isCool: Boolean
   }
 
   200: {

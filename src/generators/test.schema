@@ -1,0 +1,87 @@
+type AuthorizationHeader {
+	authorization: String!
+}
+
+type SomeType {
+	a: "foo"!
+	b: String
+	c: -42!
+	d: 42!
+	e: Int
+	f: Boolean
+	g: true
+	h: false
+	i: 32.0
+	j: -12.042
+}
+
+type UserType
+	| {q: String}
+	| "admin"
+	| "user"
+	| "thug"
+	| 49
+	| -49
+	| 12.12
+	| -32.02
+	| true
+	| false
+	| String
+	| Int
+	| SomeType
+
+type User {
+	id: Int!
+	username: String
+	status:
+	| "inactive"
+	| "active"
+	| "maybe-active"
+	someType: SomeType!
+	userType: UserType
+	user: User!
+	address: {
+		street: String
+	}
+}
+
+type FieldError {
+	field: String!
+	message: String!
+}
+
+type Error
+| { message: String! } 
+| {
+		message: String!
+		fields: [FieldError!]!
+	} 
+
+login: POST /login {
+	body: {
+		username: String!
+		password: String!
+	}
+	200: {
+		body: {
+			token: String
+		}
+	}
+	400: {
+		body: Error
+	}
+} 
+
+getUsers: GET /users {
+	headers: AuthorizationHeader
+	200: {
+		body: [User]
+	}
+} 
+
+getUser: GET /users/:id(Int) {
+	headers: AuthorizationHeader
+	200: {
+		body: User
+	}
+} 

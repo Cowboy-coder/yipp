@@ -16,7 +16,7 @@ const generateHTTPClient = (ast: Ast) => {
 
   ${generateDeclarations(declarations)}
 
-  const createApiClient = (config: AxiosRequestConfig) => {
+  const createHTTPClient = (config?: AxiosRequestConfig) => {
     const axios = Axios.create(config);
 
     return {
@@ -29,44 +29,47 @@ const generateHTTPClient = (ast: Ast) => {
           if (d.query && d.query.variableType !== 'Object') {
             throw new Error('unsupported query');
           }
-          return `
-      async "${d.name}"(${d.params?.fields.map((f) => `${f.name}:${generateType(f)}`).join(',')}, req: {
-        ${(['query', 'body', 'headers'] as const)
-          .map((t) => {
-            const x = d[t];
-            if (x === undefined) {
-              return '';
-            }
-            let isRequired = false;
-
-            if (x.variableType === 'Object') {
-              isRequired = x.fields.every((f) => f.isRequired);
-            } else if (x.variableType === 'TypeReference') {
-              const declaration = declarations.find((declaration) => declaration.name === x.value);
-              if (declaration?.variableType === 'Object') {
-                isRequired = declaration?.fields.every((f) => f.isRequired);
+          const params = d.params?.fields.map((f) => `${f.name}:${generateType(f)}`).join(',') ?? '';
+          const req = (['query', 'body', 'headers'] as const)
+            .map((t) => {
+              const x = d[t];
+              if (x === undefined) {
+                return '';
               }
-            }
-            return `${isRequired ? t : `${t}?`}: ${generateApiField(x)}`;
-          })
-          .filter((x) => !!x)
-          .join(',\n')}
-      }): Promise<AxiosResponse<${d.responses
-        .filter((r) => r.status >= 200 && r.status < 300)
-        .map(({ body }) => {
-          return body ? generateApiField(body) : '';
-        })
-        .join(' | ')}
+              let isRequired = false;
+
+              if (x.variableType === 'Object') {
+                isRequired = x.fields.every((f) => f.isRequired);
+              } else if (x.variableType === 'TypeReference') {
+                const declaration = declarations.find((declaration) => declaration.name === x.value);
+                if (declaration?.variableType === 'Object') {
+                  isRequired = declaration?.fields.every((f) => f.isRequired);
+                }
+              }
+              return `${isRequired ? t : `${t}?`}: ${generateApiField(x)}`;
+            })
+            .filter((x) => !!x)
+            .join(',\n');
+          return `
+      async "${d.name}"(
+          ${[params ? `${params}` : '', req ? `req:{${req}}` : ''].filter((x) => !!x).join(',')}
+        ): Promise<AxiosResponse<${
+          d.responses
+            .filter((r) => r.status >= 200 && r.status < 300)
+            .map(({ body }) => {
+              return body ? generateApiField(body) : '';
+            })
+            .join(' | ') || 'undefined'
+        }
         >>
       {
-        const response = await axios.request({
+        return axios.request({
           method: '${d.method}',
           url: \`${path}\`,
-          params: req.query,
+          ${d.query ? 'params: req.query,' : ''}
           ${d.headers ? 'headers: req.headers,' : ''}
-          ${d.body ? 'data: req.body,' : ''}
+          data: ${d.body ? 'req.body,' : '{}'}
         })
-        return response
       },
       `;
         })
@@ -74,15 +77,7 @@ const generateHTTPClient = (ast: Ast) => {
     }
   }
 
-  const api = createApiClient({ baseURL: 'http://localhost:3000/' });
-  (async () => {
-    const user = await api.getUser(1, {
-      body: { x: '' },
-    });
-    console.log(user)
-  })();
-
-  export default createApiClient
+  export default createHTTPClient
   `,
     {
       parser: 'typescript',

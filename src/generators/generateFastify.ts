@@ -3,58 +3,59 @@ import path from 'path';
 import prettier from 'prettier';
 import { ApiDefinition, Ast } from '../ApiParser';
 import { getApiDefinitions, getDeclarations } from '../AstQuery';
-import JsonSchema, { schemaId } from '../JsonSchema';
+import JsonSchema from '../JsonSchema';
 import { generateApiField, generateDeclarations } from './commonTs';
 
 const prettierConfig = JSON.parse(fs.readFileSync(path.join(__dirname, '../../package.json'), 'utf8')).prettier;
 
 const apiDefinition = (d: ApiDefinition) => {
+  const req = (['params', 'query', 'body', 'headers'] as const)
+    .map((t) => {
+      const x = d[t];
+      if (x === undefined) {
+        return '';
+      }
+      return `${t}: ${generateApiField(x)}`;
+    })
+    .filter((x) => !!x)
+    .join(',\n');
   return `
   ${d.name}: (
-    req: {
-      ${(['params', 'query', 'body', 'headers'] as const)
-        .map((t) => {
-          const x = d[t];
-          if (x === undefined) {
-            return '';
-          }
-          return `${t}: ${generateApiField(x)}`;
-        })
-        .filter((x) => !!x)
-        .join(',\n')} 
-    }, context: T) => MaybePromise< ${d.responses
-      .map(({ body, headers, status }) => {
-        return `{
+    req: ${req ? `{${req}}` : 'Record<string,unknown>'} , context: T) => MaybePromise< ${d.responses
+    .map(({ body, headers, status }) => {
+      return `{
     code: ${status};
     ${[body ? `body: ${generateApiField(body)}` : '', headers ? `headers: ${generateApiField(headers)}` : '']
       .filter((x) => !!x)
       .join(';\n')}
   }`;
-      })
-      .join(' | ')}
+    })
+    .join(' | ')}
   >`;
 };
 
 const fastify = (d: ApiDefinition) => {
+  const hasResponseHeaders = d.responses.map((x) => x.headers).filter((x) => !!x).length > 0;
+  const hasResponseBody = d.responses.map((x) => x.body).filter((x) => !!x).length > 0;
+
+  const generics = [
+    d.params ? `Params: ${generateApiField(d.params)}` : '',
+    d.query ? `Querystring: ${generateApiField(d.query)}` : '',
+    d.body ? `Body: ${generateApiField(d.body)}` : '',
+    d.headers ? `Headers: ${generateApiField(d.headers)}` : '',
+  ]
+    .filter((x) => !!x)
+    .join(',');
   return `
-  fastify.${d.method.toLowerCase()}<{
-    ${[
-      d.params ? `Params: ${generateApiField(d.params)}` : '',
-      d.query ? `Querystring: ${generateApiField(d.query)}` : '',
-      d.body ? `Body: ${generateApiField(d.body)}` : '',
-      d.headers ? `Headers: ${generateApiField(d.headers)}` : '',
-    ]
-      .filter((x) => !!x)
-      .join(',')}
-  }>("${d.path}", {
+  fastify.${d.method.toLowerCase()}${generics ? `<{${generics}}>` : ''}("${d.path}", {
     schema: {
     ${[
-      d.params ? `params: { $ref: "${schemaId(d.name)}_params"}` : undefined,
-      d.query ? `querystring: { $ref: "${schemaId(d.name)}_query"}` : undefined,
-      d.headers ? `headers: { $ref: "${schemaId(d.name)}_headers"}` : undefined,
-      d.body ? `body: { $ref: "${schemaId(d.name)}_body"}` : undefined,
+      d.params ? `params: { $ref: "schema#/definitions/${d.name}_params"}` : undefined,
+      d.query ? `querystring: { $ref: "schema#/definitions/${d.name}_query"}` : undefined,
+      d.headers ? `headers: { $ref: "schema#/definitions/${d.name}_headers"}` : undefined,
+      d.body ? `body: { $ref: "schema#/definitions/${d.name}_body"}` : undefined,
       `response: {${d.responses
-        .map((r) => `"${r.status}": {$ref: "${schemaId(`${d.name}_${r.status}"}`)}`)
+        .map((r) => `"${r.status}": {$ref: "schema#/definitions/${`${d.name}_${r.status}"}`}`)
         .filter((x) => !!x)
         .join(',')}}`,
     ]
@@ -64,22 +65,34 @@ const fastify = (d: ApiDefinition) => {
   }, async (req, reply) => {
     const response = await options.routes.${d.name}({
     ${[
-      d.params ? 'params: {...req.params}' : '',
-      d.query ? 'query: {...req.query}' : '',
-      d.body ? 'body: {...req.body}' : '',
-      d.headers ? 'headers: {...req.headers}' : '',
+      d.params ? 'params: req.params' : '',
+      d.query ? 'query: req.query' : '',
+      d.body ? 'body: req.body' : '',
+      d.headers ? 'headers: req.headers' : '',
     ]
       .filter((x) => !!x)
       .join(',')}
     }, (req as any).restplugin_context);
 
-    if ("headers" in response && (response as any).headers) {
-      reply.headers((response as any).headers);
+    ${
+      hasResponseHeaders
+        ? `
+      if ("headers" in response && response.headers) {
+        reply.headers(response.headers);
+      }
+    `
+        : ''
     }
 
     reply.code(response.code)
-    if ("body" in response && (response as any).body) {
-      reply.send((response as any).body)
+    ${
+      hasResponseBody
+        ? `
+      if ("body" in response && response.body) {
+        reply.send(response.body)
+      }
+    `
+        : ''
     }
   })
   `;
@@ -110,7 +123,7 @@ const generateFastify = (ast: Ast) => {
       (req as any).restplugin_context = options.setContext(req);
       done();
     });
-      JsonSchema.forEach(schema => fastify.addSchema(schema))
+      fastify.addSchema(JsonSchema)
       ${getApiDefinitions(ast).map(fastify).join('\n')}
     }
     export default RestPlugin

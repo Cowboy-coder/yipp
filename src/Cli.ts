@@ -1,17 +1,29 @@
 import chalk from 'chalk';
-import { program } from 'commander';
+import { Argument, program } from 'commander';
 import fs from 'fs';
 import path from 'path';
 import ApiParser, { ApiSyntaxError, Ast } from './ApiParser';
 import generateFastify from './generators/generateFastify';
+import generateHTTPClient from './generators/generateHTTPClient';
 import PrettyError from './PrettyError';
 
+type GenerateType = 'fastify-plugin' | 'http-client';
+
+const generator = (type: GenerateType, ast: Ast) => {
+  if (type === 'fastify-plugin') {
+    return generateFastify(ast);
+  } else if (type === 'http-client') {
+    return generateHTTPClient(ast);
+  }
+  throw new Error(`Unsupported generator type ${type}`);
+};
 program
-  .description('generate fastify plugin')
+  .description('generate')
+  .addArgument(new Argument('<type>').choices(['fastify-plugin', 'http-client']))
   .argument('<output-file>', 'generated typescript file')
   .argument('<input-file...>', 'One or more api schema files. Will be merged into one schema if several files.')
   .option('-w --watch', 'watch for changes', false)
-  .action(async (outputFile: string, inputFiles: string[], { watch }: { watch: boolean }) => {
+  .action(async (type: GenerateType, outputFile: string, inputFiles: string[], { watch }: { watch: boolean }) => {
     const generate = (exit = false) => {
       const measure = new Date().getTime();
       // TODO: figure out how to do a merged AST
@@ -49,7 +61,7 @@ program
       }
 
       if (write) {
-        const outputData = generateFastify(mergedAst);
+        const outputData = generator(type, mergedAst);
         fs.writeFileSync(outputFile, outputData, 'utf8');
         console.log(` ${chalk.green.bold('✓')} ${outputFile} ${chalk.green(`${new Date().getTime() - measure}ms`)}`);
       } else {
