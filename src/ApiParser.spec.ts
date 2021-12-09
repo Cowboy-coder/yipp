@@ -210,6 +210,9 @@ describe(ApiParser, () => {
         name: String
       }
     }
+    type Nested2 {
+      id: String
+    }
     updateUser: PUT /users/:id {
       query: {
         foo: String!
@@ -262,6 +265,19 @@ describe(ApiParser, () => {
                   isRequired: false,
                 },
               ],
+            },
+          ],
+        },
+        {
+          type: 'TypeDeclaration',
+          variableType: 'Object',
+          name: 'Nested2',
+          fields: [
+            {
+              type: 'ObjectField',
+              name: 'id',
+              variableType: 'String',
+              isRequired: false,
             },
           ],
         },
@@ -484,6 +500,9 @@ describe(ApiParser, () => {
   it('Api Definition with arrays', () => {
     const parser = new ApiParser();
     const program = `
+    type Error {
+      message: String!
+    }
     randomFunc: HEAD /users/:ids {
       200: {
         body: {
@@ -497,6 +516,19 @@ describe(ApiParser, () => {
     expect(parser.parse(program)).toMatchObject({
       type: 'Document',
       definitions: [
+        {
+          type: 'TypeDeclaration',
+          variableType: 'Object',
+          name: 'Error',
+          fields: [
+            {
+              type: 'ObjectField',
+              name: 'message',
+              variableType: 'String',
+              isRequired: true,
+            },
+          ],
+        },
         {
           type: 'ApiDefinition',
           name: 'randomFunc',
@@ -554,6 +586,9 @@ describe(ApiParser, () => {
   it('ApiDefinition with unions', () => {
     const parser = new ApiParser();
     const program = `
+    type SomeType {
+      id: String
+    }
     type UserType
       | {q: String}
       | "admin"
@@ -585,6 +620,19 @@ describe(ApiParser, () => {
     expect(parser.parse(program)).toMatchObject({
       type: 'Document',
       definitions: [
+        {
+          type: 'TypeDeclaration',
+          variableType: 'Object',
+          name: 'SomeType',
+          fields: [
+            {
+              type: 'ObjectField',
+              variableType: 'String',
+              name: 'id',
+              isRequired: false,
+            },
+          ],
+        },
         {
           type: 'TypeDeclaration',
           variableType: 'Union',

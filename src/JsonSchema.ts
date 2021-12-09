@@ -115,10 +115,6 @@ const apiFieldDefinitionSchema = (d: ApiFieldDefinition): JSONSchema7 => {
   throw new Error('unsupported variableType in apiFieldDefinitionSchema');
 };
 
-const flat = <T>(arr: T[][]): T[] => {
-  return ([] as T[]).concat(...arr);
-};
-
 const JsonSchema = (ast: Ast): JSONSchema7 => {
   const declarations = getDeclarations(ast);
   const apis = getApiDefinitions(ast);

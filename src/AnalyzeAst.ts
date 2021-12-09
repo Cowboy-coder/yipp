@@ -1,5 +1,6 @@
 import {
   ApiSyntaxError,
+  ArrayVariable,
   Ast,
   BodyType,
   HeaderType,
@@ -7,12 +8,59 @@ import {
   QueryType,
   TypeDeclaration,
   TypeReference,
+  UnionVariable,
 } from './ApiParser';
+import { Token } from './ApiTokenizer';
 import { getApiDefinitions, getDeclarations } from './AstQuery';
 
 const rules = {
   headers: ['String', 'StringLiteral'],
   query: ['Int', 'Float', 'String'],
+};
+
+const validateTypeRef = (
+  obj: ObjectVariable | ArrayVariable | UnionVariable | TypeReference | undefined,
+  declarations: TypeDeclaration[],
+): Token | undefined => {
+  if (obj === undefined) {
+    return undefined;
+  }
+
+  if (obj.variableType === 'Object') {
+    for (const field of obj.fields) {
+      if (
+        field.variableType === 'Object' ||
+        field.variableType === 'Array' ||
+        field.variableType === 'Union' ||
+        field.variableType === 'TypeReference'
+      ) {
+        const errorToken = validateTypeRef(field, declarations);
+        if (errorToken) {
+          return errorToken;
+        }
+      }
+    }
+  } else if (obj.variableType === 'Union') {
+    for (const field of obj.unions) {
+      if (field.variableType === 'Object' || field.variableType === 'TypeReference') {
+        const errorToken = validateTypeRef(field, declarations);
+        if (errorToken) {
+          return errorToken;
+        }
+      }
+    }
+  } else if (obj.variableType === 'Array' && obj.items.variableType === 'TypeReference') {
+    const value = obj.items.value;
+    if (!declarations.find((d) => d.name === value)) {
+      return obj.items.token;
+    }
+  } else if (obj.variableType === 'TypeReference') {
+    if (!declarations.find((d) => d.name === obj.value)) {
+      return obj.token;
+    }
+  }
+
+  return undefined;
 };
 
 const validateObject = (
@@ -42,12 +90,20 @@ const validateHeaders = (header: HeaderType | undefined, declarations: TypeDecla
   }
 
   if (header.variableType === 'TypeReference') {
-    const found = declarations.find((d) => d.name === header.value);
-    if (!found) {
-      throw new ApiSyntaxError(`Type '${header.value}' not found`, header.token, document);
+    const errorToken = validateTypeRef(header, declarations);
+    if (errorToken) {
+      throw new ApiSyntaxError(`Type '${errorToken.value}' not found`, errorToken, document);
     }
-    if (found.variableType === 'Object') {
+
+    const found = declarations.find((d) => d.name === header.value);
+    if (found?.variableType === 'Object') {
       validateObject(found, rules.headers, document, header);
+    } else {
+      throw new ApiSyntaxError(
+        `Type '${header.token.value}' can only be referencing an Object`,
+        header.token,
+        document,
+      );
     }
   } else if (header.variableType === 'Object') {
     validateObject(header, rules.headers, document);
@@ -60,12 +116,15 @@ const validateQuery = (query: QueryType | undefined, declarations: TypeDeclarati
   }
 
   if (query.variableType === 'TypeReference') {
-    const found = declarations.find((d) => d.name === query.value);
-    if (!found) {
-      throw new ApiSyntaxError(`Type '${query.value}' not found`, query.token, document);
+    const errorToken = validateTypeRef(query, declarations);
+    if (errorToken) {
+      throw new ApiSyntaxError(`Type '${errorToken.value}' not found`, errorToken, document);
     }
-    if (found.variableType === 'Object') {
+    const found = declarations.find((d) => d.name === query.value);
+    if (found?.variableType === 'Object') {
       validateObject(found, rules.query, document, query);
+    } else {
+      throw new ApiSyntaxError(`Type '${query.token.value}' can only be referencing an Object`, query.token, document);
     }
   } else if (query.variableType === 'Object') {
     validateObject(query, rules.query, document);
@@ -73,21 +132,27 @@ const validateQuery = (query: QueryType | undefined, declarations: TypeDeclarati
 };
 
 const validateBody = (body: BodyType | undefined, declarations: TypeDeclaration[], document: string) => {
-  if (body?.variableType === 'TypeReference') {
-    const found = declarations.find((d) => d.name === body.value);
-    if (!found) {
-      throw new ApiSyntaxError(`Type '${body.value}' not found`, body.token, document);
-    }
+  const errorReferenceToken = validateTypeRef(body, declarations);
+  if (errorReferenceToken) {
+    throw new ApiSyntaxError(`Type '${errorReferenceToken.value}' not found`, errorReferenceToken, document);
   }
 };
 
-// Because we are parsing the AST from left to right we don't know if it
+const validateDeclaration = (d: TypeDeclaration | undefined, declarations: TypeDeclaration[], document: string) => {
+  const errorReferenceToken = validateTypeRef(d, declarations);
+  if (errorReferenceToken) {
+    throw new ApiSyntaxError(`Type '${errorReferenceToken.value}' not found`, errorReferenceToken, document);
+  }
+};
+
+// Because we are parsing the syntax from left to right we don't know if it
 // produces valid code until after the whole Syntax Tree has been parsed.
 // So this function is post-parse analyzing the AST.
 const AnalyzeAst = (ast: Ast, document: string) => {
   const declarations = getDeclarations(ast);
   const apis = getApiDefinitions(ast);
 
+  declarations.forEach((d) => validateDeclaration(d, declarations, document));
   apis.forEach((api) => {
     validateHeaders(api.headers, declarations, document);
     validateQuery(api.query, declarations, document);

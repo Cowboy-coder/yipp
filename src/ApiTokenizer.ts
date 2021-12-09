@@ -10,7 +10,7 @@ const Spec = [
   [/^\bbody\b:/, 'API_BODY'],
   [/^\bheaders\b:/, 'API_HEADERS'],
   [/^\d+:/, 'API_STATUS'],
-  [/^\btype\b \b[a-zA-Z_]+\b/, 'TYPE_DECLARATION'],
+  [/^\btype\b \b[a-zA-Z][a-zA-Z_0-9]+\b/, 'TYPE_DECLARATION'],
 
   [/^\b[a-zA-Z][a-zA-Z_0-9_-]*\b:/, 'WORD_WITH_COLON'],
 

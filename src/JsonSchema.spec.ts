@@ -89,6 +89,9 @@ describe(JsonSchema, () => {
   it('Arrays', () => {
     const parser = new ApiParser();
     const program = `
+      type Test {
+        id: String!
+      }
       type Foo {
         a: [Test]!
         b: [Test!]
@@ -101,6 +104,15 @@ describe(JsonSchema, () => {
       $id: 'schema',
       type: 'object',
       definitions: {
+        Test: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'string',
+            },
+          },
+          required: ['id'],
+        },
         Foo: {
           type: 'object',
           properties: {

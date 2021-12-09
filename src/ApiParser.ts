@@ -364,6 +364,7 @@ export default class ApiParser {
     while (this.lookahead.type && ['API_QUERY', 'API_BODY', 'API_HEADERS'].includes(this.lookahead.type)) {
       if ((this.lookahead as Token).type === 'API_QUERY') {
         this.eat('API_QUERY');
+        this.disallowUnionAndArray();
         query = this.simpleObjectOrTypeReference() as QueryType; // could possible be invalid but will be after the whole AST is parsed
       }
 
@@ -374,6 +375,7 @@ export default class ApiParser {
 
       if ((this.lookahead as Token).type === 'API_HEADERS') {
         this.eat('API_HEADERS');
+        this.disallowUnionAndArray();
         headers = this.simpleObjectOrTypeReference() as HeaderType; // could possible be invalid but will be after the whole AST is parsed
       }
     }
@@ -392,6 +394,12 @@ export default class ApiParser {
       headers,
       responses,
     };
+  }
+
+  private disallowUnionAndArray() {
+    if (this.lookahead.type === '[' || this.lookahead.type === '|') {
+      throw new ApiSyntaxError('Can only be a Type Reference or Object', this.lookahead, this.str);
+    }
   }
 
   private isRequired(): boolean {
@@ -595,6 +603,7 @@ export default class ApiParser {
 
         if ((this.lookahead as Token).type === 'API_HEADERS') {
           this.eat('API_HEADERS');
+          this.disallowUnionAndArray();
           headers = this.simpleObjectOrTypeReference() as HeaderType; // could possible be invalid but will be after the whole AST is parsed
         }
       }
