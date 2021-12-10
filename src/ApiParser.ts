@@ -113,6 +113,7 @@ export type ApiDefinition = {
   headers?: HeaderType;
   body?: BodyType;
   responses: ApiResponseDefinition[];
+  token: Token;
 };
 
 export type TypeDeclaration = {
@@ -179,6 +180,7 @@ class ApiParser {
     if (!value) {
       this.reportAndExit(this.lookahead, 'TypeDefinition or ApiDefinition required on top-level');
     }
+    const typeToken = this.lookahead;
     this.eat('TYPE_DECLARATION');
     if (this.lookahead.type === '{') {
       const x = this.simpleObjectOrTypeReference();
@@ -189,6 +191,7 @@ class ApiParser {
         type: 'TypeDeclaration',
         name: value.replace('type ', ''),
         ...x,
+        token: typeToken,
       };
     } else if (this.lookahead.type === '|') {
       return {
@@ -196,7 +199,7 @@ class ApiParser {
         name: value.replace('type ', ''),
         variableType: 'Union',
         unions: this.Unions(),
-        token: this.lookahead,
+        token: typeToken,
       };
     } else {
       this.reportAndExit(this.lookahead, '"{" or "|" required');
@@ -282,6 +285,7 @@ class ApiParser {
 
   ApiDefinition(): ApiDefinition {
     const name = this.lookahead.value.slice(0, -1);
+    const apiToken = this.lookahead;
     if (name === undefined) {
       this.reportAndExit(this.lookahead, `Expected a valid name`);
     }
@@ -390,6 +394,7 @@ class ApiParser {
       body,
       headers,
       responses,
+      token: apiToken,
     };
   }
 

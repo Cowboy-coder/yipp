@@ -1,4 +1,5 @@
 import {
+  ApiDefinition,
   ApiSyntaxError,
   ArrayVariable,
   Ast,
@@ -95,6 +96,10 @@ const validateHeaders = (header: HeaderType | undefined, declarations: TypeDecla
   } else if (header.variableType === 'Object') {
     validateObject(header, rules.headers);
   }
+
+  if (header.variableType === 'Object') {
+    validateDuplicateFields(header);
+  }
 };
 
 const validateQuery = (query: QueryType | undefined, declarations: TypeDeclaration[]) => {
@@ -116,6 +121,10 @@ const validateQuery = (query: QueryType | undefined, declarations: TypeDeclarati
   } else if (query.variableType === 'Object') {
     validateObject(query, rules.query);
   }
+
+  if (query.variableType === 'Object') {
+    validateDuplicateFields(query);
+  }
 };
 
 const validateBody = (body: BodyType | undefined, declarations: TypeDeclaration[]) => {
@@ -123,6 +132,23 @@ const validateBody = (body: BodyType | undefined, declarations: TypeDeclaration[
   if (errorReferenceToken) {
     throw new ApiSyntaxError(`Type '${errorReferenceToken.value}' not found`, errorReferenceToken);
   }
+
+  if (body?.variableType === 'Object') {
+    validateDuplicateFields(body);
+  }
+};
+
+const validateDuplicateFields = (obj: ObjectVariable) => {
+  const foundFields: string[] = [];
+  obj.fields.forEach((field) => {
+    if (field.variableType === 'Object') {
+      validateDuplicateFields(field);
+    }
+    if (foundFields.includes(field.name)) {
+      throw new ApiSyntaxError(`Field is already defined`, field.token);
+    }
+    foundFields.push(field.name);
+  });
 };
 
 const validateDeclaration = (d: TypeDeclaration | undefined, declarations: TypeDeclaration[]) => {
@@ -130,6 +156,28 @@ const validateDeclaration = (d: TypeDeclaration | undefined, declarations: TypeD
   if (errorReferenceToken) {
     throw new ApiSyntaxError(`Type '${errorReferenceToken.value}' not found`, errorReferenceToken);
   }
+
+  if (d?.variableType === 'Object') {
+    validateDuplicateFields(d);
+  }
+
+  const foundTypes: string[] = [];
+  declarations.forEach((d) => {
+    if (foundTypes.includes(d.name)) {
+      throw new ApiSyntaxError(`Duplicate type declaration`, d.token);
+    }
+    foundTypes.push(d.name);
+  });
+};
+
+const validateApis = (apis: ApiDefinition[]) => {
+  const foundApis: string[] = [];
+  apis.forEach((api) => {
+    if (foundApis.includes(api.name)) {
+      throw new ApiSyntaxError(`Duplicate api definition`, api.token);
+    }
+    foundApis.push(api.name);
+  });
 };
 
 // Because we are parsing the syntax from left to right we don't know if it
@@ -138,6 +186,7 @@ const validateDeclaration = (d: TypeDeclaration | undefined, declarations: TypeD
 const AnalyzeAst = (ast: Ast) => {
   const declarations = getDeclarations(ast);
   const apis = getApiDefinitions(ast);
+  validateApis(apis);
 
   declarations.forEach((d) => validateDeclaration(d, declarations));
   apis.forEach((api) => {
