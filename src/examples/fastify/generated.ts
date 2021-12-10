@@ -71,15 +71,6 @@ export const JsonSchema = {
       },
       required: ['id', 'username', 'age', 'type', 'isCool'],
     },
-    health_200: {
-      type: 'object',
-      properties: {
-        ok: {
-          const: 'ok',
-        },
-      },
-      required: ['ok'],
-    },
     login_body: {
       type: 'object',
       properties: {
@@ -107,20 +98,14 @@ export const JsonSchema = {
     logout_204: {
       type: 'null',
     },
-    getUser_params: {
+    health_200: {
       type: 'object',
       properties: {
-        id: {
-          type: 'number',
+        ok: {
+          const: 'ok',
         },
       },
-      required: ['id'],
-    },
-    getUser_200: {
-      $ref: '#/definitions/User',
-    },
-    getUser_400: {
-      $ref: '#/definitions/Error',
+      required: ['ok'],
     },
     getUsers_query: {
       type: 'object',
@@ -141,6 +126,21 @@ export const JsonSchema = {
       },
     },
     getUsers_400: {
+      $ref: '#/definitions/Error',
+    },
+    getUser_params: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'number',
+        },
+      },
+      required: ['id'],
+    },
+    getUser_200: {
+      $ref: '#/definitions/User',
+    },
+    getUser_400: {
       $ref: '#/definitions/Error',
     },
     postUser_body: {
@@ -232,16 +232,6 @@ export type User = {
 };
 
 export type Api<T = any> = {
-  health: (
-    req: Record<string, unknown>,
-    context: T,
-  ) => MaybePromise<{
-    code: 200;
-    body: {
-      ok: 'ok';
-    };
-  }>;
-
   login: (
     req: {
       body: {
@@ -270,23 +260,15 @@ export type Api<T = any> = {
     code: 204;
   }>;
 
-  getUser: (
-    req: {
-      params: {
-        id: number;
-      };
-    },
+  health: (
+    req: Record<string, unknown>,
     context: T,
-  ) => MaybePromise<
-    | {
-        code: 200;
-        body: User;
-      }
-    | {
-        code: 400;
-        body: Error;
-      }
-  >;
+  ) => MaybePromise<{
+    code: 200;
+    body: {
+      ok: 'ok';
+    };
+  }>;
 
   getUsers: (
     req: {
@@ -300,6 +282,24 @@ export type Api<T = any> = {
     | {
         code: 200;
         body: User[];
+      }
+    | {
+        code: 400;
+        body: Error;
+      }
+  >;
+
+  getUser: (
+    req: {
+      params: {
+        id: number;
+      };
+    },
+    context: T,
+  ) => MaybePromise<
+    | {
+        code: 200;
+        body: User;
       }
     | {
         code: 400;
@@ -369,24 +369,6 @@ const RestPlugin: FastifyPluginAsync<{ routes: Api; setContext: (req: FastifyReq
   });
   fastify.addSchema(JsonSchema);
 
-  fastify.get(
-    '/health',
-    {
-      schema: {
-        response: { '200': { $ref: 'schema#/definitions/health_200' } },
-      },
-    },
-    async (req, reply) => {
-      const response = await options.routes.health({}, (req as any).restplugin_context);
-
-      reply.code(response.code);
-
-      if ('body' in response && response.body) {
-        reply.send(response.body);
-      }
-    },
-  );
-
   fastify.post<{
     Body: {
       username: string;
@@ -433,28 +415,15 @@ const RestPlugin: FastifyPluginAsync<{ routes: Api; setContext: (req: FastifyReq
     },
   );
 
-  fastify.get<{
-    Params: {
-      id: number;
-    };
-  }>(
-    '/users/:id',
+  fastify.get(
+    '/health',
     {
       schema: {
-        params: { $ref: 'schema#/definitions/getUser_params' },
-        response: {
-          '200': { $ref: 'schema#/definitions/getUser_200' },
-          '400': { $ref: 'schema#/definitions/getUser_400' },
-        },
+        response: { '200': { $ref: 'schema#/definitions/health_200' } },
       },
     },
     async (req, reply) => {
-      const response = await options.routes.getUser(
-        {
-          params: req.params,
-        },
-        (req as any).restplugin_context,
-      );
+      const response = await options.routes.health({}, (req as any).restplugin_context);
 
       reply.code(response.code);
 
@@ -486,6 +455,37 @@ const RestPlugin: FastifyPluginAsync<{ routes: Api; setContext: (req: FastifyReq
         {
           query: req.query,
           headers: req.headers,
+        },
+        (req as any).restplugin_context,
+      );
+
+      reply.code(response.code);
+
+      if ('body' in response && response.body) {
+        reply.send(response.body);
+      }
+    },
+  );
+
+  fastify.get<{
+    Params: {
+      id: number;
+    };
+  }>(
+    '/users/:id',
+    {
+      schema: {
+        params: { $ref: 'schema#/definitions/getUser_params' },
+        response: {
+          '200': { $ref: 'schema#/definitions/getUser_200' },
+          '400': { $ref: 'schema#/definitions/getUser_400' },
+        },
+      },
+    },
+    async (req, reply) => {
+      const response = await options.routes.getUser(
+        {
+          params: req.params,
         },
         (req as any).restplugin_context,
       );

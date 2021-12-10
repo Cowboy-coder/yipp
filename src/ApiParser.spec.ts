@@ -1,8 +1,7 @@
-import ApiParser from './ApiParser';
+import { parse } from './ApiParser';
 
-describe(ApiParser, () => {
+describe('ApiParser', () => {
   it('ApiDefinition with different types', () => {
-    const parser = new ApiParser();
     const program = `getUser: GET /users/:id/:id2(Int)/:id3(Float) {
       body: {
         a: "foo"!
@@ -25,7 +24,7 @@ describe(ApiParser, () => {
         } 
       } # and even more
     }`;
-    expect(parser.parse(program)).toMatchObject({
+    expect(parse(program)).toMatchObject({
       type: 'Document',
       definitions: [
         {
@@ -163,7 +162,6 @@ describe(ApiParser, () => {
   });
 
   it('ApiDefinition with no params', () => {
-    const parser = new ApiParser();
     const program = `createUser: POST /users {
       200: {
         body: {
@@ -171,7 +169,7 @@ describe(ApiParser, () => {
         }
       }
     }`;
-    expect(parser.parse(program)).toMatchObject({
+    expect(parse(program)).toMatchObject({
       type: 'Document',
       definitions: [
         {
@@ -202,7 +200,6 @@ describe(ApiParser, () => {
   });
 
   it('Full Api definition', () => {
-    const parser = new ApiParser();
     const program = `
     type Foobar {
       id: String
@@ -238,7 +235,7 @@ describe(ApiParser, () => {
         }
       }
     }`;
-    expect(parser.parse(program)).toMatchObject({
+    expect(parse(program)).toMatchObject({
       type: 'Document',
       definitions: [
         {
@@ -398,7 +395,6 @@ describe(ApiParser, () => {
   });
 
   it('Api Definition with Types and Type references', () => {
-    const parser = new ApiParser();
     const program = `
     type User {
       id: String!
@@ -418,7 +414,7 @@ describe(ApiParser, () => {
         }
       }
     }`;
-    expect(parser.parse(program)).toMatchObject({
+    expect(parse(program)).toMatchObject({
       type: 'Document',
       definitions: [
         {
@@ -498,7 +494,6 @@ describe(ApiParser, () => {
   });
 
   it('Api Definition with arrays', () => {
-    const parser = new ApiParser();
     const program = `
     type Error {
       message: String!
@@ -513,7 +508,7 @@ describe(ApiParser, () => {
         body: [Error!]
       }
     }`;
-    expect(parser.parse(program)).toMatchObject({
+    expect(parse(program)).toMatchObject({
       type: 'Document',
       definitions: [
         {
@@ -584,7 +579,6 @@ describe(ApiParser, () => {
   });
 
   it('ApiDefinition with unions', () => {
-    const parser = new ApiParser();
     const program = `
     type SomeType {
       id: String
@@ -617,7 +611,7 @@ describe(ApiParser, () => {
         }
       }
     }`;
-    expect(parser.parse(program)).toMatchObject({
+    expect(parse(program)).toMatchObject({
       type: 'Document',
       definitions: [
         {

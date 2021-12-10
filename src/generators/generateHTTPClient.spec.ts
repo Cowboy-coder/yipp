@@ -1,12 +1,11 @@
 import { spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import ApiParser from '../ApiParser';
+import { parse } from '../ApiParser';
 import generateHTTPClient from './generateHTTPClient';
 
 const generateToFile = (str: string) => {
-  const parser = new ApiParser();
-  const data = generateHTTPClient(parser.parse(str));
+  const data = generateHTTPClient(parse(str));
 
   const filename = path.join(__dirname, '../../build', `generateHTTPClient.ts`);
 

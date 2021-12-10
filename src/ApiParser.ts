@@ -1,16 +1,15 @@
+import fs from 'fs';
 import AnalyzeAst from './AnalyzeAst';
 import ApiTokenizer, { Token } from './ApiTokenizer';
 
 export class ApiSyntaxError extends Error {
   token: Token;
-  document: string;
-  constructor(message: string, token: Token, document: string) {
+  constructor(message: string, token: Token) {
     super(message);
 
     this.name = 'ApiSyntaxError';
     this.message = message;
     this.token = token;
-    this.document = document;
     Object.setPrototypeOf(this, ApiSyntaxError.prototype);
   }
 }
@@ -23,6 +22,7 @@ export type IntLiteral = { variableType: 'IntLiteral'; value: number; token: Tok
 export type FloatLiteral = { variableType: 'FloatLiteral'; value: number; token: Token };
 export type StringLiteral = { variableType: 'StringLiteral'; value: string; token: Token };
 export type BooleanLiteral = { variableType: 'BooleanLiteral'; value: boolean; token: Token };
+
 export type Builtin =
   | BooleanLiteral
   | BooleanVariable
@@ -84,6 +84,7 @@ type ObjectOrTypeReference<T> = ObjectVariable<T> | TypeReference;
 export type ApiMethod = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE' | 'HEAD';
 
 type ParamsFieldType = ObjectField<IntVariable | FloatVariable | StringVariable>;
+
 type ParamsType = ObjectVariable<IntVariable | FloatVariable | StringVariable>;
 
 type RecursiveObject<T> = T | ObjectVariable<RecursiveObject<T>>;
@@ -95,6 +96,7 @@ export type TypeReference = {
 };
 
 export type QueryType = ObjectOrTypeReference<IntVariable | FloatVariable | StringVariable>;
+
 export type HeaderType = ObjectOrTypeReference<StringVariable | StringLiteral>;
 
 export type ApiFieldDefinition = HeaderType | QueryType | ParamsType | BodyType | undefined;
@@ -133,31 +135,26 @@ const isApiMethod = (value: string): value is ApiMethod => {
   return ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'HEAD'].includes(value);
 };
 
-export default class ApiParser {
+class ApiParser {
   private tokenizer: ApiTokenizer;
   private lookahead: Token;
-  private str: string;
 
-  parse(str: string): Ast {
-    this.str = str;
-    this.tokenizer = new ApiTokenizer(str);
+  parse(str: string, filename?: string): Ast {
+    this.tokenizer = new ApiTokenizer(str, filename);
 
     this.lookahead = this.tokenizer.getNextToken();
     return this.Document();
   }
 
   reportAndExit(token: Token, error: string): never {
-    throw new ApiSyntaxError(error, token, this.str);
+    throw new ApiSyntaxError(error, token);
   }
 
   Document(): Ast {
-    return AnalyzeAst(
-      {
-        type: 'Document',
-        definitions: this.Definitions(),
-      },
-      this.str,
-    );
+    return {
+      type: 'Document',
+      definitions: this.Definitions(),
+    };
   }
 
   Definitions(): Definition[] {
@@ -365,7 +362,7 @@ export default class ApiParser {
       if ((this.lookahead as Token).type === 'API_QUERY') {
         this.eat('API_QUERY');
         this.disallowUnionAndArray();
-        query = this.simpleObjectOrTypeReference() as QueryType; // could possible be invalid but will be after the whole AST is parsed
+        query = this.simpleObjectOrTypeReference() as QueryType; // could possible be invalid but will be validated after the whole AST is parsed
       }
 
       if ((this.lookahead as Token).type === 'API_BODY') {
@@ -376,7 +373,7 @@ export default class ApiParser {
       if ((this.lookahead as Token).type === 'API_HEADERS') {
         this.eat('API_HEADERS');
         this.disallowUnionAndArray();
-        headers = this.simpleObjectOrTypeReference() as HeaderType; // could possible be invalid but will be after the whole AST is parsed
+        headers = this.simpleObjectOrTypeReference() as HeaderType; // could possible be invalid but will be validated after the whole AST is parsed
       }
     }
 
@@ -398,7 +395,7 @@ export default class ApiParser {
 
   private disallowUnionAndArray() {
     if (this.lookahead.type === '[' || this.lookahead.type === '|') {
-      throw new ApiSyntaxError('Can only be a Type Reference or Object', this.lookahead, this.str);
+      throw new ApiSyntaxError('Can only be a Type Reference or Object', this.lookahead);
     }
   }
 
@@ -604,7 +601,7 @@ export default class ApiParser {
         if ((this.lookahead as Token).type === 'API_HEADERS') {
           this.eat('API_HEADERS');
           this.disallowUnionAndArray();
-          headers = this.simpleObjectOrTypeReference() as HeaderType; // could possible be invalid but will be after the whole AST is parsed
+          headers = this.simpleObjectOrTypeReference() as HeaderType; // could possible be invalid but will be validated after the whole AST is parsed
         }
       }
 
@@ -639,3 +636,19 @@ export default class ApiParser {
     return token;
   }
 }
+
+export const parse = (str: string): Ast => {
+  return AnalyzeAst(new ApiParser().parse(str));
+};
+
+export const parseFiles = (filenames: string[]): Ast => {
+  const mergedAst: Ast = {
+    type: 'Document',
+    definitions: [],
+  };
+  for (const filename of filenames) {
+    const data = fs.readFileSync(filename, 'utf8');
+    mergedAst.definitions = [...mergedAst.definitions, ...new ApiParser().parse(data, filename).definitions];
+  }
+  return AnalyzeAst(mergedAst);
+};

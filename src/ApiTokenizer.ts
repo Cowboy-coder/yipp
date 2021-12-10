@@ -41,20 +41,24 @@ export type Token = {
   line: number;
   col: number;
   value: string;
+  document: string;
+  filename?: string;
 };
 
 export default class ApiTokenizer {
   private str: string;
   private cursor: number;
+  private filename?: string;
 
-  constructor(str: string) {
+  constructor(str: string, filename?: string) {
     this.str = str;
     this.cursor = 0;
+    this.filename = filename;
   }
 
   getNextToken(): Token {
+    const lines = this.str.split('\n');
     if (!this.hasMoreTokens()) {
-      const lines = this.str.split('\n');
       return {
         type: 'EOF',
         start: this.str.length,
@@ -62,6 +66,8 @@ export default class ApiTokenizer {
         line: lines.length,
         col: lines[lines.length - 1].length,
         value: '',
+        document: this.str,
+        filename: this.filename,
       };
     }
 
@@ -87,6 +93,8 @@ export default class ApiTokenizer {
         end: this.cursor,
         line: lines.length,
         col: lines[lines.length - 1].length,
+        document: this.str,
+        filename: this.filename,
       };
     }
     throw new SyntaxError(`Unexpected token "${str[0]}"`);

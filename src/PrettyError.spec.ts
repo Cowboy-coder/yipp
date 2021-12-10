@@ -15,7 +15,6 @@ weirdsyntax
     expect(
       PrettyError({
         token: tokenizer.getNextToken(),
-        document,
         errorMessage: 'Unexpected error, you fool!',
         options: {
           color: false,
@@ -44,7 +43,6 @@ weirdsyntax
     expect(
       PrettyError({
         token: tokenizer.getNextToken(),
-        document,
         errorMessage: 'Unexpected error, you fool!',
         options: {
           color: false,
@@ -93,7 +91,6 @@ weirdsyntax
     expect(
       PrettyError({
         token: tokenizer.getNextToken(),
-        document,
         errorMessage: 'Unexpected error, you fool!',
         options: {
           color: false,
@@ -126,7 +123,6 @@ type Header {
     expect(
       PrettyError({
         token: tokenizer.getNextToken(),
-        document,
         errorMessage: 'Unexpected error, you fool etc etc etc!',
         options: {
           color: false,

@@ -1,21 +1,6 @@
-type AuthenticatedRoute {
-  authorization: String!
-}
-
-type Field {
-  name: String!
-  message: String!
-}
-
-type Error {
-  message: String!
-  fields: [Field!]!
-}
-
 type UserType
  | "admin"
  | "user"
-
 
 type User {
   id: Int!
@@ -23,45 +8,6 @@ type User {
   age: Int!
   type: UserType!
   isCool: Boolean!
-}
-
-health: GET /health {
-  200: {
-    body: {
-      ok: "ok"!
-    }
-  }
-}
-
-login: POST /login {
-  body: {
-    username: String!
-    password: String!
-  }
-  200: {
-    body: {
-      token: String!
-    }
-  }
-  400: {
-    body: Error
-  }
-}
-
-logout: POST /logout {
-  204: {}
-}
-
-
-getUser: GET /users/:id(Int) {
-
-  200: {
-    body: User
-  }
-
-  400: {
-    body: Error
-  }
 }
 
 getUsers: GET /users {
@@ -79,6 +25,19 @@ getUsers: GET /users {
     body: Error
   }
 }
+
+
+getUser: GET /users/:id(Int) {
+
+  200: {
+    body: User
+  }
+
+  400: {
+    body: Error
+  }
+}
+
 
 postUser: POST /users {
   headers: AuthenticatedRoute

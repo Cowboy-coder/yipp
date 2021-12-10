@@ -1,0 +1,18 @@
+login: POST /login {
+  body: {
+    username: String!
+    password: String!
+  }
+  200: {
+    body: {
+      token: String!
+    }
+  }
+  400: {
+    body: Error
+  }
+}
+
+logout: POST /logout {
+  204: {}
+}

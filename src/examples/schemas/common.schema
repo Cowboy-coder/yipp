@@ -1,0 +1,21 @@
+type AuthenticatedRoute {
+  authorization: String!
+}
+
+type Field {
+  name: String!
+  message: String!
+}
+
+type Error {
+  message: String!
+  fields: [Field!]!
+}
+
+health: GET /health {
+  200: {
+    body: {
+      ok: "ok"!
+    }
+  }
+}

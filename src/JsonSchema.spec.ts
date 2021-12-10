@@ -1,10 +1,9 @@
 import { JSONSchema7 } from 'json-schema';
-import ApiParser from './ApiParser';
+import { parse } from './ApiParser';
 import JsonSchema from './JsonSchema';
 
 describe(JsonSchema, () => {
   it('Different types', () => {
-    const parser = new ApiParser();
     const program = `
     type Foo {
       a: "foo"!
@@ -21,7 +20,7 @@ describe(JsonSchema, () => {
       with_underscore: String
     }
     `;
-    expect(JsonSchema(parser.parse(program))).toEqual<JSONSchema7>({
+    expect(JsonSchema(parse(program))).toEqual<JSONSchema7>({
       $id: 'schema',
       type: 'object',
       definitions: {
@@ -48,7 +47,6 @@ describe(JsonSchema, () => {
   });
 
   it('Nested type', () => {
-    const parser = new ApiParser();
     const program = `
       type Foo {
         a: {
@@ -59,7 +57,7 @@ describe(JsonSchema, () => {
       }
       `;
 
-    expect(JsonSchema(parser.parse(program))).toEqual<JSONSchema7>({
+    expect(JsonSchema(parse(program))).toEqual<JSONSchema7>({
       $id: 'schema',
       type: 'object',
       definitions: {
@@ -87,7 +85,6 @@ describe(JsonSchema, () => {
   });
 
   it('Arrays', () => {
-    const parser = new ApiParser();
     const program = `
       type Test {
         id: String!
@@ -100,7 +97,7 @@ describe(JsonSchema, () => {
       }
       `;
 
-    expect(JsonSchema(parser.parse(program))).toEqual<JSONSchema7>({
+    expect(JsonSchema(parse(program))).toEqual<JSONSchema7>({
       $id: 'schema',
       type: 'object',
       definitions: {
@@ -148,7 +145,6 @@ describe(JsonSchema, () => {
   });
 
   it('Union type', () => {
-    const parser = new ApiParser();
     const program = `
       type Foo
        | "foo"
@@ -162,7 +158,7 @@ describe(JsonSchema, () => {
        | 32.0
        | -12.042
       `;
-    expect(JsonSchema(parser.parse(program))).toEqual<JSONSchema7>({
+    expect(JsonSchema(parse(program))).toEqual<JSONSchema7>({
       $id: 'schema',
       type: 'object',
       definitions: {
@@ -185,7 +181,6 @@ describe(JsonSchema, () => {
   });
 
   it('Complex Union type', () => {
-    const parser = new ApiParser();
     const program = `
       type Error
        | { message: String! }
@@ -193,7 +188,7 @@ describe(JsonSchema, () => {
        | "Foo"
        | 42
       `;
-    expect(JsonSchema(parser.parse(program))).toEqual<JSONSchema7>({
+    expect(JsonSchema(parse(program))).toEqual<JSONSchema7>({
       $id: 'schema',
       type: 'object',
       definitions: {
@@ -218,7 +213,6 @@ describe(JsonSchema, () => {
   });
 
   it('Api definition with type reference', () => {
-    const parser = new ApiParser();
     const program = `
       type User {
         id: String!
@@ -240,7 +234,7 @@ describe(JsonSchema, () => {
         }
       }
       `;
-    expect(JsonSchema(parser.parse(program))).toEqual<JSONSchema7>({
+    expect(JsonSchema(parse(program))).toEqual<JSONSchema7>({
       $id: 'schema',
       type: 'object',
       definitions: {
@@ -279,7 +273,6 @@ describe(JsonSchema, () => {
   });
 
   it('Complex Api definition with type reference, unions etc', () => {
-    const parser = new ApiParser();
     const program = `
       type UserType
         | "Admin"
@@ -314,7 +307,7 @@ describe(JsonSchema, () => {
         }
       }
       `;
-    expect(JsonSchema(parser.parse(program))).toEqual<JSONSchema7>({
+    expect(JsonSchema(parse(program))).toEqual<JSONSchema7>({
       $id: 'schema',
       type: 'object',
       definitions: {

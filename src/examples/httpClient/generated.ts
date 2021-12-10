@@ -24,19 +24,6 @@ const createHTTPClient = (config?: AxiosRequestConfig) => {
   const axios = Axios.create(config);
 
   return {
-    async health(): Promise<
-      AxiosResponse<{
-        ok: 'ok';
-      }>
-    > {
-      return axios.request({
-        method: 'GET',
-        url: `/health`,
-
-        data: {},
-      });
-    },
-
     async login(req: {
       body: {
         username: string;
@@ -64,10 +51,14 @@ const createHTTPClient = (config?: AxiosRequestConfig) => {
       });
     },
 
-    async getUser(id: number): Promise<AxiosResponse<User>> {
+    async health(): Promise<
+      AxiosResponse<{
+        ok: 'ok';
+      }>
+    > {
       return axios.request({
         method: 'GET',
-        url: `/users/${id}`,
+        url: `/health`,
 
         data: {},
       });
@@ -84,6 +75,15 @@ const createHTTPClient = (config?: AxiosRequestConfig) => {
         url: `/users`,
         params: req.query,
         headers: req.headers,
+        data: {},
+      });
+    },
+
+    async getUser(id: number): Promise<AxiosResponse<User>> {
+      return axios.request({
+        method: 'GET',
+        url: `/users/${id}`,
+
         data: {},
       });
     },

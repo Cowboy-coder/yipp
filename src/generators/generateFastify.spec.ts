@@ -1,12 +1,11 @@
 import { spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import ApiParser from '../ApiParser';
+import { parse } from '../ApiParser';
 import generateFastify from './generateFastify';
 
 const generateToFile = (str: string) => {
-  const parser = new ApiParser();
-  const data = generateFastify(parser.parse(str));
+  const data = generateFastify(parse(str));
 
   const filename = path.join(__dirname, '../../build', `generateFastify.ts`);
 

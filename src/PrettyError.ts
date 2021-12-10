@@ -3,12 +3,10 @@ import { Token } from './ApiTokenizer';
 
 const PrettyError = ({
   token,
-  document,
   errorMessage,
   options,
 }: {
   token: Token;
-  document: string;
   errorMessage: string;
   options?: {
     color: boolean;
@@ -19,7 +17,7 @@ const PrettyError = ({
   const contextVisible = options?.contextVisible ?? 2;
 
   const errorMsg = color ? chalk.red(errorMessage) : errorMessage;
-  const allLines = document.split('\n');
+  const allLines = token.document.split('\n');
 
   const lines = [
     ...allLines.slice(Math.max(token.line - contextVisible - 1, 0), token.line - 1),
