@@ -22,6 +22,7 @@ export type IntLiteral = { variableType: 'IntLiteral'; value: number; token: Tok
 export type FloatLiteral = { variableType: 'FloatLiteral'; value: number; token: Token };
 export type StringLiteral = { variableType: 'StringLiteral'; value: string; token: Token };
 export type BooleanLiteral = { variableType: 'BooleanLiteral'; value: boolean; token: Token };
+export type DateTimeVariable = { variableType: 'DateTime'; token: Token };
 
 export type Builtin =
   | BooleanLiteral
@@ -31,7 +32,8 @@ export type Builtin =
   | IntLiteral
   | IntVariable
   | StringLiteral
-  | StringVariable;
+  | StringVariable
+  | DateTimeVariable;
 
 type defaultUnion = Builtin | TypeReference | ObjectVariable;
 export type UnionItem<T = defaultUnion> = {
@@ -129,7 +131,7 @@ export type Ast = {
 };
 
 const isBuiltIn = (value: string): value is 'Int' | 'Float' | 'String' | 'Boolean' => {
-  return ['Int', 'Float', 'String', 'Boolean'].includes(value);
+  return ['Int', 'Float', 'String', 'Boolean', 'DateTime'].includes(value);
 };
 
 const isApiMethod = (value: string): value is ApiMethod => {

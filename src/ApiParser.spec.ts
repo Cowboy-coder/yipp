@@ -14,6 +14,7 @@ describe('ApiParser', () => {
         h: false
         i: 32.0
         j: -12.042
+        k: DateTime
         with-dash: String
         with_underscore: String
       }
@@ -123,6 +124,12 @@ describe('ApiParser', () => {
                 name: 'j',
                 variableType: 'FloatLiteral',
                 value: -12.042,
+                isRequired: false,
+              },
+              {
+                type: 'ObjectField',
+                name: 'k',
+                variableType: 'DateTime',
                 isRequired: false,
               },
               {

@@ -16,6 +16,7 @@ describe(JsonSchema, () => {
       h: false
       i: 32.0
       j: -12.042
+      k: DateTime
       with-dash: String
       with_underscore: String
     }
@@ -37,6 +38,7 @@ describe(JsonSchema, () => {
             h: { const: false },
             i: { const: 32.0 },
             j: { const: -12.042 },
+            k: { type: 'string', format: 'date-time' },
             'with-dash': { type: 'string' },
             with_underscore: { type: 'string' },
           },

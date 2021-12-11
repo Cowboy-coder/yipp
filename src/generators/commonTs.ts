@@ -1,31 +1,6 @@
-import {
-  ApiFieldDefinition,
-  BooleanLiteral,
-  BooleanVariable,
-  FloatLiteral,
-  FloatVariable,
-  IntLiteral,
-  IntVariable,
-  ObjectField,
-  StringLiteral,
-  StringVariable,
-  TypeDeclaration,
-  TypeReference,
-  UnionItem,
-} from '../ApiParser';
+import { ApiFieldDefinition, Builtin, ObjectField, TypeDeclaration, TypeReference, UnionItem } from '../ApiParser';
 
-export const generateType = (
-  d:
-    | BooleanVariable
-    | IntVariable
-    | StringVariable
-    | FloatVariable
-    | BooleanLiteral
-    | IntLiteral
-    | StringLiteral
-    | FloatLiteral
-    | TypeReference,
-): string => {
+export const generateType = (d: Builtin | TypeReference): string => {
   switch (d.variableType) {
     case 'Int':
       return 'number';
@@ -43,10 +18,12 @@ export const generateType = (
       return 'number';
     case 'FloatLiteral':
       return `${d.value}`;
+    case 'DateTime':
+      return 'string';
     case 'TypeReference':
       return d.value;
     default:
-      throw `unsupported type`;
+      throw new Error(`Unsupported type`);
   }
 };
 

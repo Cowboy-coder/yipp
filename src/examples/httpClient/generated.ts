@@ -18,6 +18,7 @@ export type User = {
   age: number;
   type: UserType;
   isCool: boolean;
+  createdAt: string;
 };
 
 const createHTTPClient = (config?: AxiosRequestConfig) => {
@@ -113,6 +114,7 @@ const createHTTPClient = (config?: AxiosRequestConfig) => {
           username?: string;
           age?: number;
           isCool?: boolean;
+          createdAt?: string;
         };
         headers: AuthenticatedRoute;
       },

@@ -22,6 +22,7 @@ const db = {
         type: ix % 4 === 0 ? ('admin' as const) : ('user' as const),
         age: ix + 1,
         isCool: ix % 2 === 0,
+        createdAt: new Date().toISOString(),
       }))
       .filter((x) => x.username.indexOf(query ?? '') > -1);
   },

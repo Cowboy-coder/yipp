@@ -68,8 +68,12 @@ export const JsonSchema = {
         isCool: {
           type: 'boolean',
         },
+        createdAt: {
+          type: 'string',
+          format: 'date-time',
+        },
       },
-      required: ['id', 'username', 'age', 'type', 'isCool'],
+      required: ['id', 'username', 'age', 'type', 'isCool', 'createdAt'],
     },
     login_body: {
       type: 'object',
@@ -191,6 +195,10 @@ export const JsonSchema = {
         isCool: {
           type: 'boolean',
         },
+        createdAt: {
+          type: 'string',
+          format: 'date-time',
+        },
       },
       required: [],
     },
@@ -229,6 +237,7 @@ export type User = {
   age: number;
   type: UserType;
   isCool: boolean;
+  createdAt: string;
 };
 
 export type Api<T = any> = {
@@ -338,6 +347,7 @@ export type Api<T = any> = {
         username?: string;
         age?: number;
         isCool?: boolean;
+        createdAt?: string;
       };
       headers: AuthenticatedRoute;
     },
@@ -543,6 +553,7 @@ const RestPlugin: FastifyPluginAsync<{ routes: Api; setContext: (req: FastifyReq
       username?: string;
       age?: number;
       isCool?: boolean;
+      createdAt?: string;
     };
     Headers: AuthenticatedRoute;
   }>(

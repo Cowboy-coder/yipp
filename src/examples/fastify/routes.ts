@@ -60,6 +60,7 @@ const routes: Api<Context> = {
         age: body.age,
         type: 'user',
         isCool: body.isCool,
+        createdAt: new Date().toISOString(),
       };
       return {
         code: 200,
@@ -96,6 +97,9 @@ const routes: Api<Context> = {
       }
       if (body.isCool !== undefined) {
         user.isCool = body.isCool;
+      }
+      if (body.createdAt !== undefined) {
+        user.createdAt = body.createdAt;
       }
 
       return {

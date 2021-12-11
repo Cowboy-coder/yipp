@@ -62,6 +62,10 @@ const fieldSchema = (
     return { const: field.value };
   }
 
+  if (field.variableType === 'DateTime') {
+    return { type: 'string', format: 'date-time' };
+  }
+
   if (field.variableType === 'TypeReference') {
     return { $ref: `#/definitions/${field.value}` };
   }
@@ -170,14 +174,6 @@ const JsonSchema = (ast: Ast): JSONSchema7 => {
           ...acc,
           ...obj,
         };
-        // return [
-        //   ...)
-        //     .filter((x): x is JSONSchema7 => !!x),
-        //   ...api.responses.map((response) => {
-        //     const $id = schemaId(`${api.name}_${response.status}`);
-        //     return apiFieldDefinitionSchema($id, response.body);
-        //   }),
-        // ];
       }, {} as { [key: string]: JSONSchema7Definition }),
     },
   };
