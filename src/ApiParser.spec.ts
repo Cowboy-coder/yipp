@@ -208,6 +208,10 @@ describe('ApiParser', () => {
 
   it('Full Api definition', () => {
     const program = `
+    enum Color {
+      red
+      blue
+    }
     type Foobar {
       id: String
       nested: {
@@ -220,6 +224,7 @@ describe('ApiParser', () => {
     updateUser: PUT /users/:id {
       query: {
         foo: String!
+        color: Color!
       }
       body: {
         id: String
@@ -245,6 +250,24 @@ describe('ApiParser', () => {
     expect(parse(program)).toMatchObject({
       type: 'Document',
       definitions: [
+        {
+          type: 'EnumDeclaration',
+          name: 'Color',
+          fields: [
+            {
+              type: 'EnumField',
+              name: 'red',
+              variableType: 'StringLiteral',
+              value: 'red',
+            },
+            {
+              type: 'EnumField',
+              name: 'blue',
+              variableType: 'StringLiteral',
+              value: 'blue',
+            },
+          ],
+        },
         {
           type: 'TypeDeclaration',
           variableType: 'Object',
@@ -308,6 +331,13 @@ describe('ApiParser', () => {
                 type: 'ObjectField',
                 name: 'foo',
                 variableType: 'String',
+                isRequired: true,
+              },
+              {
+                type: 'ObjectField',
+                name: 'color',
+                variableType: 'TypeReference',
+                value: 'Color',
                 isRequired: true,
               },
             ],

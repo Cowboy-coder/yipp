@@ -16,8 +16,8 @@ import { Token } from './ApiTokenizer';
 import { getApiDefinitions, getDeclarations } from './AstQuery';
 
 const rules = {
-  headers: ['String', 'StringLiteral'],
-  query: ['Int', 'Float', 'String'],
+  headers: ['String', 'StringLiteral', 'EnumDeclaration'],
+  query: ['Int', 'Float', 'String', 'EnumDeclaration'],
 };
 
 const validateTypeRef = (
@@ -51,9 +51,19 @@ const validateTypeRef = (
   return undefined;
 };
 
-const validateObject = (obj: ObjectVariable, validFields: string[], typeRef: TypeReference | undefined = undefined) => {
+const validateObject = (
+  obj: ObjectVariable,
+  validFields: string[],
+  declarations: (TypeDeclaration | EnumDeclaration | UnionDeclaration)[],
+  typeRef: TypeReference | undefined = undefined,
+) => {
   obj.fields.forEach((field) => {
-    if (!validFields.includes(field.variableType)) {
+    const fieldVariableType =
+      field.variableType === 'TypeReference'
+        ? declarations.find((d) => d.name === field.value)?.type
+        : field.variableType;
+
+    if (fieldVariableType && !validFields.includes(fieldVariableType)) {
       if (typeRef) {
         throw new ApiSyntaxError(`This type can only contain fields of type ${validFields.join(',')}`, typeRef.token);
       } else {
@@ -85,12 +95,12 @@ const validateHeaders = (
       throw new ApiSyntaxError(`Type '${header.token.value}' can not be referencing an Union`, header.token);
     }
     if (found?.variableType === 'Object') {
-      validateObject(found, rules.headers, header);
+      validateObject(found, rules.headers, declarations, header);
     } else {
       throw new ApiSyntaxError(`Type '${header.token.value}' can only be referencing an Object`, header.token);
     }
   } else if (header.variableType === 'Object') {
-    validateObject(header, rules.headers);
+    validateObject(header, rules.headers, declarations);
   }
 
   if (header.variableType === 'Object') {
@@ -119,12 +129,12 @@ const validateQuery = (
       throw new ApiSyntaxError(`Type '${query.token.value}' can not be referencing an Union`, query.token);
     }
     if (found?.variableType === 'Object') {
-      validateObject(found, rules.query, query);
+      validateObject(found, rules.query, declarations, query);
     } else {
       throw new ApiSyntaxError(`Type '${query.token.value}' can only be referencing an Object`, query.token);
     }
   } else if (query.variableType === 'Object') {
-    validateObject(query, rules.query);
+    validateObject(query, rules.query, declarations);
   }
 
   if (query.variableType === 'Object') {

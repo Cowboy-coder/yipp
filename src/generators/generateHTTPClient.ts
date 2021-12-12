@@ -26,9 +26,6 @@ const generateHTTPClient = (ast: Ast) => {
           d.params?.fields.forEach((p) => {
             path = path.replace(`:${p.name}`, `\${${p.name}}`);
           });
-          if (d.query && d.query.variableType !== 'Object') {
-            throw new Error('unsupported query');
-          }
           const params = d.params?.fields.map((f) => `${f.name}:${generateType(f)}`).join(',') ?? '';
           const req = (['query', 'body', 'headers'] as const)
             .map((t) => {

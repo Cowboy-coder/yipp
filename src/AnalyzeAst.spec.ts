@@ -18,7 +18,9 @@ describe(AnalyzeAst, () => {
         }
       }
    `),
-    ).toThrowErrorMatchingInlineSnapshot(`"This type can only contain fields of type String,StringLiteral"`);
+    ).toThrowErrorMatchingInlineSnapshot(
+      `"This type can only contain fields of type String,StringLiteral,EnumDeclaration"`,
+    );
   });
 
   it('validates query', () => {
@@ -37,7 +39,9 @@ describe(AnalyzeAst, () => {
         }
       }
    `),
-    ).toThrowErrorMatchingInlineSnapshot(`"This type can only contain fields of type Int,Float,String"`);
+    ).toThrowErrorMatchingInlineSnapshot(
+      `"This type can only contain fields of type Int,Float,String,EnumDeclaration"`,
+    );
   });
 
   it('validates reference errors', () => {
