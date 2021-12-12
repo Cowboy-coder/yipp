@@ -9,12 +9,10 @@ type FieldError {
   message: String!
 }
 
-type Error
-| { message: String! } 
-| {
-    message: String!
-    fields: [FieldError!]!
-  } 
+type Error {
+  message: String!
+  fields: [FieldError!]!
+} 
   
 login: POST /login {
   body: {
@@ -39,14 +37,10 @@ export type FieldError = {
   message: string;
 };
 
-export type Error =
-  | {
-      message: string;
-    }
-  | {
-      message: string;
-      fields: FieldError[];
-    };
+export type Error = {
+  message: string;
+  fields: FieldError[];
+};
     
 export type Api = {
   login: (req: {
@@ -55,16 +49,18 @@ export type Api = {
       password: string;
     };
   }) =>
-    | MaybePromise<{
+  ) => MaybePromise<
+    | {
         code: 200;
         body: {
           token: string;
         };
-      }>
-    | MaybePromise<{
+      }
+    | {
         code: 400;
         body: Error;
-      }>;
+      }
+  >;
 }
 ```
 
@@ -106,18 +102,25 @@ fastify.register(RestPlugin, {
 ```
 This uses [fastify](https://www.fastify.io/) underneath but could in theory use any framework.
 
-A more complete (but WIP) example can be seen in [fastifyExample](https://github.com/Cowboy-coder/schema-first-rest/tree/master/src/fastifyExample).
+A more complete (but WIP) example can be seen in [fastifyExample](https://github.com/Cowboy-coder/schema-first-rest/tree/master/src/examples/fastify).
 
 ### CLI
 
 Can be used to generate a Fastify Plugin. Also supports merging multiple schemas into one, if needed. Supports watch-mode.
 
-For example
-
 ```
-./node_modules/.bin/ts-node-dev src/Cli.ts --watch src/fastifyExample/generated.ts src/fastifyExample/schemas/**.schema
-```
+Usage: Cli [options] <type> <output-file> <input-file...>
 
-Would start a watch process on all schema files in `./src/fastifyExample/schemas` and generate a FastifyPlugin `./src/fastifyExample/generated.ts`.
+generate
+
+Arguments:
+  type         (choices: "fastify-plugin", "http-client")
+  output-file  generated typescript file
+  input-file   One or more api schema files. Will be merged into one schema if several files.
+
+Options:
+  -w --watch   watch for changes (default: false)
+  -h, --help   display help for command
+```
 
 🐄
