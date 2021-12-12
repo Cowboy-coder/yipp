@@ -62,6 +62,7 @@ import createHTTPClient, { UserType } from './generated';
         })
       ).data,
     );
+    console.log('getFeed', (await api.getFeed()).data);
     console.log('logout', (await api.logout()).data);
     console.log('completed in', new Date().getTime() - start, 'ms');
   } catch (err) {

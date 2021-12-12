@@ -585,217 +585,6 @@ describe('ApiParser', () => {
     });
   });
 
-  it('ApiDefinition with unions', () => {
-    const program = `
-    type SomeType {
-      id: String
-    }
-    type UserType
-      | {q: String}
-      | "admin"
-      | "user"
-      | "thug"
-      | 49
-      | -49
-      | 12.12
-      | -32.02
-      | true
-      | false
-      | String
-      | Int
-      | SomeType
-
-
-    createUser: POST /users {
-      body: {
-        username: String!
-        userType: UserType!
-      }
-      200: {
-        body: {
-          id: String!
-          test: | "foo" | "bar" | "baz" | SomeType | { a: String }!
-        }
-      }
-    }`;
-    expect(parse(program)).toMatchObject({
-      type: 'Document',
-      definitions: [
-        {
-          type: 'TypeDeclaration',
-          variableType: 'Object',
-          name: 'SomeType',
-          fields: [
-            {
-              type: 'ObjectField',
-              variableType: 'String',
-              name: 'id',
-              isRequired: false,
-            },
-          ],
-        },
-        {
-          type: 'TypeDeclaration',
-          variableType: 'Union',
-          name: 'UserType',
-          unions: [
-            {
-              type: 'UnionItem',
-              variableType: 'Object',
-              fields: [
-                {
-                  type: 'ObjectField',
-                  name: 'q',
-                  variableType: 'String',
-                  isRequired: false,
-                },
-              ],
-            },
-            {
-              type: 'UnionItem',
-              variableType: 'StringLiteral',
-              value: 'admin',
-            },
-            {
-              type: 'UnionItem',
-              variableType: 'StringLiteral',
-              value: 'user',
-            },
-            {
-              type: 'UnionItem',
-              variableType: 'StringLiteral',
-              value: 'thug',
-            },
-            {
-              type: 'UnionItem',
-              variableType: 'IntLiteral',
-              value: 49,
-            },
-            {
-              type: 'UnionItem',
-              value: -49,
-              variableType: 'IntLiteral',
-            },
-            {
-              type: 'UnionItem',
-              value: 12.12,
-              variableType: 'FloatLiteral',
-            },
-            {
-              type: 'UnionItem',
-              value: -32.02,
-              variableType: 'FloatLiteral',
-            },
-            {
-              type: 'UnionItem',
-              value: true,
-              variableType: 'BooleanLiteral',
-            },
-            {
-              type: 'UnionItem',
-              value: false,
-              variableType: 'BooleanLiteral',
-            },
-            {
-              type: 'UnionItem',
-              variableType: 'String',
-            },
-            {
-              type: 'UnionItem',
-              variableType: 'Int',
-            },
-            {
-              type: 'UnionItem',
-              variableType: 'TypeReference',
-              value: 'SomeType',
-            },
-          ],
-        },
-        {
-          type: 'ApiDefinition',
-          name: 'createUser',
-          method: 'POST',
-          path: '/users',
-          body: {
-            variableType: 'Object',
-            fields: [
-              {
-                type: 'ObjectField',
-                name: 'username',
-                variableType: 'String',
-                isRequired: true,
-              },
-              {
-                type: 'ObjectField',
-                name: 'userType',
-                variableType: 'TypeReference',
-                value: 'UserType',
-                isRequired: true,
-              },
-            ],
-          },
-          responses: [
-            {
-              type: 'ApiResponseDefinition',
-              status: 200,
-              body: {
-                variableType: 'Object',
-                fields: [
-                  {
-                    type: 'ObjectField',
-                    name: 'id',
-                    variableType: 'String',
-                    isRequired: true,
-                  },
-                  {
-                    type: 'ObjectField',
-                    name: 'test',
-                    variableType: 'Union',
-                    unions: [
-                      {
-                        type: 'UnionItem',
-                        variableType: 'StringLiteral',
-                        value: 'foo',
-                      },
-                      {
-                        type: 'UnionItem',
-                        variableType: 'StringLiteral',
-                        value: 'bar',
-                      },
-                      {
-                        type: 'UnionItem',
-                        variableType: 'StringLiteral',
-                        value: 'baz',
-                      },
-                      {
-                        type: 'UnionItem',
-                        variableType: 'TypeReference',
-                        value: 'SomeType',
-                      },
-                      {
-                        type: 'UnionItem',
-                        variableType: 'Object',
-                        fields: [
-                          {
-                            type: 'ObjectField',
-                            name: 'a',
-                            variableType: 'String',
-                            isRequired: false,
-                          },
-                        ],
-                      },
-                    ],
-                    isRequired: true,
-                  },
-                ],
-              },
-            },
-          ],
-        },
-      ],
-    });
-  });
-
   it('Enums', () => {
     const program = `
     enum UserType {
@@ -843,6 +632,83 @@ describe('ApiParser', () => {
               name: 'Bar',
               variableType: 'StringLiteral',
               value: 'B',
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  it('UnionDeclaration', () => {
+    const program = `
+    type Photo {
+      photoUrl: String!
+      type: "Photo"!
+    }
+
+    type Video {
+      videoUrl: String!
+      type: "Video"!
+    }
+
+    union Feed = Video | Photo, type
+    `;
+    expect(parse(program)).toMatchObject({
+      type: 'Document',
+      definitions: [
+        {
+          type: 'TypeDeclaration',
+          variableType: 'Object',
+          name: 'Photo',
+          fields: [
+            {
+              type: 'ObjectField',
+              name: 'photoUrl',
+              variableType: 'String',
+              isRequired: true,
+            },
+            {
+              type: 'ObjectField',
+              name: 'type',
+              variableType: 'StringLiteral',
+              value: 'Photo',
+              isRequired: true,
+            },
+          ],
+        },
+        {
+          type: 'TypeDeclaration',
+          variableType: 'Object',
+          name: 'Video',
+          fields: [
+            {
+              type: 'ObjectField',
+              name: 'videoUrl',
+              variableType: 'String',
+              isRequired: true,
+            },
+            {
+              type: 'ObjectField',
+              name: 'type',
+              variableType: 'StringLiteral',
+              value: 'Video',
+              isRequired: true,
+            },
+          ],
+        },
+        {
+          type: 'UnionDeclaration',
+          name: 'Feed',
+          items: [
+            {
+              type: 'UnionItem',
+              variableType: 'TypeReference',
+              value: 'Video',
+            },
+            {
+              type: 'UnionItem',
+              variableType: 'TypeReference',
+              value: 'Photo',
             },
           ],
         },

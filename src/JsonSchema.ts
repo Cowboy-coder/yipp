@@ -7,15 +7,13 @@ import {
   ObjectField,
   ObjectVariable,
   TypeReference,
-  UnionItem,
-  UnionVariable,
 } from './ApiParser';
 import { getApiDefinitions, getDeclarations } from './AstQuery';
 
 export const schemaId = (str: string) => `https://example.com/#${str}`;
 
 const fieldSchema = (
-  field: ObjectField | ObjectVariable | TypeReference | ArrayVariable | ArrayItem | UnionVariable | UnionItem,
+  field: ObjectField | ObjectVariable | TypeReference | ArrayVariable | ArrayItem,
 ): JSONSchema7Definition => {
   if (field.variableType === 'Object') {
     const properties: {
@@ -78,13 +76,6 @@ const fieldSchema = (
         : { oneOf: [{ type: 'null' }, fieldSchema(field.items)] },
     };
   }
-  if (field.variableType === 'Union') {
-    return {
-      oneOf: field.unions.map((union) => {
-        return fieldSchema(union);
-      }),
-    };
-  }
   throw new Error(`Unsupported field`);
 };
 
@@ -128,7 +119,14 @@ const JsonSchema = (ast: Ast): JSONSchema7 => {
     type: 'object',
     definitions: {
       ...declarations.reduce((acc, d) => {
-        if (d.type === 'EnumDeclaration') {
+        if (d.type === 'UnionDeclaration') {
+          return {
+            ...acc,
+            [d.name]: {
+              oneOf: d.items.map((f) => ({ $ref: `#/definitions/${f.value}` })),
+            },
+          };
+        } else if (d.type === 'EnumDeclaration') {
           return {
             ...acc,
             [d.name]: {
@@ -148,15 +146,6 @@ const JsonSchema = (ast: Ast): JSONSchema7 => {
               type: 'object',
               properties,
               required: d.fields.filter((f) => f.isRequired).map((f) => f.name),
-            },
-          };
-        } else if (d.variableType === 'Union') {
-          return {
-            ...acc,
-            [d.name]: {
-              oneOf: d.unions.map((union) => {
-                return fieldSchema(union);
-              }),
             },
           };
         }

@@ -144,6 +144,60 @@ describe(AnalyzeAst, () => {
     ).toThrowErrorMatchingInlineSnapshot(`"Field is already defined"`);
   });
 
+  it('validates duplicate unions', () => {
+    expect(() =>
+      parse(`
+        type Dupe {
+          id: String
+          typename: "Dupe"
+        }
+        union SomeUnion = Dupe | Dupe
+   `),
+    ).toThrowErrorMatchingInlineSnapshot(`"Reached EOF, expected ,"`);
+  });
+
+  it('validates duplicate unions', () => {
+    expect(() =>
+      parse(`
+        type Union1 {
+          id: String
+        }
+        type Union2 {
+          id: String
+          type: "Union2"
+        }
+        union SomeUnion = Union1 | Union2, type
+   `),
+    ).toThrowErrorMatchingInlineSnapshot(`"Union1 needs a \\"type\\" field defined to be part of the Union"`);
+  });
+
+  it('validates type reference error for union', () => {
+    expect(() =>
+      parse(`
+        type Union1 {
+          id: String
+          type: "Union1"
+        }
+        union SomeUnion = Union1 | NotFound, type
+   `),
+    ).toThrowErrorMatchingInlineSnapshot(`"Type \\"NotFound\\" not found"`);
+  });
+
+  it('validates type error for union', () => {
+    expect(() =>
+      parse(`
+        enum Foo {
+          Foo
+        }
+        type Union1 {
+          id: String
+          type: "Union1"
+        }
+        union SomeUnion = Union1 | Foo, type
+   `),
+    ).toThrowErrorMatchingInlineSnapshot(`"Only type declarations can be used in unions"`);
+  });
+
   it('validates duplicate api definitions', () => {
     expect(() =>
       parse(`

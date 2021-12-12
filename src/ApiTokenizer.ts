@@ -12,18 +12,20 @@ const Spec = [
   [/^\d+:/, 'API_STATUS'],
   [/^\btype\b \b[a-zA-Z][a-zA-Z_0-9]*\b/, 'TYPE_DECLARATION'],
   [/^\benum\b \b[a-zA-Z][a-zA-Z_0-9]*\b/, 'ENUM_DECLARATION'],
+  [/^\bunion\b \b[a-zA-Z][a-zA-Z_0-9]*\b/, 'UNION_DECLARATION'],
 
-  [/^\b[a-zA-Z][a-zA-Z_0-9_-]*\b:/, 'WORD_WITH_COLON'],
+  [/^\b[a-zA-Z_][a-zA-Z_0-9_-]*\b:/, 'WORD_WITH_COLON'],
 
   [/^-?\d+\.\d+/, 'FLOAT_LITERAL'],
   [/^-?\d+/, 'INT_LITERAL'],
   [/^\b(true|false)\b/, 'BOOLEAN_LITERAL'],
   [/^"([^"\\]*(\\.[^"\\]*)*)"/, 'STRING_LITERAL'],
-  [/^\b[a-zA-Z][a-zA-Z_0-9_-]*\b/, 'VARIABLE_TYPE'],
+  [/^\b[a-zA-Z_][a-zA-Z_0-9_-]*\b/, 'VARIABLE_TYPE'],
 
   [/^!/, '!'],
 
   [/^=/, '='],
+  [/^,/, ','],
   [/^{/, '{'],
   [/^}/, '}'],
   [/^\[/, '['],

@@ -116,6 +116,23 @@ const routes: Api<Context> = {
       },
     };
   },
+  getFeed: () => {
+    return {
+      code: 200,
+      body: [
+        {
+          id: 'f',
+          postBody: 'postobody',
+          type: 'Post',
+        },
+        {
+          id: 'f',
+          videoUrl: 'videourl',
+          type: 'Video',
+        },
+      ],
+    };
+  },
 };
 
 export default routes;

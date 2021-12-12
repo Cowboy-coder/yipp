@@ -40,6 +40,67 @@ export const JsonSchema = {
       },
       required: ['message', 'fields'],
     },
+    FeedType: {
+      enum: ['Video', 'Photo', 'Post'],
+    },
+    Video: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'string',
+        },
+        videoUrl: {
+          type: 'string',
+        },
+        type: {
+          const: 'Video',
+        },
+      },
+      required: ['id', 'videoUrl', 'type'],
+    },
+    Photo: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'string',
+        },
+        photoUrl: {
+          type: 'string',
+        },
+        type: {
+          const: 'Photo',
+        },
+      },
+      required: ['id', 'photoUrl', 'type'],
+    },
+    Post: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'string',
+        },
+        postBody: {
+          type: 'string',
+        },
+        type: {
+          const: 'Post',
+        },
+      },
+      required: ['id', 'postBody', 'type'],
+    },
+    Feed: {
+      oneOf: [
+        {
+          $ref: '#/definitions/Video',
+        },
+        {
+          $ref: '#/definitions/Photo',
+        },
+        {
+          $ref: '#/definitions/Post',
+        },
+      ],
+    },
     UserType: {
       enum: ['admin', 'user'],
     },
@@ -103,6 +164,12 @@ export const JsonSchema = {
         },
       },
       required: ['ok'],
+    },
+    getFeed_200: {
+      type: 'array',
+      items: {
+        $ref: '#/definitions/Feed',
+      },
     },
     getUsers_query: {
       type: 'object',
@@ -223,6 +290,27 @@ export type Error = {
   message: string;
   fields: Field[];
 };
+export enum FeedType {
+  Video = 'Video',
+  Photo = 'Photo',
+  Post = 'Post',
+}
+export type Video = {
+  id: string;
+  videoUrl: string;
+  type: 'Video';
+};
+export type Photo = {
+  id: string;
+  photoUrl: string;
+  type: 'Photo';
+};
+export type Post = {
+  id: string;
+  postBody: string;
+  type: 'Post';
+};
+export type Feed = Video | Photo | Post;
 export enum UserType {
   admin = 'admin',
   user = 'user',
@@ -273,6 +361,14 @@ export type Api<T = any> = {
     body: {
       ok: 'ok';
     };
+  }>;
+
+  getFeed: (
+    req: Record<string, unknown>,
+    context: T,
+  ) => MaybePromise<{
+    code: 200;
+    body: Feed[];
   }>;
 
   getUsers: (
@@ -430,6 +526,24 @@ const RestPlugin: FastifyPluginAsync<{ routes: Api; setContext: (req: FastifyReq
     },
     async (req, reply) => {
       const response = await options.routes.health({}, (req as any).restplugin_context);
+
+      reply.code(response.code);
+
+      if ('body' in response && response.body) {
+        reply.send(response.body);
+      }
+    },
+  );
+
+  fastify.get(
+    '/feed',
+    {
+      schema: {
+        response: { '200': { $ref: 'schema#/definitions/getFeed_200' } },
+      },
+    },
+    async (req, reply) => {
+      const response = await options.routes.getFeed({}, (req as any).restplugin_context);
 
       reply.code(response.code);
 

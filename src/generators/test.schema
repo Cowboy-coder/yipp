@@ -15,30 +15,17 @@ type SomeType {
 	j: -12.042
 }
 
-type UserType
-	| {q: String}
-	| "admin"
-	| "user"
-	| "thug"
-	| 49
-	| -49
-	| 12.12
-	| -32.02
-	| true
-	| false
-	| String
-	| Int
-	| SomeType
+enum Status {
+  Inactive = "inactive"
+  Active = "active"
+  MaybeActive = "maybe-active"
+}
 
 type User {
 	id: Int!
 	username: String
-	status:
-	| "inactive"
-	| "active"
-	| "maybe-active"
+	status: Status
 	someType: SomeType!
-	userType: UserType
 	user: User!
 	address: {
 		street: String
@@ -50,12 +37,10 @@ type FieldError {
 	message: String!
 }
 
-type Error
-| { message: String! } 
-| {
-		message: String!
-		fields: [FieldError!]!
-	} 
+type Error {
+  message: String!
+  fields: [FieldError!]!
+} 
 
 login: POST /login {
 	body: {

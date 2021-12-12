@@ -35,18 +35,6 @@ export type Builtin =
   | StringVariable
   | DateTimeVariable;
 
-type defaultUnion = Builtin | TypeReference | ObjectVariable;
-export type UnionItem<T = defaultUnion> = {
-  type: 'UnionItem';
-  token: Token;
-} & T;
-
-export type UnionVariable<T = defaultUnion> = {
-  variableType: 'Union';
-  unions: UnionItem<T>[];
-  token: Token;
-};
-
 export type ArrayItem<T = Builtin | TypeReference> = {
   isRequired: boolean;
   token: Token;
@@ -66,7 +54,7 @@ export type ApiResponseDefinition = {
   token: Token;
 };
 
-type defaultFields = Builtin | TypeReference | UnionVariable | ArrayVariable;
+type defaultFields = Builtin | TypeReference | ArrayVariable;
 
 export type ObjectField<T = RecursiveObject<defaultFields>> = {
   type: 'ObjectField';
@@ -121,7 +109,7 @@ export type ApiDefinition = {
 export type TypeDeclaration = {
   type: 'TypeDeclaration';
   name: string;
-} & (ObjectVariable | UnionVariable);
+} & ObjectVariable;
 
 export type EnumField = {
   name: string;
@@ -135,7 +123,19 @@ export type EnumDeclaration = {
   token: Token;
 };
 
-export type Definition = TypeDeclaration | ApiDefinition | EnumDeclaration;
+export type UnionItem = {
+  type: 'UnionItem';
+} & TypeReference;
+
+export type UnionDeclaration = {
+  name: string;
+  type: 'UnionDeclaration';
+  discriminator: string;
+  items: UnionItem[];
+  token: Token;
+};
+
+export type Definition = TypeDeclaration | ApiDefinition | EnumDeclaration | UnionDeclaration;
 
 export type Ast = {
   type: 'Document';
@@ -173,11 +173,12 @@ class ApiParser {
   }
 
   Definitions(): Definition[] {
-    const definitions: (TypeDeclaration | ApiDefinition | EnumDeclaration)[] = [];
+    const definitions: (TypeDeclaration | ApiDefinition | EnumDeclaration | UnionDeclaration)[] = [];
     while (
       this.lookahead.type === 'WORD_WITH_COLON' ||
       this.lookahead.type === 'TYPE_DECLARATION' ||
-      this.lookahead.type === 'ENUM_DECLARATION'
+      this.lookahead.type === 'ENUM_DECLARATION' ||
+      this.lookahead.type === 'UNION_DECLARATION'
     ) {
       if (this.lookahead.type === 'WORD_WITH_COLON') {
         definitions.push(this.ApiDefinition());
@@ -185,6 +186,8 @@ class ApiParser {
         definitions.push(this.TypeDeclaration());
       } else if (this.lookahead.type === 'ENUM_DECLARATION') {
         definitions.push(this.enumDeclaration());
+      } else if (this.lookahead.type === 'UNION_DECLARATION') {
+        definitions.push(this.unionDeclaration());
       } else {
         this.reportAndExit(this.lookahead, 'TypeDefinition or ApiDefinition required on top-level');
       }
@@ -193,6 +196,37 @@ class ApiParser {
       this.reportAndExit(this.lookahead, 'TypeDefinition or ApiDefinition required on top-level');
     }
     return definitions;
+  }
+  unionDeclaration(): UnionDeclaration {
+    const name = this.lookahead.value.replace('union ', '');
+    const unionToken = this.lookahead;
+    this.eat('UNION_DECLARATION');
+    this.eat('=');
+    const items: UnionItem[] = [];
+    while (this.lookahead.type === '|' || this.lookahead.type === 'VARIABLE_TYPE') {
+      if (this.lookahead.type === '|') {
+        this.eat('|');
+      }
+      const value = this.lookahead.value;
+      const token = this.lookahead;
+      this.eat('VARIABLE_TYPE');
+      items.push({
+        type: 'UnionItem',
+        variableType: 'TypeReference',
+        value,
+        token,
+      });
+    }
+    this.eat(',');
+    const discriminator = this.lookahead.value;
+    this.eat('VARIABLE_TYPE');
+    return {
+      name,
+      discriminator,
+      type: 'UnionDeclaration',
+      token: unionToken,
+      items,
+    };
   }
   enumDeclaration(): EnumDeclaration {
     const name = this.lookahead.value.replace('enum ', '');
@@ -248,95 +282,9 @@ class ApiParser {
         ...x,
         token: typeToken,
       };
-    } else if (this.lookahead.type === '|') {
-      return {
-        type: 'TypeDeclaration',
-        name: value.replace('type ', ''),
-        variableType: 'Union',
-        unions: this.Unions(),
-        token: typeToken,
-      };
     } else {
-      console.log(this.lookahead);
-      this.reportAndExit(this.lookahead, '"{" or "|" required');
+      this.reportAndExit(this.lookahead, '"{" required');
     }
-  }
-
-  Unions(): UnionItem[] {
-    const unions: UnionItem[] = [];
-
-    while (this.lookahead.type === '|') {
-      this.eat('|');
-
-      const value = this.lookahead.value;
-      if ((this.lookahead as Token).type === 'STRING_LITERAL') {
-        const token = this.lookahead;
-        this.eat('STRING_LITERAL');
-        unions.push({
-          type: 'UnionItem',
-          variableType: 'StringLiteral',
-          value: value.slice(0, -1).slice(1),
-          token,
-        });
-      } else if ((this.lookahead as Token).type === 'BOOLEAN_LITERAL') {
-        const token = this.lookahead;
-        this.eat('BOOLEAN_LITERAL');
-        unions.push({
-          type: 'UnionItem',
-          variableType: 'BooleanLiteral',
-          value: value === 'true',
-          token,
-        });
-      } else if ((this.lookahead as Token).type === 'INT_LITERAL') {
-        const token = this.lookahead;
-        this.eat('INT_LITERAL');
-        unions.push({
-          type: 'UnionItem',
-          variableType: 'IntLiteral',
-          value: Number(value),
-          token,
-        });
-      } else if ((this.lookahead as Token).type === 'FLOAT_LITERAL') {
-        const token = this.lookahead;
-        this.eat('FLOAT_LITERAL');
-        unions.push({
-          type: 'UnionItem',
-          variableType: 'FloatLiteral',
-          value: Number(value),
-          token,
-        });
-      } else if ((this.lookahead as Token).type === 'VARIABLE_TYPE') {
-        const token = this.lookahead;
-        this.eat('VARIABLE_TYPE');
-        if (isBuiltIn(value)) {
-          unions.push({
-            type: 'UnionItem',
-            variableType: value,
-            token,
-          });
-        } else {
-          unions.push({
-            type: 'UnionItem',
-            variableType: 'TypeReference',
-            value,
-            token,
-          });
-        }
-      } else if ((this.lookahead as Token).type === '{') {
-        const x = this.simpleObjectOrTypeReference();
-        if (x.variableType === 'Array') {
-          this.reportAndExit(this.lookahead, 'Arrays are not allowed inside of a union');
-        }
-        unions.push({
-          type: 'UnionItem',
-          ...x,
-        });
-      }
-    }
-    if (unions.length === 0) {
-      this.reportAndExit(this.lookahead, 'At least one union-item is required');
-    }
-    return unions;
   }
 
   ApiDefinition(): ApiDefinition {
@@ -518,20 +466,6 @@ class ApiParser {
       this.eat('WORD_WITH_COLON');
 
       switch ((this.lookahead as Token).type) {
-        case '|': {
-          const token = this.lookahead;
-          const u = this.Unions();
-          u.filter((x) => x.variableType);
-          fields.push({
-            type: 'ObjectField',
-            name,
-            variableType: 'Union',
-            unions: u,
-            isRequired: this.isRequired(),
-            token,
-          });
-          break;
-        }
         case 'STRING_LITERAL': {
           const value = this.lookahead.value.slice(0, -1).slice(1);
           const token = this.lookahead;

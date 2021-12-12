@@ -1,0 +1,31 @@
+enum FeedType {
+  Video
+  Photo
+  Post
+}
+
+type Video {
+  id: String!
+  videoUrl: String!
+  type: "Video"!
+}
+
+type Photo {
+  id: String!
+  photoUrl: String!
+  type: "Photo"!
+}
+
+type Post {
+  id: String!
+  postBody: String!
+  type: "Post"!
+}
+
+union Feed = Video | Photo | Post, type
+
+getFeed: GET /feed {
+  200: {
+    body: [Feed!]
+  }
+}

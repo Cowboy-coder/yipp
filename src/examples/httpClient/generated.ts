@@ -11,6 +11,27 @@ export type Error = {
   message: string;
   fields: Field[];
 };
+export enum FeedType {
+  Video = 'Video',
+  Photo = 'Photo',
+  Post = 'Post',
+}
+export type Video = {
+  id: string;
+  videoUrl: string;
+  type: 'Video';
+};
+export type Photo = {
+  id: string;
+  photoUrl: string;
+  type: 'Photo';
+};
+export type Post = {
+  id: string;
+  postBody: string;
+  type: 'Post';
+};
+export type Feed = Video | Photo | Post;
 export enum UserType {
   admin = 'admin',
   user = 'user',
@@ -63,6 +84,15 @@ const createHTTPClient = (config?: AxiosRequestConfig) => {
       return axios.request({
         method: 'GET',
         url: `/health`,
+
+        data: {},
+      });
+    },
+
+    async getFeed(): Promise<AxiosResponse<Feed[]>> {
+      return axios.request({
+        method: 'GET',
+        url: `/feed`,
 
         data: {},
       });

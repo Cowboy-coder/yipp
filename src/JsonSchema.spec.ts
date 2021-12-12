@@ -146,74 +146,6 @@ describe(JsonSchema, () => {
     });
   });
 
-  it('Union type', () => {
-    const program = `
-      type Foo
-       | "foo"
-       | String
-       | -42
-       | 42
-       | Int
-       | Boolean
-       | true
-       | false
-       | 32.0
-       | -12.042
-      `;
-    expect(JsonSchema(parse(program))).toEqual<JSONSchema7>({
-      $id: 'schema',
-      type: 'object',
-      definitions: {
-        Foo: {
-          oneOf: [
-            { const: 'foo' },
-            { type: 'string' },
-            { const: -42 },
-            { const: 42 },
-            { type: 'number' },
-            { type: 'boolean' },
-            { const: true },
-            { const: false },
-            { const: 32.0 },
-            { const: -12.042 },
-          ],
-        },
-      },
-    });
-  });
-
-  it('Complex Union type', () => {
-    const program = `
-      type Error
-       | { message: String! }
-       | { code: 404 message: "testing" }
-       | "Foo"
-       | 42
-      `;
-    expect(JsonSchema(parse(program))).toEqual<JSONSchema7>({
-      $id: 'schema',
-      type: 'object',
-      definitions: {
-        Error: {
-          oneOf: [
-            {
-              type: 'object',
-              properties: { message: { type: 'string' } },
-              required: ['message'],
-            },
-            {
-              type: 'object',
-              properties: { code: { const: 404 }, message: { const: 'testing' } },
-              required: [],
-            },
-            { const: 'Foo' },
-            { const: 42 },
-          ],
-        },
-      },
-    });
-  });
-
   it('Api definition with type reference', () => {
     const program = `
       type User {
@@ -274,11 +206,12 @@ describe(JsonSchema, () => {
     });
   });
 
-  it('Complex Api definition with type reference, unions etc', () => {
+  it('Complex Api definition with type reference, enums etc', () => {
     const program = `
-      type UserType
-        | "Admin"
-        | "User"
+      enum UserType {
+        Admin
+        User
+      }
 
       type User {
         id: String!
@@ -314,7 +247,7 @@ describe(JsonSchema, () => {
       type: 'object',
       definitions: {
         UserType: {
-          oneOf: [{ const: 'Admin' }, { const: 'User' }],
+          enum: ['Admin', 'User'],
         },
         User: {
           type: 'object',

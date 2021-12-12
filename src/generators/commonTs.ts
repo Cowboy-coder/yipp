@@ -5,7 +5,7 @@ import {
   ObjectField,
   TypeDeclaration,
   TypeReference,
-  UnionItem,
+  UnionDeclaration,
 } from '../ApiParser';
 
 export const generateType = (d: Builtin | TypeReference): string => {
@@ -35,18 +35,12 @@ export const generateType = (d: Builtin | TypeReference): string => {
   }
 };
 
-const generateUnionItem = (union: UnionItem) => {
-  return union.variableType === 'Object' ? generateFields(union.fields) : generateType(union);
-};
-
 const field = (field: ObjectField) => {
   field.variableType;
 
   return `"${field.name}"${field.isRequired ? ':' : '?:'} ${
     field.variableType === 'Object'
       ? generateFields(field.fields)
-      : field.variableType === 'Union'
-      ? field.unions.map(generateUnionItem).join(' | ')
       : field.variableType === 'Array'
       ? `(${generateType(field.items)}${field.items.isRequired === false ? ' | null' : ''})[]`
       : generateType(field)
@@ -72,9 +66,14 @@ export const generateApiField = (d: ApiFieldDefinition) => {
   }`;
 };
 
-export const generateDeclarations = (declarations: (TypeDeclaration | EnumDeclaration)[]): string => {
+export const generateDeclarations = (
+  declarations: (TypeDeclaration | EnumDeclaration | UnionDeclaration)[],
+): string => {
   return declarations
     .map((d) => {
+      if (d.type === 'UnionDeclaration') {
+        return `export type ${d.name} = ${d.items.map((f) => f.value).join(' | ')}`;
+      }
       if (d.type === 'EnumDeclaration') {
         return `export enum ${d.name} {
             ${d.fields
@@ -88,9 +87,6 @@ export const generateDeclarations = (declarations: (TypeDeclaration | EnumDeclar
         return `export type ${d.name} = {
             ${d.fields.map(field).join('\n')}
           }`;
-      }
-      if (d.variableType === 'Union') {
-        return `export type ${d.name} = ${d.unions.map(generateUnionItem).join(' | ')}`;
       }
     })
     .join('\n');
