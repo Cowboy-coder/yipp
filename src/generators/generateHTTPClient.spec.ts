@@ -16,7 +16,7 @@ const generateToFile = (str: string) => {
 
 describe(generateHTTPClient, () => {
   it('works', () => {
-    const filename = generateToFile(fs.readFileSync(path.join(__dirname, './test.schema'), 'utf8'));
+    const filename = generateToFile(fs.readFileSync(path.join(__dirname, './test.yipp'), 'utf8'));
 
     // TODO: Figure out a better and faster(!) way to validate the output.
     const result = spawnSync(`../node_modules/.bin/tsc`, ['--noEmit', filename]);

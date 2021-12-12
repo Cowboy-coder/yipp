@@ -1,8 +1,12 @@
 {
-  "name": "schema-first-rest",
-  "version": "0.1.0",
-  "main": "index.js",
+  "name": "yipp",
+  "version": "0.1.1",
+  "main": "./lib/Cli.js",
+  "bin": {
+    "yipp": "./lib/Cli.js"
+  },
   "license": "MIT",
+  "description": "An api tool for building rest apis, heavily inspired by GQL syntax.",
   "author": "Fredrik Lindin <fredriklindin@gmail.com>",
   "scripts": {
     "test": "jest",
@@ -11,8 +15,8 @@
     "prettier": "prettier --write src/**",
     "example": "concurrently --raw \"npm:example-server\" \"npm:example-watch-fastify-plugin\" \"npm:example-watch-http-client\"",
     "example-server": "ts-node-dev ./src/examples/fastify",
-    "example-watch-fastify-plugin": "ts-node-dev src/Cli.ts fastify-plugin --watch src/examples/fastify/generated.ts src/examples/schemas/**.schema",
-    "example-watch-http-client": "ts-node-dev src/Cli.ts http-client --watch src/examples/httpClient/generated.ts src/examples/schemas/**.schema",
+    "example-watch-fastify-plugin": "ts-node-dev src/Cli.ts fastify-plugin --watch src/examples/fastify/generated.ts src/examples/schemas/**.yipp",
+    "example-watch-http-client": "ts-node-dev src/Cli.ts http-client --watch src/examples/httpClient/generated.ts src/examples/schemas/**.yipp",
     "prepare": "yarn run build",
     "prepublishOnly": "yarn test && yarn run lint"
   },

@@ -1,3 +1,4 @@
+#! /usr/bin/env node
 import chalk from 'chalk';
 import { Argument, program } from 'commander';
 import fs from 'fs';
@@ -17,6 +18,7 @@ const generator = (type: GenerateType, ast: Ast) => {
   throw new Error(`Unsupported generator type ${type}`);
 };
 program
+  .name('yipp')
   .description('generate')
   .addArgument(new Argument('<type>').choices(['fastify-plugin', 'http-client']))
   .argument('<output-file>', 'generated typescript file')

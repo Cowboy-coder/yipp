@@ -1,9 +1,11 @@
-schema-first-rest
-=================
+yipp
+====
 
 Use a GQL-inspired syntax to build a schema-first driven REST API.
 
 ```graphql
+# schema.yipp
+
 type FieldError {
   field: String!
   message: String!
@@ -13,6 +15,11 @@ type Error {
   message: String!
   fields: [FieldError!]!
 } 
+
+enum UserType {
+  admin
+  user
+}
   
 login: POST /login {
   body: {
@@ -28,88 +35,36 @@ login: POST /login {
     body: Error
   }
 } 
-```
 
-Will generate this type, which is also backed by a [JSON Schema](https://json-schema.org/) so the types (compile-time) should never be different from the input/output at runtime.
-```typescript
-export type FieldError = {
-  field: string;
-  message: string;
-};
-
-export type Error = {
-  message: string;
-  fields: FieldError[];
-};
-    
-export type Api = {
-  login: (req: {
+getUser: GET /users/:id(Int) {
+  headers: {
+    authorization: String!
+  }
+  
+  200: {
     body: {
-      username: string;
-      password: string;
-    };
-  }) =>
-  ) => MaybePromise<
-    | {
-        code: 200;
-        body: {
-          token: string;
-        };
-      }
-    | {
-        code: 400;
-        body: Error;
-      }
-  >;
+      id: Int!
+      username: String!
+      type: UserType!
+    }
+  }
+
+  400: {
+    body: Error
+  }
 }
 ```
-
-Then the implementation of it is as simple as this
-```typescript
-import RestPlugin, {Api} from "./generated";
-
-type Context {
-  db: DbInstance
-}
-const routes: Api<Context> = {
-  login: async ({ body: { username, password } }, { db }) => {
-    return await db.login(username, password)
-      ? {
-          code: 200,
-          body: {
-            token: "newtoken yo",
-          },
-        }
-      : {
-          code: 400,
-          body: {
-            message: "damn",
-            fields: {
-              username,
-              password,
-            },
-          },
-        };
-  },
-}
-
-fastify.register(RestPlugin, {
-  routes: routes,
-  setContext: (req) => ({
-    db: {}
-  }),
-});
-```
-This uses [fastify](https://www.fastify.io/) underneath but could in theory use any framework.
-
-A more complete (but WIP) example can be seen in [fastifyExample](https://github.com/Cowboy-coder/schema-first-rest/tree/master/src/examples/fastify).
 
 ### CLI
 
-Can be used to generate a Fastify Plugin. Also supports merging multiple schemas into one, if needed. Supports watch-mode.
+Can be used to generate different clients, servers, etc.
+
+Example of generators using [this schema](https://github.com/Cowboy-coder/yipp/tree/master/src/examples/schemas/):
+- [`fastify-plugin`](https://github.com/Cowboy-coder/yipp/tree/master/src/examples/fastify/routes.ts) - Fastify Plugin
+- [`http-client`](https://github.com/Cowboy-coder/yipp/tree/master/src/examples/httpClient/generated.ts) - HTTP Client using Axios
 
 ```
-Usage: Cli [options] <type> <output-file> <input-file...>
+Usage: yipp [options] <type> <output-file> <input-file...>
 
 generate
 
