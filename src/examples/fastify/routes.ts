@@ -1,5 +1,5 @@
 import { Context } from '.';
-import { Api, User } from './generated';
+import { Api, User, UserType } from './generated';
 
 const routes: Api<Context> = {
   health: () => ({ code: 200, body: { ok: 'ok' } }),
@@ -58,7 +58,7 @@ const routes: Api<Context> = {
         id: 999,
         username: body.username,
         age: body.age,
-        type: 'user',
+        type: UserType.user,
         isCool: body.isCool,
         createdAt: new Date().toISOString(),
       };

@@ -5,7 +5,7 @@ describe(AnalyzeAst, () => {
   it('validates headers', () => {
     expect(() =>
       parse(`
-      type NotValidHeader = {
+      type NotValidHeader {
         id: Int!
       }
       x: GET / {
@@ -24,7 +24,7 @@ describe(AnalyzeAst, () => {
   it('validates query', () => {
     expect(() =>
       parse(`
-      type NotValidQuery = {
+      type NotValidQuery {
         id: Boolean!
       }
       x: GET / {
@@ -55,7 +55,7 @@ describe(AnalyzeAst, () => {
   it('validates reference on nested fields', () => {
     expect(() =>
       parse(`
-      type Foo = {
+      type Foo {
         nested: {
           x: NestedNotFound!
         }
@@ -67,7 +67,7 @@ describe(AnalyzeAst, () => {
   it('validates duplicate fields', () => {
     expect(() =>
       parse(`
-      type Foo = {
+      type Foo {
         id: Boolean!
         id: String!
       }
@@ -78,7 +78,7 @@ describe(AnalyzeAst, () => {
   it('validates duplicate fields in nested object', () => {
     expect(() =>
       parse(`
-      type Foo = {
+      type Foo {
         id: Boolean!
         x: {
           y: String
@@ -118,6 +118,30 @@ describe(AnalyzeAst, () => {
         }
    `),
     ).toThrowErrorMatchingInlineSnapshot(`"Duplicate type declaration"`);
+  });
+
+  it('validates duplicate type declarations with enums', () => {
+    expect(() =>
+      parse(`
+        type Dupe {
+          id: String
+        }
+        enum Dupe {
+          TEST
+        }
+   `),
+    ).toThrowErrorMatchingInlineSnapshot(`"Duplicate type declaration"`);
+  });
+
+  it('validates duplicate enum fields', () => {
+    expect(() =>
+      parse(`
+        enum Color {
+          Red
+          Red
+        }
+   `),
+    ).toThrowErrorMatchingInlineSnapshot(`"Field is already defined"`);
   });
 
   it('validates duplicate api definitions', () => {

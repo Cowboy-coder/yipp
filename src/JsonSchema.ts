@@ -128,7 +128,14 @@ const JsonSchema = (ast: Ast): JSONSchema7 => {
     type: 'object',
     definitions: {
       ...declarations.reduce((acc, d) => {
-        if (d.variableType === 'Object') {
+        if (d.type === 'EnumDeclaration') {
+          return {
+            ...acc,
+            [d.name]: {
+              enum: d.fields.map((f) => f.value),
+            },
+          };
+        } else if (d.variableType === 'Object') {
           const properties: {
             [key: string]: JSONSchema7Definition;
           } = {};

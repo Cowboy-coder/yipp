@@ -42,7 +42,7 @@ const generateHTTPClient = (ast: Ast) => {
                 isRequired = x.fields.every((f) => f.isRequired);
               } else if (x.variableType === 'TypeReference') {
                 const declaration = declarations.find((declaration) => declaration.name === x.value);
-                if (declaration?.variableType === 'Object') {
+                if (declaration?.type === 'TypeDeclaration' && declaration.variableType === 'Object') {
                   isRequired = declaration?.fields.every((f) => f.isRequired);
                 }
               }

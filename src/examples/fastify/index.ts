@@ -1,5 +1,5 @@
 import Fastify, { FastifyError } from 'fastify';
-import RestPlugin from './generated';
+import RestPlugin, { UserType } from './generated';
 import routes from './routes';
 const fastify = Fastify({
   ajv: {
@@ -19,7 +19,7 @@ const db = {
       .map((_, ix) => ({
         id: ix,
         username: `username_${ix}`,
-        type: ix % 4 === 0 ? ('admin' as const) : ('user' as const),
+        type: ix % 4 === 0 ? UserType.admin : UserType.user,
         age: ix + 1,
         isCool: ix % 2 === 0,
         createdAt: new Date().toISOString(),

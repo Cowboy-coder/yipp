@@ -1,6 +1,7 @@
-type UserType
- | "admin"
- | "user"
+enum UserType {
+  admin
+  user
+}
 
 type User {
   id: Int!

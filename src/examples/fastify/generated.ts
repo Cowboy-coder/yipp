@@ -41,14 +41,7 @@ export const JsonSchema = {
       required: ['message', 'fields'],
     },
     UserType: {
-      oneOf: [
-        {
-          const: 'admin',
-        },
-        {
-          const: 'user',
-        },
-      ],
+      enum: ['admin', 'user'],
     },
     User: {
       type: 'object',
@@ -230,7 +223,10 @@ export type Error = {
   message: string;
   fields: Field[];
 };
-export type UserType = 'admin' | 'user';
+export enum UserType {
+  admin = 'admin',
+  user = 'user',
+}
 export type User = {
   id: number;
   username: string;

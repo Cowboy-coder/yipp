@@ -11,6 +11,7 @@ const Spec = [
   [/^\bheaders\b:/, 'API_HEADERS'],
   [/^\d+:/, 'API_STATUS'],
   [/^\btype\b \b[a-zA-Z][a-zA-Z_0-9]*\b/, 'TYPE_DECLARATION'],
+  [/^\benum\b \b[a-zA-Z][a-zA-Z_0-9]*\b/, 'ENUM_DECLARATION'],
 
   [/^\b[a-zA-Z][a-zA-Z_0-9_-]*\b:/, 'WORD_WITH_COLON'],
 
@@ -22,6 +23,7 @@ const Spec = [
 
   [/^!/, '!'],
 
+  [/^=/, '='],
   [/^{/, '{'],
   [/^}/, '}'],
   [/^\[/, '['],

@@ -1,4 +1,4 @@
-import createHTTPClient from './generated';
+import createHTTPClient, { UserType } from './generated';
 
 (async () => {
   const api = createHTTPClient({
@@ -56,7 +56,7 @@ import createHTTPClient from './generated';
           body: {
             username: 'Test!',
             age: 99,
-            type: 'admin',
+            type: UserType.user,
             isCool: false,
           },
         })

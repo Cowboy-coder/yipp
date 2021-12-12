@@ -1,4 +1,12 @@
-import { ApiFieldDefinition, Builtin, ObjectField, TypeDeclaration, TypeReference, UnionItem } from '../ApiParser';
+import {
+  ApiFieldDefinition,
+  Builtin,
+  EnumDeclaration,
+  ObjectField,
+  TypeDeclaration,
+  TypeReference,
+  UnionItem,
+} from '../ApiParser';
 
 export const generateType = (d: Builtin | TypeReference): string => {
   switch (d.variableType) {
@@ -64,9 +72,18 @@ export const generateApiField = (d: ApiFieldDefinition) => {
   }`;
 };
 
-export const generateDeclarations = (declarations: TypeDeclaration[]): string => {
+export const generateDeclarations = (declarations: (TypeDeclaration | EnumDeclaration)[]): string => {
   return declarations
     .map((d) => {
+      if (d.type === 'EnumDeclaration') {
+        return `export enum ${d.name} {
+            ${d.fields
+              .map((field) => {
+                return `${field.name} = "${field.value}"`;
+              })
+              .join(',\n')}
+          }`;
+      }
       if (d.variableType === 'Object') {
         return `export type ${d.name} = {
             ${d.fields.map(field).join('\n')}

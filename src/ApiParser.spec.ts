@@ -795,4 +795,58 @@ describe('ApiParser', () => {
       ],
     });
   });
+
+  it('Enums', () => {
+    const program = `
+    enum UserType {
+      ADMIN
+      USER
+    }
+    enum EnumWithValues {
+      Foo = "A"
+      Bar = "B"
+    }
+    `;
+    expect(parse(program)).toMatchObject({
+      type: 'Document',
+      definitions: [
+        {
+          type: 'EnumDeclaration',
+          name: 'UserType',
+          fields: [
+            {
+              type: 'EnumField',
+              name: 'ADMIN',
+              variableType: 'StringLiteral',
+              value: 'ADMIN',
+            },
+            {
+              type: 'EnumField',
+              name: 'USER',
+              variableType: 'StringLiteral',
+              value: 'USER',
+            },
+          ],
+        },
+        {
+          type: 'EnumDeclaration',
+          name: 'EnumWithValues',
+          fields: [
+            {
+              type: 'EnumField',
+              name: 'Foo',
+              variableType: 'StringLiteral',
+              value: 'A',
+            },
+            {
+              type: 'EnumField',
+              name: 'Bar',
+              variableType: 'StringLiteral',
+              value: 'B',
+            },
+          ],
+        },
+      ],
+    });
+  });
 });

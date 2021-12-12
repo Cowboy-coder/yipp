@@ -4,6 +4,7 @@ import {
   ArrayVariable,
   Ast,
   BodyType,
+  EnumDeclaration,
   HeaderType,
   ObjectVariable,
   QueryType,
@@ -21,7 +22,7 @@ const rules = {
 
 const validateTypeRef = (
   obj: ObjectVariable | ArrayVariable | UnionVariable | TypeReference | undefined,
-  declarations: TypeDeclaration[],
+  declarations: (TypeDeclaration | EnumDeclaration)[],
 ): Token | undefined => {
   if (obj === undefined) {
     return undefined;
@@ -76,7 +77,7 @@ const validateObject = (obj: ObjectVariable, validFields: string[], typeRef: Typ
   });
 };
 
-const validateHeaders = (header: HeaderType | undefined, declarations: TypeDeclaration[]) => {
+const validateHeaders = (header: HeaderType | undefined, declarations: (TypeDeclaration | EnumDeclaration)[]) => {
   if (!header) {
     return;
   }
@@ -88,6 +89,9 @@ const validateHeaders = (header: HeaderType | undefined, declarations: TypeDecla
     }
 
     const found = declarations.find((d) => d.name === header.value);
+    if (found?.type === 'EnumDeclaration') {
+      throw new ApiSyntaxError(`Type '${header.token.value}' can not be referencing an Enum`, header.token);
+    }
     if (found?.variableType === 'Object') {
       validateObject(found, rules.headers, header);
     } else {
@@ -102,7 +106,7 @@ const validateHeaders = (header: HeaderType | undefined, declarations: TypeDecla
   }
 };
 
-const validateQuery = (query: QueryType | undefined, declarations: TypeDeclaration[]) => {
+const validateQuery = (query: QueryType | undefined, declarations: (TypeDeclaration | EnumDeclaration)[]) => {
   if (!query) {
     return;
   }
@@ -113,6 +117,9 @@ const validateQuery = (query: QueryType | undefined, declarations: TypeDeclarati
       throw new ApiSyntaxError(`Type '${errorToken.value}' not found`, errorToken);
     }
     const found = declarations.find((d) => d.name === query.value);
+    if (found?.type === 'EnumDeclaration') {
+      throw new ApiSyntaxError(`Type '${query.token.value}' can not be referencing an Enum`, query.token);
+    }
     if (found?.variableType === 'Object') {
       validateObject(found, rules.query, query);
     } else {
@@ -127,7 +134,7 @@ const validateQuery = (query: QueryType | undefined, declarations: TypeDeclarati
   }
 };
 
-const validateBody = (body: BodyType | undefined, declarations: TypeDeclaration[]) => {
+const validateBody = (body: BodyType | undefined, declarations: (TypeDeclaration | EnumDeclaration)[]) => {
   const errorReferenceToken = validateTypeRef(body, declarations);
   if (errorReferenceToken) {
     throw new ApiSyntaxError(`Type '${errorReferenceToken.value}' not found`, errorReferenceToken);
@@ -138,7 +145,7 @@ const validateBody = (body: BodyType | undefined, declarations: TypeDeclaration[
   }
 };
 
-const validateDuplicateFields = (obj: ObjectVariable) => {
+const validateDuplicateFields = (obj: ObjectVariable | EnumDeclaration) => {
   const foundFields: string[] = [];
   obj.fields.forEach((field) => {
     if (field.variableType === 'Object') {
@@ -151,7 +158,15 @@ const validateDuplicateFields = (obj: ObjectVariable) => {
   });
 };
 
-const validateDeclaration = (d: TypeDeclaration | undefined, declarations: TypeDeclaration[]) => {
+const validateDeclaration = (
+  d: (TypeDeclaration | EnumDeclaration) | undefined,
+  declarations: (TypeDeclaration | EnumDeclaration)[],
+) => {
+  if (d?.type === 'EnumDeclaration') {
+    validateDuplicateFields(d);
+    return;
+  }
+
   const errorReferenceToken = validateTypeRef(d, declarations);
   if (errorReferenceToken) {
     throw new ApiSyntaxError(`Type '${errorReferenceToken.value}' not found`, errorReferenceToken);

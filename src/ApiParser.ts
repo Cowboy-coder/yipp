@@ -123,7 +123,19 @@ export type TypeDeclaration = {
   name: string;
 } & (ObjectVariable | UnionVariable);
 
-export type Definition = TypeDeclaration | ApiDefinition;
+export type EnumField = {
+  name: string;
+  type: 'EnumField';
+} & StringLiteral;
+
+export type EnumDeclaration = {
+  name: string;
+  type: 'EnumDeclaration';
+  fields: EnumField[];
+  token: Token;
+};
+
+export type Definition = TypeDeclaration | ApiDefinition | EnumDeclaration;
 
 export type Ast = {
   type: 'Document';
@@ -161,12 +173,18 @@ class ApiParser {
   }
 
   Definitions(): Definition[] {
-    const definitions: (TypeDeclaration | ApiDefinition)[] = [];
-    while (this.lookahead.type === 'WORD_WITH_COLON' || this.lookahead.type === 'TYPE_DECLARATION') {
+    const definitions: (TypeDeclaration | ApiDefinition | EnumDeclaration)[] = [];
+    while (
+      this.lookahead.type === 'WORD_WITH_COLON' ||
+      this.lookahead.type === 'TYPE_DECLARATION' ||
+      this.lookahead.type === 'ENUM_DECLARATION'
+    ) {
       if (this.lookahead.type === 'WORD_WITH_COLON') {
         definitions.push(this.ApiDefinition());
       } else if (this.lookahead.type === 'TYPE_DECLARATION') {
         definitions.push(this.TypeDeclaration());
+      } else if (this.lookahead.type === 'ENUM_DECLARATION') {
+        definitions.push(this.enumDeclaration());
       } else {
         this.reportAndExit(this.lookahead, 'TypeDefinition or ApiDefinition required on top-level');
       }
@@ -175,6 +193,41 @@ class ApiParser {
       this.reportAndExit(this.lookahead, 'TypeDefinition or ApiDefinition required on top-level');
     }
     return definitions;
+  }
+  enumDeclaration(): EnumDeclaration {
+    const name = this.lookahead.value.replace('enum ', '');
+    const enumToken = this.lookahead;
+    this.eat('ENUM_DECLARATION');
+    this.eat('{');
+    const fields: EnumField[] = [];
+    while (this.lookahead.type === 'VARIABLE_TYPE') {
+      const fieldName = this.lookahead.value;
+      let value = fieldName;
+      const token = this.lookahead;
+      this.eat('VARIABLE_TYPE');
+      if ((this.lookahead as Token).type === '=') {
+        this.eat('=');
+        if ((this.lookahead as Token).type !== 'STRING_LITERAL') {
+          this.reportAndExit(this.lookahead, 'Enum value has to be a String Literal');
+        }
+        value = this.lookahead.value.slice(0, -1).slice(1);
+        this.eat('STRING_LITERAL');
+      }
+      fields.push({
+        name: fieldName,
+        type: 'EnumField',
+        variableType: 'StringLiteral',
+        value,
+        token,
+      });
+    }
+    this.eat('}');
+    return {
+      name,
+      type: 'EnumDeclaration',
+      token: enumToken,
+      fields: fields,
+    };
   }
 
   TypeDeclaration(): TypeDeclaration {
@@ -204,6 +257,7 @@ class ApiParser {
         token: typeToken,
       };
     } else {
+      console.log(this.lookahead);
       this.reportAndExit(this.lookahead, '"{" or "|" required');
     }
   }
