@@ -57,6 +57,10 @@ const validateObject = (
   declarations: (TypeDeclaration | EnumDeclaration | UnionDeclaration)[],
   typeRef: TypeReference | undefined = undefined,
 ) => {
+  const token = validateTypeRef(obj, declarations);
+  if (token) {
+    throw new ApiSyntaxError(`Type '${token.value}' not found`, token);
+  }
   obj.fields.forEach((field) => {
     const fieldVariableType =
       field.variableType === 'TypeReference'

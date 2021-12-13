@@ -44,6 +44,24 @@ describe(AnalyzeAst, () => {
     );
   });
 
+  it('validates query object reference errors', () => {
+    expect(() =>
+      parse(`
+      x: GET / {
+        query: {
+          n: NotFound!
+        }
+
+        200: {
+          body: {
+            x: String!
+          }
+        }
+      }
+   `),
+    ).toThrowErrorMatchingInlineSnapshot(`"Type 'NotFound' not found"`);
+  });
+
   it('validates reference errors', () => {
     expect(() =>
       parse(`
@@ -109,6 +127,24 @@ describe(AnalyzeAst, () => {
       }
    `),
     ).toThrowErrorMatchingInlineSnapshot(`"Field is already defined"`);
+  });
+
+  it('validates header object reference errors', () => {
+    expect(() =>
+      parse(`
+      x: GET / {
+        headers: {
+          n: NotFound!
+        }
+
+        200: {
+          body: {
+            x: String!
+          }
+        }
+      }
+   `),
+    ).toThrowErrorMatchingInlineSnapshot(`"Type 'NotFound' not found"`);
   });
 
   it('validates duplicate type declarations', () => {

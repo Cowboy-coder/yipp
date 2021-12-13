@@ -55,6 +55,14 @@ getUser: GET /users/:id(Int) {
 }
 ```
 
+### Install and usage
+
+
+```
+npm install -g yipp
+yipp http-client output.ts schema.yipp
+```
+
 ### CLI
 
 Can be used to generate different clients, servers, etc.
