@@ -19,7 +19,7 @@ describe(generateFastify, () => {
     const filename = generateToFile(fs.readFileSync(path.join(__dirname, './test.yipp'), 'utf8'));
 
     // TODO: Figure out a better and faster(!) way to validate the output.
-    const result = spawnSync(`../node_modules/.bin/tsc`, ['--noEmit', filename]);
+    const result = spawnSync(`node_modules/.bin/tsc`, ['--noEmit', filename]);
 
     expect(result.error).toEqual(undefined);
     expect(result.stderr.toString()).toEqual('');
