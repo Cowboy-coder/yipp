@@ -1,6 +1,7 @@
 import {
   ApiFieldDefinition,
   Builtin,
+  Docs,
   EnumDeclaration,
   ObjectField,
   TypeDeclaration,
@@ -36,9 +37,7 @@ export const generateType = (d: Builtin | TypeReference): string => {
 };
 
 const field = (field: ObjectField) => {
-  field.variableType;
-
-  return `"${field.name}"${field.isRequired ? ':' : '?:'} ${
+  return `${generateDocs(field.docs)}"${field.name}"${field.isRequired ? ':' : '?:'} ${
     field.variableType === 'Object'
       ? generateFields(field.fields)
       : field.variableType === 'Array'
@@ -66,25 +65,38 @@ export const generateApiField = (d: ApiFieldDefinition) => {
   }`;
 };
 
+export const generateDocs = (docs: Docs): string => {
+  if (!docs) {
+    return '';
+  }
+  let docString = '/**\n';
+  docs.value.split('\n').forEach((doc) => {
+    docString += `* ${doc}\n`;
+  });
+  docString += '*/\n';
+
+  return docString;
+};
+
 export const generateDeclarations = (
   declarations: (TypeDeclaration | EnumDeclaration | UnionDeclaration)[],
 ): string => {
   return declarations
     .map((d) => {
       if (d.type === 'UnionDeclaration') {
-        return `export type ${d.name} = ${d.items.map((f) => f.value).join(' | ')}`;
+        return `${generateDocs(d.docs)}export type ${d.name} = ${d.items.map((f) => f.value).join(' | ')}`;
       }
       if (d.type === 'EnumDeclaration') {
-        return `export enum ${d.name} {
+        return `${generateDocs(d.docs)}export enum ${d.name} {
             ${d.fields
               .map((field) => {
-                return `${field.name} = "${field.value}"`;
+                return `${generateDocs(field.docs)}${field.name} = "${field.value}"`;
               })
               .join(',\n')}
           }`;
       }
       if (d.variableType === 'Object') {
-        return `export type ${d.name} = {
+        return `${generateDocs(d.docs)}export type ${d.name} = {
             ${d.fields.map(field).join('\n')}
           }`;
       }

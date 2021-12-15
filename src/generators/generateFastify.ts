@@ -4,7 +4,7 @@ import prettier from 'prettier';
 import { ApiDefinition, Ast } from '../ApiParser';
 import { getApiDefinitions, getDeclarations } from '../AstQuery';
 import JsonSchema from '../JsonSchema';
-import { generateApiField, generateDeclarations } from './commonTs';
+import { generateApiField, generateDeclarations, generateDocs } from './commonTs';
 
 const prettierConfig = JSON.parse(fs.readFileSync(path.join(__dirname, '../../package.json'), 'utf8')).prettier;
 
@@ -15,17 +15,21 @@ const apiDefinition = (d: ApiDefinition) => {
       if (x === undefined) {
         return '';
       }
-      return `${t}: ${generateApiField(x)}`;
+      const docs = t === 'params' ? undefined : d[t]?.docs;
+      return `${generateDocs(docs)}${t}: ${generateApiField(x)}`;
     })
     .filter((x) => !!x)
     .join(',\n');
   return `
-  ${d.name}: (
+  ${generateDocs(d.docs)}${d.name}: (
     req: ${req ? `{${req}}` : 'Record<string,unknown>'} , context: T) => MaybePromise< ${d.responses
     .map(({ body, headers, status }) => {
       return `{
     code: ${status};
-    ${[body ? `body: ${generateApiField(body)}` : '', headers ? `headers: ${generateApiField(headers)}` : '']
+    ${[
+      body ? `${generateDocs(body.docs)}body: ${generateApiField(body)}` : '',
+      headers ? `${generateDocs(headers.docs)}headers: ${generateApiField(headers)}` : '',
+    ]
       .filter((x) => !!x)
       .join(';\n')}
   }`;

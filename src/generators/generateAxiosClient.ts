@@ -3,7 +3,7 @@ import path from 'path';
 import prettier from 'prettier';
 import { Ast } from '../ApiParser';
 import { getApiDefinitions, getDeclarations } from '../AstQuery';
-import { generateApiField, generateDeclarations, generateType } from './commonTs';
+import { generateApiField, generateDeclarations, generateDocs, generateType } from './commonTs';
 
 const prettierConfig = JSON.parse(fs.readFileSync(path.join(__dirname, '../../package.json'), 'utf8')).prettier;
 
@@ -43,12 +43,11 @@ const generateAxiosClient = (ast: Ast) => {
                   isRequired = declaration?.fields.every((f) => f.isRequired);
                 }
               }
-              return `${isRequired ? t : `${t}?`}: ${generateApiField(x)}`;
+              return `${generateDocs(x.docs)}${isRequired ? t : `${t}?`}: ${generateApiField(x)}`;
             })
             .filter((x) => !!x)
             .join(',\n');
-          return `
-      async "${d.name}"(
+          return `${generateDocs(d.docs)}async "${d.name}"(
           ${[params ? `${params}` : '', req ? `req:{${req}}` : ''].filter((x) => !!x).join(',')}
         ): Promise<AxiosResponse<${
           d.responses

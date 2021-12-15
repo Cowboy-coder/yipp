@@ -2,8 +2,12 @@ import { parse } from './ApiParser';
 
 describe('ApiParser', () => {
   it('ApiDefinition with different types', () => {
-    const program = `getUser: GET /users/:id/:id2(Int)/:id3(Float) {
+    const program = `
+    "with some documentation"
+    getUser: GET /users/:id/:id2(Int)/:id3(Float) {
+      "and body documentation"
       body: {
+        "a is cool"
         a: "foo"!
         b: String
         c: -42!
@@ -16,6 +20,7 @@ describe('ApiParser', () => {
         j: -12.042
         k: DateTime
         with-dash: String
+        "and field documentation"
         with_underscore: String
       }
       200: {
@@ -30,6 +35,10 @@ describe('ApiParser', () => {
       definitions: [
         {
           type: 'ApiDefinition',
+          docs: {
+            type: 'Docs',
+            value: 'with some documentation',
+          },
           name: 'getUser',
           method: 'GET',
           path: '/users/:id/:id2/:id3',
@@ -57,6 +66,10 @@ describe('ApiParser', () => {
             ],
           },
           body: {
+            docs: {
+              type: 'Docs',
+              value: 'and body documentation',
+            },
             variableType: 'Object',
             fields: [
               {
@@ -65,6 +78,10 @@ describe('ApiParser', () => {
                 variableType: 'StringLiteral',
                 value: 'foo',
                 isRequired: true,
+                docs: {
+                  type: 'Docs',
+                  value: 'a is cool',
+                },
               },
               {
                 type: 'ObjectField',
@@ -143,6 +160,10 @@ describe('ApiParser', () => {
                 name: 'with_underscore',
                 variableType: 'String',
                 isRequired: false,
+                docs: {
+                  type: 'Docs',
+                  value: 'and field documentation',
+                },
               },
             ],
           },
@@ -208,13 +229,17 @@ describe('ApiParser', () => {
 
   it('Full Api definition', () => {
     const program = `
+    "enum docs"
     enum Color {
       red
+      "blue comment"
       blue
     }
+    "type docs"
     type Foobar {
       id: String
       nested: {
+        "nested name docs"
         name: String
       }
     }
@@ -224,6 +249,7 @@ describe('ApiParser', () => {
     updateUser: PUT /users/:id {
       query: {
         foo: String!
+        "color docs"
         color: Color!
       }
       body: {
@@ -253,6 +279,10 @@ describe('ApiParser', () => {
         {
           type: 'EnumDeclaration',
           name: 'Color',
+          docs: {
+            type: 'Docs',
+            value: 'enum docs',
+          },
           fields: [
             {
               type: 'EnumField',
@@ -265,6 +295,10 @@ describe('ApiParser', () => {
               name: 'blue',
               variableType: 'StringLiteral',
               value: 'blue',
+              docs: {
+                type: 'Docs',
+                value: 'blue comment',
+              },
             },
           ],
         },
@@ -272,6 +306,10 @@ describe('ApiParser', () => {
           type: 'TypeDeclaration',
           variableType: 'Object',
           name: 'Foobar',
+          docs: {
+            type: 'Docs',
+            value: 'type docs',
+          },
           fields: [
             {
               type: 'ObjectField',
@@ -290,6 +328,10 @@ describe('ApiParser', () => {
                   name: 'name',
                   variableType: 'String',
                   isRequired: false,
+                  docs: {
+                    type: 'Docs',
+                    value: 'nested name docs',
+                  },
                 },
               ],
             },
@@ -339,6 +381,10 @@ describe('ApiParser', () => {
                 variableType: 'TypeReference',
                 value: 'Color',
                 isRequired: true,
+                docs: {
+                  type: 'Docs',
+                  value: 'color docs',
+                },
               },
             ],
           },
@@ -447,6 +493,7 @@ describe('ApiParser', () => {
       }
       404: {
         body: {
+          "error docs"
           error: String!
         }
       }
@@ -520,6 +567,10 @@ describe('ApiParser', () => {
                     name: 'error',
                     variableType: 'String',
                     isRequired: true,
+                    docs: {
+                      type: 'Docs',
+                      value: 'error docs',
+                    },
                   },
                 ],
               },
@@ -681,6 +732,7 @@ describe('ApiParser', () => {
       type: "Video"!
     }
 
+    "union docs"
     union Feed = Video | Photo, type
     `;
     expect(parse(program)).toMatchObject({
@@ -729,6 +781,10 @@ describe('ApiParser', () => {
         {
           type: 'UnionDeclaration',
           name: 'Feed',
+          docs: {
+            type: 'Docs',
+            value: 'union docs',
+          },
           items: [
             {
               type: 'UnionItem',

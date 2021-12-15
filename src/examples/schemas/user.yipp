@@ -3,6 +3,7 @@ enum UserType {
   user
 }
 
+"Useful user documentation..."
 type User {
   id: Int!
   username: String!
@@ -12,14 +13,18 @@ type User {
   createdAt: DateTime!
 }
 
+"Get all users"
 getUsers: GET /users {
   headers: AuthenticatedRoute
 
+  "Optional filters"
   query: {
+    "Free text search"
     q: String
   }
 
   200: {
+    "An array of users"
     body: [User!]
   }
 

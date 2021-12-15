@@ -52,6 +52,7 @@ export type ApiResponseDefinition = {
   body?: BodyType;
   headers?: HeaderType;
   token: Token;
+  docs: Docs;
 };
 
 type defaultFields = Builtin | TypeReference | ArrayVariable;
@@ -61,6 +62,7 @@ export type ObjectField<T = RecursiveObject<defaultFields>> = {
   name: string;
   isRequired: boolean;
   token: Token;
+  docs: Docs;
 } & T;
 
 export interface ObjectVariable<T = RecursiveObject<defaultFields>> {
@@ -85,13 +87,19 @@ export type TypeReference = {
   token: Token;
 };
 
-export type QueryType = ObjectOrTypeReference<IntVariable | FloatVariable | StringVariable>;
+export type QueryType = ObjectOrTypeReference<IntVariable | FloatVariable | StringVariable> & {
+  docs: Docs;
+};
 
-export type HeaderType = ObjectOrTypeReference<StringVariable | StringLiteral>;
+export type HeaderType = ObjectOrTypeReference<StringVariable | StringLiteral> & {
+  docs: Docs;
+};
 
 export type ApiFieldDefinition = HeaderType | QueryType | ParamsType | BodyType | undefined;
 
-export type BodyType = TypeReference | ArrayVariable | ObjectVariable;
+export type BodyType = (TypeReference | ArrayVariable | ObjectVariable) & {
+  docs: Docs;
+};
 
 export type ApiDefinition = {
   type: 'ApiDefinition';
@@ -104,16 +112,19 @@ export type ApiDefinition = {
   body?: BodyType;
   responses: ApiResponseDefinition[];
   token: Token;
+  docs: Docs;
 };
 
 export type TypeDeclaration = {
   type: 'TypeDeclaration';
   name: string;
+  docs: Docs;
 } & ObjectVariable;
 
 export type EnumField = {
   name: string;
   type: 'EnumField';
+  docs: Docs;
 } & StringLiteral;
 
 export type EnumDeclaration = {
@@ -121,6 +132,7 @@ export type EnumDeclaration = {
   type: 'EnumDeclaration';
   fields: EnumField[];
   token: Token;
+  docs: Docs;
 };
 
 export type UnionItem = {
@@ -133,7 +145,16 @@ export type UnionDeclaration = {
   discriminator: string;
   items: UnionItem[];
   token: Token;
+  docs: Docs;
 };
+
+export type Docs =
+  | {
+      type: 'Docs';
+      value: string;
+      token: Token;
+    }
+  | undefined;
 
 export type Definition = TypeDeclaration | ApiDefinition | EnumDeclaration | UnionDeclaration;
 
@@ -175,19 +196,21 @@ class ApiParser {
   Definitions(): Definition[] {
     const definitions: (TypeDeclaration | ApiDefinition | EnumDeclaration | UnionDeclaration)[] = [];
     while (
+      this.isDocs() ||
       this.lookahead.type === 'WORD_WITH_COLON' ||
       this.lookahead.type === 'TYPE_DECLARATION' ||
       this.lookahead.type === 'ENUM_DECLARATION' ||
       this.lookahead.type === 'UNION_DECLARATION'
     ) {
+      const docs = this.docs();
       if (this.lookahead.type === 'WORD_WITH_COLON') {
-        definitions.push(this.ApiDefinition());
+        definitions.push(this.ApiDefinition(docs));
       } else if (this.lookahead.type === 'TYPE_DECLARATION') {
-        definitions.push(this.TypeDeclaration());
+        definitions.push(this.TypeDeclaration(docs));
       } else if (this.lookahead.type === 'ENUM_DECLARATION') {
-        definitions.push(this.enumDeclaration());
+        definitions.push(this.enumDeclaration(docs));
       } else if (this.lookahead.type === 'UNION_DECLARATION') {
-        definitions.push(this.unionDeclaration());
+        definitions.push(this.unionDeclaration(docs));
       } else {
         this.reportAndExit(this.lookahead, 'TypeDefinition or ApiDefinition required on top-level');
       }
@@ -197,7 +220,26 @@ class ApiParser {
     }
     return definitions;
   }
-  unionDeclaration(): UnionDeclaration {
+
+  docs(): Docs {
+    if (this.lookahead.type === 'STRING_LITERAL') {
+      const token = this.lookahead;
+      const value = token.value.slice(0, -1).slice(1);
+      this.eat('STRING_LITERAL');
+      return {
+        type: 'Docs',
+        token,
+        value,
+      };
+    }
+    return undefined;
+  }
+
+  isDocs(): boolean {
+    return this.lookahead.type === 'STRING_LITERAL';
+  }
+
+  unionDeclaration(docs: Docs): UnionDeclaration {
     const name = this.lookahead.value.replace('union ', '');
     const unionToken = this.lookahead;
     this.eat('UNION_DECLARATION');
@@ -226,15 +268,17 @@ class ApiParser {
       type: 'UnionDeclaration',
       token: unionToken,
       items,
+      docs,
     };
   }
-  enumDeclaration(): EnumDeclaration {
+  enumDeclaration(docs: Docs): EnumDeclaration {
     const name = this.lookahead.value.replace('enum ', '');
     const enumToken = this.lookahead;
     this.eat('ENUM_DECLARATION');
     this.eat('{');
     const fields: EnumField[] = [];
-    while (this.lookahead.type === 'VARIABLE_TYPE') {
+    while (this.isDocs() || this.lookahead.type === 'VARIABLE_TYPE') {
+      const docs = this.docs();
       const fieldName = this.lookahead.value;
       let value = fieldName;
       const token = this.lookahead;
@@ -251,6 +295,7 @@ class ApiParser {
         name: fieldName,
         type: 'EnumField',
         variableType: 'StringLiteral',
+        docs,
         value,
         token,
       });
@@ -261,10 +306,11 @@ class ApiParser {
       type: 'EnumDeclaration',
       token: enumToken,
       fields: fields,
+      docs,
     };
   }
 
-  TypeDeclaration(): TypeDeclaration {
+  TypeDeclaration(docs: Docs): TypeDeclaration {
     const value = this.lookahead.value;
     if (!value) {
       this.reportAndExit(this.lookahead, 'TypeDefinition or ApiDefinition required on top-level');
@@ -281,13 +327,14 @@ class ApiParser {
         name: value.replace('type ', ''),
         ...x,
         token: typeToken,
+        docs,
       };
     } else {
       this.reportAndExit(this.lookahead, '"{" required');
     }
   }
 
-  ApiDefinition(): ApiDefinition {
+  ApiDefinition(docs: Docs): ApiDefinition {
     const name = this.lookahead.value.slice(0, -1);
     const apiToken = this.lookahead;
     if (name === undefined) {
@@ -322,6 +369,7 @@ class ApiParser {
           variableType: 'String',
           isRequired: true,
           token: this.lookahead,
+          docs: undefined,
         });
         this.eat('API_PATH_STRING');
       } else if (this.lookahead.type === 'API_PATH_INT') {
@@ -333,6 +381,7 @@ class ApiParser {
           variableType: 'Int',
           isRequired: true,
           token: this.lookahead,
+          docs: undefined,
         });
         this.eat('API_PATH_INT');
       } else if (this.lookahead.type === 'API_PATH_FLOAT') {
@@ -344,6 +393,7 @@ class ApiParser {
           variableType: 'Float',
           isRequired: true,
           token: this.lookahead,
+          docs: undefined,
         });
         this.eat('API_PATH_FLOAT');
       }
@@ -366,22 +416,32 @@ class ApiParser {
     let body: BodyType | undefined = undefined;
     let headers: HeaderType | undefined = undefined;
 
-    while (this.lookahead.type && ['API_QUERY', 'API_BODY', 'API_HEADERS'].includes(this.lookahead.type)) {
+    while (this.isDocs() || ['API_QUERY', 'API_BODY', 'API_HEADERS'].includes(this.lookahead.type)) {
+      const docs = this.docs();
       if ((this.lookahead as Token).type === 'API_QUERY') {
         this.eat('API_QUERY');
         this.disallowUnionAndArray();
-        query = this.simpleObjectOrTypeReference() as QueryType; // could possible be invalid but will be validated after the whole AST is parsed
+        query = {
+          ...this.simpleObjectOrTypeReference(),
+          docs,
+        } as QueryType; // could possible be invalid but will be validated after the whole AST is parsed
       }
 
       if ((this.lookahead as Token).type === 'API_BODY') {
         this.eat('API_BODY');
-        body = this.simpleObjectOrTypeReference();
+        body = {
+          ...this.simpleObjectOrTypeReference(),
+          docs,
+        };
       }
 
       if ((this.lookahead as Token).type === 'API_HEADERS') {
         this.eat('API_HEADERS');
         this.disallowUnionAndArray();
-        headers = this.simpleObjectOrTypeReference() as HeaderType; // could possible be invalid but will be validated after the whole AST is parsed
+        headers = {
+          ...this.simpleObjectOrTypeReference(),
+          docs,
+        } as HeaderType; // could possible be invalid but will be validated after the whole AST is parsed
       }
     }
 
@@ -398,6 +458,7 @@ class ApiParser {
       body,
       headers,
       responses,
+      docs,
       token: apiToken,
     };
   }
@@ -461,7 +522,8 @@ class ApiParser {
     const token = this.lookahead;
     this.eat('{');
     const fields: ObjectField[] = [];
-    while (this.lookahead.type === 'WORD_WITH_COLON') {
+    while (this.lookahead.type === 'WORD_WITH_COLON' || this.isDocs()) {
+      const docs = this.docs();
       const name = this.lookahead.value.slice(0, -1);
       this.eat('WORD_WITH_COLON');
 
@@ -477,6 +539,7 @@ class ApiParser {
             value,
             isRequired: this.isRequired(),
             token,
+            docs,
           });
           break;
         }
@@ -491,6 +554,7 @@ class ApiParser {
             value,
             isRequired: this.isRequired(),
             token,
+            docs,
           });
           break;
         }
@@ -505,6 +569,7 @@ class ApiParser {
             value,
             isRequired: this.isRequired(),
             token,
+            docs,
           });
           break;
         }
@@ -519,6 +584,7 @@ class ApiParser {
             value,
             isRequired: this.isRequired(),
             token,
+            docs,
           });
           break;
         }
@@ -533,6 +599,7 @@ class ApiParser {
               variableType: value,
               isRequired: this.isRequired(),
               token,
+              docs,
             });
           } else {
             fields.push({
@@ -542,6 +609,7 @@ class ApiParser {
               value,
               isRequired: this.isRequired(),
               token,
+              docs,
             });
           }
           break;
@@ -552,6 +620,7 @@ class ApiParser {
             name,
             ...this.simpleObjectOrTypeReference(),
             isRequired: this.isRequired(),
+            docs,
           });
           break;
         }
@@ -561,6 +630,7 @@ class ApiParser {
             name,
             ...this.simpleObjectOrTypeReference(),
             isRequired: this.isRequired(),
+            docs,
           });
           break;
         }
@@ -579,7 +649,8 @@ class ApiParser {
       this.reportAndExit(this.lookahead, 'Expected a HTTP status code');
     }
     const responses: ApiResponseDefinition[] = [];
-    while (this.lookahead.type === 'API_STATUS') {
+    while (this.isDocs() || this.lookahead.type === 'API_STATUS') {
+      const docs = this.docs();
       const token = this.lookahead;
       const status = Number(this.lookahead.value.slice(0, -1));
       this.eat('API_STATUS');
@@ -587,16 +658,23 @@ class ApiParser {
 
       let body: BodyType | undefined = undefined;
       let headers: HeaderType | undefined = undefined;
-      while (['API_BODY', 'API_HEADERS'].includes(this.lookahead.type)) {
+      while (this.isDocs() || ['API_BODY', 'API_HEADERS'].includes(this.lookahead.type)) {
+        const docs = this.docs();
         if ((this.lookahead as Token).type === 'API_BODY') {
           this.eat('API_BODY');
-          body = this.simpleObjectOrTypeReference();
+          body = {
+            ...this.simpleObjectOrTypeReference(),
+            docs,
+          };
         }
 
         if ((this.lookahead as Token).type === 'API_HEADERS') {
           this.eat('API_HEADERS');
           this.disallowUnionAndArray();
-          headers = this.simpleObjectOrTypeReference() as HeaderType; // could possible be invalid but will be validated after the whole AST is parsed
+          headers = {
+            ...this.simpleObjectOrTypeReference(),
+            docs,
+          } as HeaderType; // could possible be invalid but will be validated after the whole AST is parsed
         }
       }
 
@@ -614,6 +692,7 @@ class ApiParser {
         body,
         headers,
         token,
+        docs,
       });
     }
     return responses;

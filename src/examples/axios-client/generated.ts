@@ -36,6 +36,9 @@ export enum UserType {
   admin = 'admin',
   user = 'user',
 }
+/**
+ * Useful user documentation...
+ */
 export type User = {
   id: number;
   username: string;
@@ -66,7 +69,6 @@ const createHTTPClient = (config?: AxiosRequestConfig) => {
         data: req.body,
       });
     },
-
     async logout(): Promise<AxiosResponse<undefined>> {
       return axios.request({
         method: 'POST',
@@ -75,7 +77,6 @@ const createHTTPClient = (config?: AxiosRequestConfig) => {
         data: {},
       });
     },
-
     async health(): Promise<
       AxiosResponse<{
         ok: 'ok';
@@ -88,7 +89,6 @@ const createHTTPClient = (config?: AxiosRequestConfig) => {
         data: {},
       });
     },
-
     async getFeed(): Promise<AxiosResponse<Feed[]>> {
       return axios.request({
         method: 'GET',
@@ -97,9 +97,17 @@ const createHTTPClient = (config?: AxiosRequestConfig) => {
         data: {},
       });
     },
-
+    /**
+     * Get all users
+     */
     async getUsers(req: {
+      /**
+       * Optional filters
+       */
       query?: {
+        /**
+         * Free text search
+         */
         q?: string;
       };
       headers: AuthenticatedRoute;
@@ -112,7 +120,6 @@ const createHTTPClient = (config?: AxiosRequestConfig) => {
         data: {},
       });
     },
-
     async getUser(id: number): Promise<AxiosResponse<User>> {
       return axios.request({
         method: 'GET',
@@ -121,7 +128,6 @@ const createHTTPClient = (config?: AxiosRequestConfig) => {
         data: {},
       });
     },
-
     async postUser(req: {
       body: {
         username: string;
@@ -139,7 +145,6 @@ const createHTTPClient = (config?: AxiosRequestConfig) => {
         data: req.body,
       });
     },
-
     async updateUser(
       id: number,
       req: {

@@ -315,6 +315,9 @@ export enum UserType {
   admin = 'admin',
   user = 'user',
 }
+/**
+ * Useful user documentation...
+ */
 export type User = {
   id: number;
   username: string;
@@ -371,9 +374,18 @@ export type Api<T = any> = {
     body: Feed[];
   }>;
 
+  /**
+   * Get all users
+   */
   getUsers: (
     req: {
+      /**
+       * Optional filters
+       */
       query: {
+        /**
+         * Free text search
+         */
         q?: string;
       };
       headers: AuthenticatedRoute;
@@ -382,6 +394,9 @@ export type Api<T = any> = {
   ) => MaybePromise<
     | {
         code: 200;
+        /**
+         * An array of users
+         */
         body: User[];
       }
     | {
@@ -555,6 +570,9 @@ const RestPlugin: FastifyPluginAsync<{ routes: Api; setContext: (req: FastifyReq
 
   fastify.get<{
     Querystring: {
+      /**
+       * Free text search
+       */
       q?: string;
     };
     Headers: AuthenticatedRoute;
