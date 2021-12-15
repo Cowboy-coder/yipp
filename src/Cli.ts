@@ -3,24 +3,24 @@ import chalk from 'chalk';
 import { Argument, program } from 'commander';
 import fs from 'fs';
 import { ApiSyntaxError, Ast, parseFiles } from './ApiParser';
+import generateAxiosClient from './generators/generateAxiosClient';
 import generateFastify from './generators/generateFastify';
-import generateHTTPClient from './generators/generateHTTPClient';
 import PrettyError from './PrettyError';
 
-type GenerateType = 'fastify-plugin' | 'http-client';
+type GenerateType = 'fastify-plugin' | 'axios-client';
 
 const generator = (type: GenerateType, ast: Ast) => {
   if (type === 'fastify-plugin') {
     return generateFastify(ast);
-  } else if (type === 'http-client') {
-    return generateHTTPClient(ast);
+  } else if (type === 'axios-client') {
+    return generateAxiosClient(ast);
   }
   throw new Error(`Unsupported generator type ${type}`);
 };
 program
   .name('yipp')
   .description('generate')
-  .addArgument(new Argument('<type>').choices(['fastify-plugin', 'http-client']))
+  .addArgument(new Argument('<type>').choices(['fastify-plugin', 'axios-client']))
   .argument('<output-file>', 'generated typescript file')
   .argument('<input-file...>', 'One or more api schema files. Will be merged into one schema if several files.')
   .option('-w --watch', 'watch for changes', false)

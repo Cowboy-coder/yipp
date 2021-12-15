@@ -7,7 +7,7 @@ import { generateApiField, generateDeclarations, generateType } from './commonTs
 
 const prettierConfig = JSON.parse(fs.readFileSync(path.join(__dirname, '../../package.json'), 'utf8')).prettier;
 
-const generateHTTPClient = (ast: Ast) => {
+const generateAxiosClient = (ast: Ast) => {
   const declarations = getDeclarations(ast);
   return prettier.format(
     `
@@ -82,4 +82,4 @@ const generateHTTPClient = (ast: Ast) => {
     },
   );
 };
-export default generateHTTPClient;
+export default generateAxiosClient;

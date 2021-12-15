@@ -2,19 +2,19 @@ import { spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { parse } from '../ApiParser';
-import generateHTTPClient from './generateHTTPClient';
+import generateAxiosClient from './generateAxiosClient';
 
 const generateToFile = (str: string) => {
-  const data = generateHTTPClient(parse(str));
+  const data = generateAxiosClient(parse(str));
 
-  const filename = path.join(__dirname, '../../build', `generateHTTPClient.ts`);
+  const filename = path.join(__dirname, '../../build', `generateAxiosClient.ts`);
 
   fs.mkdirSync(path.dirname(filename), { recursive: true });
   fs.writeFileSync(filename, data, 'utf8');
   return filename;
 };
 
-describe(generateHTTPClient, () => {
+describe(generateAxiosClient, () => {
   it('works', () => {
     const filename = generateToFile(fs.readFileSync(path.join(__dirname, './test.yipp'), 'utf8'));
 

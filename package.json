@@ -13,10 +13,10 @@
     "build": "rm -rf lib && tsc",
     "lint": "eslint src/",
     "prettier": "prettier --write src/**",
-    "example": "concurrently --raw \"npm:example-server\" \"npm:example-watch-fastify-plugin\" \"npm:example-watch-http-client\"",
+    "example": "concurrently --raw \"npm:example-server\" \"npm:example-watch-fastify-plugin\" \"npm:example-watch-axios-client\"",
     "example-server": "ts-node-dev ./src/examples/fastify",
     "example-watch-fastify-plugin": "ts-node-dev src/Cli.ts fastify-plugin --watch src/examples/fastify/generated.ts src/examples/schemas/**.yipp",
-    "example-watch-http-client": "ts-node-dev src/Cli.ts http-client --watch src/examples/httpClient/generated.ts src/examples/schemas/**.yipp",
+    "example-watch-axios-client": "ts-node-dev src/Cli.ts axios-client --watch src/examples/axios-client/generated.ts src/examples/schemas/**.yipp",
     "prepare": "yarn run build",
     "prepublishOnly": "yarn test && yarn run lint"
   },
