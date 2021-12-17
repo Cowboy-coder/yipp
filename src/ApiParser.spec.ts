@@ -90,6 +90,7 @@ describe('ApiParser', () => {
                 docs: {
                   type: 'Docs',
                   value: 'a is cool',
+                  isMultiLine: false,
                 },
               },
               {
@@ -98,6 +99,7 @@ describe('ApiParser', () => {
                 docs: {
                   type: 'Docs',
                   value: 'Multi line\ndocumentation',
+                  isMultiLine: true,
                 },
                 variableType: 'String',
                 isRequired: false,
@@ -115,6 +117,7 @@ describe('ApiParser', () => {
                 docs: {
                   type: 'Docs',
                   value: 'Multi line\n  documentation\nwith indentation',
+                  isMultiLine: true,
                 },
                 variableType: 'IntLiteral',
                 value: 42,
@@ -180,6 +183,7 @@ describe('ApiParser', () => {
                 docs: {
                   type: 'Docs',
                   value: 'and field documentation',
+                  isMultiLine: false,
                 },
               },
             ],

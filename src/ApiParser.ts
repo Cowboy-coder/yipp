@@ -154,6 +154,7 @@ export type Docs =
       type: 'Docs';
       value: string;
       token: Token;
+      isMultiLine: boolean;
     }
   | undefined;
 
@@ -232,6 +233,7 @@ class ApiParser {
         type: 'Docs',
         token,
         value,
+        isMultiLine: false,
       };
     } else if (this.lookahead.type === 'MULTI_STRING_LITERAL') {
       const token = this.lookahead;
@@ -242,6 +244,7 @@ class ApiParser {
         type: 'Docs',
         token,
         value,
+        isMultiLine: true,
       };
     }
     return undefined;
