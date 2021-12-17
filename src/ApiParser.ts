@@ -436,14 +436,14 @@ class ApiParser {
     let body: BodyType | undefined = undefined;
     let headers: HeaderType | undefined = undefined;
 
-    while (this.isDocs() || ['API_QUERY', 'API_BODY', 'API_HEADERS'].includes(this.lookahead.type)) {
-      const docs = this.docs();
+    let currentDocs = this.docs();
+    while (['API_QUERY', 'API_BODY', 'API_HEADERS'].includes(this.lookahead.type)) {
       if ((this.lookahead as Token).type === 'API_QUERY') {
         this.eat('API_QUERY');
         this.disallowUnionAndArray();
         query = {
           ...this.simpleObjectOrTypeReference(),
-          docs,
+          docs: currentDocs,
         } as QueryType; // could possible be invalid but will be validated after the whole AST is parsed
       }
 
@@ -451,7 +451,7 @@ class ApiParser {
         this.eat('API_BODY');
         body = {
           ...this.simpleObjectOrTypeReference(),
-          docs,
+          docs: currentDocs,
         };
       }
 
@@ -460,12 +460,13 @@ class ApiParser {
         this.disallowUnionAndArray();
         headers = {
           ...this.simpleObjectOrTypeReference(),
-          docs,
+          docs: currentDocs,
         } as HeaderType; // could possible be invalid but will be validated after the whole AST is parsed
       }
+      currentDocs = this.docs();
     }
 
-    const responses = this.Responses();
+    const responses = this.Responses(currentDocs);
     this.eat('}');
 
     return {
@@ -672,13 +673,18 @@ class ApiParser {
     };
   }
 
-  private Responses(): ApiResponseDefinition[] {
+  private Responses(trailingDoc: Docs): ApiResponseDefinition[] {
     if (this.lookahead.type !== 'API_STATUS') {
       this.reportAndExit(this.lookahead, 'Expected a HTTP status code');
     }
     const responses: ApiResponseDefinition[] = [];
+    let i = 0;
     while (this.isDocs() || this.lookahead.type === 'API_STATUS') {
-      const docs = this.docs();
+      // this is a little bit weird but the `Docs` for the first item got eaten
+      // by the caller of `this.Responses()` so the first API_STATUS consumed
+      // here uses the trailing doc.
+      const docs = i === 0 ? trailingDoc : this.docs();
+      i++;
       const token = this.lookahead;
       const status = Number(this.lookahead.value.slice(0, -1));
       this.eat('API_STATUS');

@@ -32,12 +32,18 @@ describe('ApiParser', () => {
         "and field documentation"
         with_underscore: String
       }
+      "200 OK!"
       200: {
         # with some comments
         body: {
           id: String! # more comment
         } 
       } # and even more
+      404: {
+        body: {
+          id:String!
+        }
+      }
     }`;
     expect(parse(program)).toMatchObject({
       type: 'Document',
@@ -192,6 +198,27 @@ describe('ApiParser', () => {
             {
               type: 'ApiResponseDefinition',
               status: 200,
+              docs: {
+                type: 'Docs',
+                value: '200 OK!',
+                isMultiLine: false,
+              },
+              body: {
+                variableType: 'Object',
+                fields: [
+                  {
+                    type: 'ObjectField',
+                    name: 'id',
+                    variableType: 'String',
+                    isRequired: true,
+                  },
+                ],
+              },
+            },
+            {
+              type: 'ApiResponseDefinition',
+              status: 404,
+              docs: undefined,
               body: {
                 variableType: 'Object',
                 fields: [
