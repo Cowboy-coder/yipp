@@ -145,6 +145,10 @@ const createHTTPClient = (config?: AxiosRequestConfig) => {
         data: req.body,
       });
     },
+    /**
+     * Update user takes user-fields
+     * as input and returns the updated user
+     */
     async updateUser(
       id: number,
       req: {
@@ -154,6 +158,9 @@ const createHTTPClient = (config?: AxiosRequestConfig) => {
           isCool?: boolean;
           createdAt?: string;
         };
+        /**
+         * Authenticated route. Must pass correct JWT.
+         */
         headers: AuthenticatedRoute;
       },
     ): Promise<AxiosResponse<User>> {

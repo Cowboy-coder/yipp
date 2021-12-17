@@ -445,6 +445,10 @@ export type Api<T = any> = {
       }
   >;
 
+  /**
+   * Update user takes user-fields
+   * as input and returns the updated user
+   */
   updateUser: (
     req: {
       params: {
@@ -456,12 +460,18 @@ export type Api<T = any> = {
         isCool?: boolean;
         createdAt?: string;
       };
+      /**
+       * Authenticated route. Must pass correct JWT.
+       */
       headers: AuthenticatedRoute;
     },
     context: T,
   ) => MaybePromise<
     | {
         code: 200;
+        /**
+         * The updated user
+         */
         body: User;
       }
     | {

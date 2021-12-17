@@ -9,8 +9,17 @@ describe('ApiParser', () => {
       body: {
         "a is cool"
         a: "foo"!
+        """
+        Multi line
+        documentation
+        """
         b: String
         c: -42!
+        """
+        Multi line
+          documentation
+        with indentation
+        """
         d: 42!
         e: Int
         f: Boolean
@@ -86,6 +95,10 @@ describe('ApiParser', () => {
               {
                 type: 'ObjectField',
                 name: 'b',
+                docs: {
+                  type: 'Docs',
+                  value: 'Multi line\ndocumentation',
+                },
                 variableType: 'String',
                 isRequired: false,
               },
@@ -99,6 +112,10 @@ describe('ApiParser', () => {
               {
                 type: 'ObjectField',
                 name: 'd',
+                docs: {
+                  type: 'Docs',
+                  value: 'Multi line\n  documentation\nwith indentation',
+                },
                 variableType: 'IntLiteral',
                 value: 42,
                 isRequired: true,

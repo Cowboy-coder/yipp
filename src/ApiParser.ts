@@ -1,6 +1,7 @@
 import fs from 'fs';
 import AnalyzeAst from './AnalyzeAst';
 import ApiTokenizer, { Token } from './ApiTokenizer';
+import multiLine from './multiLine';
 
 export class ApiSyntaxError extends Error {
   token: Token;
@@ -226,6 +227,17 @@ class ApiParser {
       const token = this.lookahead;
       const value = token.value.slice(0, -1).slice(1);
       this.eat('STRING_LITERAL');
+
+      return {
+        type: 'Docs',
+        token,
+        value,
+      };
+    } else if (this.lookahead.type === 'MULTI_STRING_LITERAL') {
+      const token = this.lookahead;
+      const value = multiLine(token.value.slice(0, -3).slice(3));
+      this.eat('MULTI_STRING_LITERAL');
+
       return {
         type: 'Docs',
         token,
@@ -236,7 +248,7 @@ class ApiParser {
   }
 
   isDocs(): boolean {
-    return this.lookahead.type === 'STRING_LITERAL';
+    return this.lookahead.type === 'STRING_LITERAL' || this.lookahead.type === 'MULTI_STRING_LITERAL';
   }
 
   unionDeclaration(docs: Docs): UnionDeclaration {
@@ -285,11 +297,16 @@ class ApiParser {
       this.eat('VARIABLE_TYPE');
       if ((this.lookahead as Token).type === '=') {
         this.eat('=');
-        if ((this.lookahead as Token).type !== 'STRING_LITERAL') {
+        if ((this.lookahead as Token).type !== 'STRING_LITERAL' && this.lookahead.type !== 'MULTI_STRING_LITERAL') {
           this.reportAndExit(this.lookahead, 'Enum value has to be a String Literal');
         }
-        value = this.lookahead.value.slice(0, -1).slice(1);
-        this.eat('STRING_LITERAL');
+        if (this.lookahead.type === 'STRING_LITERAL') {
+          value = this.lookahead.value.slice(0, -1).slice(1);
+          this.eat('STRING_LITERAL');
+        } else if (this.lookahead.type === 'MULTI_STRING_LITERAL') {
+          value = multiLine(this.lookahead.value.slice(0, -3).slice(3));
+          this.eat('MULTI_STRING_LITERAL');
+        }
       }
       fields.push({
         name: fieldName,
@@ -528,10 +545,18 @@ class ApiParser {
       this.eat('WORD_WITH_COLON');
 
       switch ((this.lookahead as Token).type) {
+        case 'MULTI_STRING_LITERAL':
         case 'STRING_LITERAL': {
-          const value = this.lookahead.value.slice(0, -1).slice(1);
+          let value = '';
           const token = this.lookahead;
-          this.eat('STRING_LITERAL');
+          if (this.lookahead.type === 'STRING_LITERAL') {
+            value = this.lookahead.value.slice(0, -1).slice(1);
+            this.eat('STRING_LITERAL');
+          } else if (this.lookahead.type === 'MULTI_STRING_LITERAL') {
+            value = multiLine(this.lookahead.value.slice(0, -3).slice(3));
+            this.eat('MULTI_STRING_LITERAL');
+          }
+
           fields.push({
             type: 'ObjectField',
             name,

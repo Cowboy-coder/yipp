@@ -19,7 +19,11 @@ const Spec = [
   [/^-?\d+\.\d+/, 'FLOAT_LITERAL'],
   [/^-?\d+/, 'INT_LITERAL'],
   [/^\b(true|false)\b/, 'BOOLEAN_LITERAL'],
-  [/^"([^"\\]*(\\.[^"\\]*)*)"/, 'STRING_LITERAL'],
+
+  // TODO: Fix this. It should support unescaped input.
+  // Except for `\"""` which should translate to `"""`
+  [/^"""([^"\\]*(\\.[^"\\]*)*)"""/, 'MULTI_STRING_LITERAL'],
+  [/^"([^"\\\r\n]*(\\.[^"\\]*)*)"/, 'STRING_LITERAL'],
   [/^\b[a-zA-Z_][a-zA-Z_0-9_-]*\b/, 'VARIABLE_TYPE'],
 
   [/^!/, '!'],

@@ -35,7 +35,6 @@ getUsers: GET /users {
 
 
 getUser: GET /users/:id(Int) {
-
   200: {
     body: User
   }
@@ -65,7 +64,14 @@ postUser: POST /users {
   }
 }
 
+"""
+Update user takes user-fields
+as input and returns the updated user
+"""
 updateUser: PATCH /users/:id(Int) {
+  """
+  Authenticated route. Must pass correct JWT.
+  """
   headers: AuthenticatedRoute
 
   body: {
@@ -76,6 +82,9 @@ updateUser: PATCH /users/:id(Int) {
   }
 
   200: {
+    """
+    The updated user
+    """
     body: User
   }
 
