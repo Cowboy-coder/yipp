@@ -1,5 +1,6 @@
 import { JSONSchema7, JSONSchema7Definition } from 'json-schema';
 import {
+  ApiDefinition,
   ApiFieldDefinition,
   ArrayItem,
   ArrayVariable,
@@ -8,7 +9,7 @@ import {
   ObjectVariable,
   TypeReference,
 } from './ApiParser';
-import { getApiDefinitions, getDeclarations } from './AstQuery';
+import { getApiDefinitions, getApiGroups, getDeclarations } from './AstQuery';
 
 export const schemaId = (str: string) => `https://example.com/#${str}`;
 
@@ -110,10 +111,34 @@ const apiFieldDefinitionSchema = (d: ApiFieldDefinition): JSONSchema7 => {
   throw new Error('unsupported variableType in apiFieldDefinitionSchema');
 };
 
+const apiSchema = (apis: ApiDefinition[], group?: string | undefined): { [key: string]: JSONSchema7Definition } => {
+  return apis.reduce((acc, api) => {
+    const obj: { [key: string]: JSONSchema7Definition } = {};
+    const params = ['params', 'query', 'body', 'headers'] as const;
+    const prefix = group ? `${group}_` : '';
+    params.forEach((key) => {
+      const current = api[key];
+      if (!current) {
+        return undefined;
+      }
+
+      obj[`${prefix}${api.name}_${key}`] = apiFieldDefinitionSchema(current);
+    });
+    api.responses.forEach((response) => {
+      obj[`${prefix}${api.name}_${response.status}`] = apiFieldDefinitionSchema(response.body);
+    });
+
+    return {
+      ...acc,
+      ...obj,
+    };
+  }, {} as { [key: string]: JSONSchema7Definition });
+};
+
 const JsonSchema = (ast: Ast): JSONSchema7 => {
   const declarations = getDeclarations(ast);
   const apis = getApiDefinitions(ast);
-
+  const groups = getApiGroups(ast);
   const schema: JSONSchema7 = {
     $id: 'schema',
     type: 'object',
@@ -151,26 +176,14 @@ const JsonSchema = (ast: Ast): JSONSchema7 => {
         }
         throw new Error(`Json Schema unsupported declaration`);
       }, {} as { [key: string]: JSONSchema7Definition }),
-      ...apis.reduce((acc, api) => {
-        const obj: { [key: string]: JSONSchema7Definition } = {};
-        const params = ['params', 'query', 'body', 'headers'] as const;
-        params.forEach((key) => {
-          const current = api[key];
-          if (!current) {
-            return undefined;
-          }
-
-          obj[`${api.name}_${key}`] = apiFieldDefinitionSchema(current);
-        });
-        api.responses.forEach((response) => {
-          obj[`${api.name}_${response.status}`] = apiFieldDefinitionSchema(response.body);
-        });
-
-        return {
+      ...apiSchema(apis),
+      ...groups.reduce(
+        (acc, group) => ({
           ...acc,
-          ...obj,
-        };
-      }, {} as { [key: string]: JSONSchema7Definition }),
+          ...apiSchema(group.apis, group.name),
+        }),
+        {} as { [key: string]: JSONSchema7Definition },
+      ),
     },
   };
   return schema;

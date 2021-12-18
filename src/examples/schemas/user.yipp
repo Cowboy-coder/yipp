@@ -13,86 +13,89 @@ type User {
   createdAt: DateTime!
 }
 
-"Get all users"
-getUsers: GET /users {
-  headers: AuthenticatedRoute
+"User apis"
+api Users {
+  "Get all users"
+  getUsers: GET /users {
+    headers: AuthenticatedRoute
 
-  "Optional filters"
-  query: {
-    "Free text search"
-    q: String
+    "Optional filters"
+    query: {
+      "Free text search"
+      q: String
+    }
+
+    200: {
+      "An array of users"
+      body: [User!]
+    }
+
+    400: {
+      body: Error
+    }
   }
 
-  200: {
-    "An array of users"
-    body: [User!]
+
+  getUser: GET /users/:id(Int) {
+    200: {
+      body: User
+    }
+
+    400: {
+      body: Error
+    }
   }
 
-  400: {
-    body: Error
-  }
-}
 
+  createUser: POST /users {
+    headers: AuthenticatedRoute
 
-getUser: GET /users/:id(Int) {
-  200: {
-    body: User
-  }
+    body: {
+      username: String!
+      age: Int!
+      type: UserType!
+      isCool: Boolean!
+    }
 
-  400: {
-    body: Error
-  }
-}
+    200: {
+      body: User
+    }
 
-
-postUser: POST /users {
-  headers: AuthenticatedRoute
-
-  body: {
-    username: String!
-    age: Int!
-    type: UserType!
-    isCool: Boolean!
+    400: {
+      body: Error
+    }
   }
 
-  200: {
-    body: User
-  }
-
-  400: {
-    body: Error
-  }
-}
-
-"""
-Update user takes user-fields
-as input and returns the updated user
-"""
-updateUser: PATCH /users/:id(Int) {
   """
-  Authenticated route. Must pass correct JWT.
+  Update user takes user-fields
+  as input and returns the updated user
   """
-  headers: AuthenticatedRoute
-
-  body: {
-    username: String
-    age: Int
-    isCool: Boolean
-    createdAt: DateTime
-  }
-
-  200: {
+  updateUser: PATCH /users/:id(Int) {
     """
-    The updated user
+    Authenticated route. Must pass correct JWT.
     """
-    body: User
-  }
+    headers: AuthenticatedRoute
 
-  400: {
-    body: Error
-  }
+    body: {
+      username: String
+      age: Int
+      isCool: Boolean
+      createdAt: DateTime
+    }
 
-  404: {
-    body: Error
+    200: {
+      """
+      The updated user
+      """
+      body: User
+    }
+
+    400: {
+      body: Error
+    }
+
+    404: {
+      body: Error
+    }
   }
 }

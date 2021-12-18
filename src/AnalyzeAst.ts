@@ -13,7 +13,7 @@ import {
   UnionDeclaration,
 } from './ApiParser';
 import { Token } from './ApiTokenizer';
-import { getApiDefinitions, getDeclarations } from './AstQuery';
+import { getApiDefinitions, getApiGroups, getDeclarations } from './AstQuery';
 
 const rules = {
   headers: ['String', 'StringLiteral', 'EnumDeclaration'],
@@ -231,7 +231,10 @@ const validateDeclaration = (
   });
 };
 
-const validateApis = (apis: ApiDefinition[]) => {
+const validateApis = (
+  apis: ApiDefinition[],
+  declarations: (TypeDeclaration | EnumDeclaration | UnionDeclaration)[],
+) => {
   const foundApis: string[] = [];
   apis.forEach((api) => {
     if (foundApis.includes(api.name)) {
@@ -239,17 +242,7 @@ const validateApis = (apis: ApiDefinition[]) => {
     }
     foundApis.push(api.name);
   });
-};
 
-// Because we are parsing the syntax from left to right we don't know if it
-// produces valid code until after the whole Syntax Tree has been parsed.
-// So this function is post-parse analyzing the AST.
-const AnalyzeAst = (ast: Ast) => {
-  const declarations = getDeclarations(ast);
-  const apis = getApiDefinitions(ast);
-  validateApis(apis);
-
-  declarations.forEach((d) => validateDeclaration(d, declarations));
   apis.forEach((api) => {
     validateHeaders(api.headers, declarations);
     validateQuery(api.query, declarations);
@@ -259,6 +252,19 @@ const AnalyzeAst = (ast: Ast) => {
       validateBody(r.body, declarations);
     });
   });
+};
+
+// Because we are parsing the syntax from left to right we don't know if it
+// produces valid code until after the whole Syntax Tree has been parsed.
+// So this function is post-parse analyzing the AST.
+const AnalyzeAst = (ast: Ast) => {
+  const declarations = getDeclarations(ast);
+  const groups = getApiGroups(ast);
+  const apis = getApiDefinitions(ast);
+  validateApis(apis, declarations);
+  groups.forEach((group) => validateApis(group.apis, declarations));
+
+  declarations.forEach((d) => validateDeclaration(d, declarations));
 
   return ast;
 };

@@ -309,4 +309,61 @@ describe(JsonSchema, () => {
       },
     });
   });
+
+  it('supports api groups', () => {
+    const program = `
+      foo1: GET /foo1 {
+        200: {
+          body: {
+            id: String!
+          }
+        }
+      }
+      api group1 {
+        bar1: GET /foo1 {
+          body: {
+            x: Int!
+          }
+          200: {
+            body: {
+              id: String!
+            }
+          }
+        }
+        bar2: GET /foo1 {
+          200: {
+            body: {
+              id: String!
+            }
+          }
+        }
+      }
+      `;
+    expect(JsonSchema(parse(program))).toEqual<JSONSchema7>({
+      $id: 'schema',
+      type: 'object',
+      definitions: {
+        foo1_200: {
+          type: 'object',
+          properties: { id: { type: 'string' } },
+          required: ['id'],
+        },
+        group1_bar1_body: {
+          type: 'object',
+          properties: { x: { type: 'number' } },
+          required: ['x'],
+        },
+        group1_bar1_200: {
+          type: 'object',
+          properties: { id: { type: 'string' } },
+          required: ['id'],
+        },
+        group1_bar2_200: {
+          type: 'object',
+          properties: { id: { type: 'string' } },
+          required: ['id'],
+        },
+      },
+    });
+  });
 });

@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import prettier from 'prettier';
 import { ApiDefinition, Ast } from '../ApiParser';
-import { getApiDefinitions, getDeclarations } from '../AstQuery';
+import { getApiDefinitions, getApiGroups, getDeclarations } from '../AstQuery';
 import JsonSchema from '../JsonSchema';
 import { generateApiField, generateDeclarations, generateDocs } from './commonTs';
 
@@ -38,10 +38,11 @@ const apiDefinition = (d: ApiDefinition) => {
   >`;
 };
 
-const fastify = (d: ApiDefinition) => {
+const fastify = (d: ApiDefinition, group?: string | undefined) => {
   const hasResponseHeaders = d.responses.map((x) => x.headers).filter((x) => !!x).length > 0;
   const hasResponseBody = d.responses.map((x) => x.body).filter((x) => !!x).length > 0;
 
+  const schemaKey = `${group ? `${group}_` : ''}${d.name}`;
   const generics = [
     d.params ? `Params: ${generateApiField(d.params)}` : '',
     d.query ? `Querystring: ${generateApiField(d.query)}` : '',
@@ -54,12 +55,12 @@ const fastify = (d: ApiDefinition) => {
   fastify.${d.method.toLowerCase()}${generics ? `<{${generics}}>` : ''}("${d.path}", {
     schema: {
     ${[
-      d.params ? `params: { $ref: "schema#/definitions/${d.name}_params"}` : undefined,
-      d.query ? `querystring: { $ref: "schema#/definitions/${d.name}_query"}` : undefined,
-      d.headers ? `headers: { $ref: "schema#/definitions/${d.name}_headers"}` : undefined,
-      d.body ? `body: { $ref: "schema#/definitions/${d.name}_body"}` : undefined,
+      d.params ? `params: { $ref: "schema#/definitions/${schemaKey}_params"}` : undefined,
+      d.query ? `querystring: { $ref: "schema#/definitions/${schemaKey}_query"}` : undefined,
+      d.headers ? `headers: { $ref: "schema#/definitions/${schemaKey}_headers"}` : undefined,
+      d.body ? `body: { $ref: "schema#/definitions/${schemaKey}_body"}` : undefined,
       `response: {${d.responses
-        .map((r) => `"${r.status}": {$ref: "schema#/definitions/${`${d.name}_${r.status}"}`}`)
+        .map((r) => `"${r.status}": {$ref: "schema#/definitions/${`${schemaKey}_${r.status}"}`}`)
         .filter((x) => !!x)
         .join(',')}}`,
     ]
@@ -67,7 +68,7 @@ const fastify = (d: ApiDefinition) => {
       .join(',')},
     }
   }, async (req, reply) => {
-    const response = await options.routes.${d.name}({
+    const response = await options.routes.${group ? `${group}.` : ''}${d.name}({
     ${[
       d.params ? 'params: req.params' : '',
       d.query ? 'query: req.query' : '',
@@ -115,10 +116,15 @@ const generateFastify = (ast: Ast) => {
 
     export type Api<T = any> = {
     ${getApiDefinitions(ast)
-      .map((d) => {
-        return apiDefinition(d);
-      })
+      .map((a) => apiDefinition(a))
       .join('\n')}
+      ${getApiGroups(ast).map((group) => {
+        return `
+        ${generateDocs(group.docs)}${group.name}: {
+          ${group.apis.map((a) => apiDefinition(a)).join('\n')}
+        }
+        `;
+      })}
     }
     const RestPlugin: FastifyPluginAsync<{routes:Api; setContext: (req: FastifyRequest) => any;}> = async (fastify, options) => {
     fastify.decorateRequest("restplugin_context", null);
@@ -128,7 +134,12 @@ const generateFastify = (ast: Ast) => {
       done();
     });
       fastify.addSchema(JsonSchema)
-      ${getApiDefinitions(ast).map(fastify).join('\n')}
+      ${getApiDefinitions(ast)
+        .map((a) => fastify(a))
+        .join('\n')}
+      ${getApiGroups(ast)
+        .map((group) => group.apis.map((a) => fastify(a, group.name)).join('\n'))
+        .join('\n')}
     }
     export default RestPlugin
     `,

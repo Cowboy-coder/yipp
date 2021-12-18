@@ -13,6 +13,7 @@ const Spec = [
   [/^\btype\b \b[a-zA-Z][a-zA-Z_0-9]*\b/, 'TYPE_DECLARATION'],
   [/^\benum\b \b[a-zA-Z][a-zA-Z_0-9]*\b/, 'ENUM_DECLARATION'],
   [/^\bunion\b \b[a-zA-Z][a-zA-Z_0-9]*\b/, 'UNION_DECLARATION'],
+  [/^\bapi\b \b[a-zA-Z][a-zA-Z_0-9]*\b/, 'API_GROUP'],
 
   [/^\b[a-zA-Z_][a-zA-Z_0-9_-]*\b:/, 'WORD_WITH_COLON'],
 

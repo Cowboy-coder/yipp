@@ -258,4 +258,26 @@ describe(AnalyzeAst, () => {
    `),
     ).toThrowErrorMatchingInlineSnapshot(`"Duplicate api definition"`);
   });
+  it('validates duplicate api definitions inside of api groups', () => {
+    expect(() =>
+      parse(`
+        api Users {
+          getUser: GET / {
+            200: {
+              body: {
+                id: String
+              }
+            }
+          }
+          getUser: GET / {
+            200: {
+              body: {
+                id: String
+              }
+            }
+          }
+        }
+   `),
+    ).toThrowErrorMatchingInlineSnapshot(`"Duplicate api definition"`);
+  });
 });

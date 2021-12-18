@@ -97,80 +97,86 @@ const createHTTPClient = (config?: AxiosRequestConfig) => {
         data: {},
       });
     },
+
     /**
-     * Get all users
+     * User apis
      */
-    async getUsers(req: {
+    Users: {
       /**
-       * Optional filters
+       * Get all users
        */
-      query?: {
+      async getUsers(req: {
         /**
-         * Free text search
+         * Optional filters
          */
-        q?: string;
-      };
-      headers: AuthenticatedRoute;
-    }): Promise<AxiosResponse<User[]>> {
-      return axios.request({
-        method: 'GET',
-        url: `/users`,
-        params: req.query,
-        headers: req.headers,
-        data: {},
-      });
-    },
-    async getUser(id: number): Promise<AxiosResponse<User>> {
-      return axios.request({
-        method: 'GET',
-        url: `/users/${id}`,
-
-        data: {},
-      });
-    },
-    async postUser(req: {
-      body: {
-        username: string;
-        age: number;
-        type: UserType;
-        isCool: boolean;
-      };
-      headers: AuthenticatedRoute;
-    }): Promise<AxiosResponse<User>> {
-      return axios.request({
-        method: 'POST',
-        url: `/users`,
-
-        headers: req.headers,
-        data: req.body,
-      });
-    },
-    /**
-     * Update user takes user-fields
-     * as input and returns the updated user
-     */
-    async updateUser(
-      id: number,
-      req: {
-        body?: {
-          username?: string;
-          age?: number;
-          isCool?: boolean;
-          createdAt?: string;
+        query?: {
+          /**
+           * Free text search
+           */
+          q?: string;
         };
-        /**
-         * Authenticated route. Must pass correct JWT.
-         */
         headers: AuthenticatedRoute;
+      }): Promise<AxiosResponse<User[]>> {
+        return axios.request({
+          method: 'GET',
+          url: `/users`,
+          params: req.query,
+          headers: req.headers,
+          data: {},
+        });
       },
-    ): Promise<AxiosResponse<User>> {
-      return axios.request({
-        method: 'PATCH',
-        url: `/users/${id}`,
+      async getUser(id: number): Promise<AxiosResponse<User>> {
+        return axios.request({
+          method: 'GET',
+          url: `/users/${id}`,
 
-        headers: req.headers,
-        data: req.body,
-      });
+          data: {},
+        });
+      },
+      async createUser(req: {
+        body: {
+          username: string;
+          age: number;
+          type: UserType;
+          isCool: boolean;
+        };
+        headers: AuthenticatedRoute;
+      }): Promise<AxiosResponse<User>> {
+        return axios.request({
+          method: 'POST',
+          url: `/users`,
+
+          headers: req.headers,
+          data: req.body,
+        });
+      },
+      /**
+       * Update user takes user-fields
+       * as input and returns the updated user
+       */
+      async updateUser(
+        id: number,
+        req: {
+          body?: {
+            username?: string;
+            age?: number;
+            isCool?: boolean;
+            createdAt?: string;
+          };
+          /**
+           * Authenticated route. Must pass correct JWT.
+           */
+          headers: AuthenticatedRoute;
+        },
+      ): Promise<AxiosResponse<User>> {
+        return axios.request({
+          method: 'PATCH',
+          url: `/users/${id}`,
+
+          headers: req.headers,
+          data: req.body,
+        });
+      },
     },
   };
 };

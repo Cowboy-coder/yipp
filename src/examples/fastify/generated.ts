@@ -171,7 +171,7 @@ export const JsonSchema = {
         $ref: '#/definitions/Feed',
       },
     },
-    getUsers_query: {
+    Users_getUsers_query: {
       type: 'object',
       properties: {
         q: {
@@ -180,19 +180,19 @@ export const JsonSchema = {
       },
       required: [],
     },
-    getUsers_headers: {
+    Users_getUsers_headers: {
       $ref: '#/definitions/AuthenticatedRoute',
     },
-    getUsers_200: {
+    Users_getUsers_200: {
       type: 'array',
       items: {
         $ref: '#/definitions/User',
       },
     },
-    getUsers_400: {
+    Users_getUsers_400: {
       $ref: '#/definitions/Error',
     },
-    getUser_params: {
+    Users_getUser_params: {
       type: 'object',
       properties: {
         id: {
@@ -201,13 +201,13 @@ export const JsonSchema = {
       },
       required: ['id'],
     },
-    getUser_200: {
+    Users_getUser_200: {
       $ref: '#/definitions/User',
     },
-    getUser_400: {
+    Users_getUser_400: {
       $ref: '#/definitions/Error',
     },
-    postUser_body: {
+    Users_createUser_body: {
       type: 'object',
       properties: {
         username: {
@@ -225,16 +225,16 @@ export const JsonSchema = {
       },
       required: ['username', 'age', 'type', 'isCool'],
     },
-    postUser_headers: {
+    Users_createUser_headers: {
       $ref: '#/definitions/AuthenticatedRoute',
     },
-    postUser_200: {
+    Users_createUser_200: {
       $ref: '#/definitions/User',
     },
-    postUser_400: {
+    Users_createUser_400: {
       $ref: '#/definitions/Error',
     },
-    updateUser_params: {
+    Users_updateUser_params: {
       type: 'object',
       properties: {
         id: {
@@ -243,7 +243,7 @@ export const JsonSchema = {
       },
       required: ['id'],
     },
-    updateUser_body: {
+    Users_updateUser_body: {
       type: 'object',
       properties: {
         username: {
@@ -262,16 +262,16 @@ export const JsonSchema = {
       },
       required: [],
     },
-    updateUser_headers: {
+    Users_updateUser_headers: {
       $ref: '#/definitions/AuthenticatedRoute',
     },
-    updateUser_200: {
+    Users_updateUser_200: {
       $ref: '#/definitions/User',
     },
-    updateUser_400: {
+    Users_updateUser_400: {
       $ref: '#/definitions/Error',
     },
-    updateUser_404: {
+    Users_updateUser_404: {
       $ref: '#/definitions/Error',
     },
   },
@@ -375,114 +375,119 @@ export type Api<T = any> = {
   }>;
 
   /**
-   * Get all users
+   * User apis
    */
-  getUsers: (
-    req: {
-      /**
-       * Optional filters
-       */
-      query: {
+  Users: {
+    /**
+     * Get all users
+     */
+    getUsers: (
+      req: {
         /**
-         * Free text search
+         * Optional filters
          */
-        q?: string;
-      };
-      headers: AuthenticatedRoute;
-    },
-    context: T,
-  ) => MaybePromise<
-    | {
-        code: 200;
+        query: {
+          /**
+           * Free text search
+           */
+          q?: string;
+        };
+        headers: AuthenticatedRoute;
+      },
+      context: T,
+    ) => MaybePromise<
+      | {
+          code: 200;
+          /**
+           * An array of users
+           */
+          body: User[];
+        }
+      | {
+          code: 400;
+          body: Error;
+        }
+    >;
+
+    getUser: (
+      req: {
+        params: {
+          id: number;
+        };
+      },
+      context: T,
+    ) => MaybePromise<
+      | {
+          code: 200;
+          body: User;
+        }
+      | {
+          code: 400;
+          body: Error;
+        }
+    >;
+
+    createUser: (
+      req: {
+        body: {
+          username: string;
+          age: number;
+          type: UserType;
+          isCool: boolean;
+        };
+        headers: AuthenticatedRoute;
+      },
+      context: T,
+    ) => MaybePromise<
+      | {
+          code: 200;
+          body: User;
+        }
+      | {
+          code: 400;
+          body: Error;
+        }
+    >;
+
+    /**
+     * Update user takes user-fields
+     * as input and returns the updated user
+     */
+    updateUser: (
+      req: {
+        params: {
+          id: number;
+        };
+        body: {
+          username?: string;
+          age?: number;
+          isCool?: boolean;
+          createdAt?: string;
+        };
         /**
-         * An array of users
+         * Authenticated route. Must pass correct JWT.
          */
-        body: User[];
-      }
-    | {
-        code: 400;
-        body: Error;
-      }
-  >;
-
-  getUser: (
-    req: {
-      params: {
-        id: number;
-      };
-    },
-    context: T,
-  ) => MaybePromise<
-    | {
-        code: 200;
-        body: User;
-      }
-    | {
-        code: 400;
-        body: Error;
-      }
-  >;
-
-  postUser: (
-    req: {
-      body: {
-        username: string;
-        age: number;
-        type: UserType;
-        isCool: boolean;
-      };
-      headers: AuthenticatedRoute;
-    },
-    context: T,
-  ) => MaybePromise<
-    | {
-        code: 200;
-        body: User;
-      }
-    | {
-        code: 400;
-        body: Error;
-      }
-  >;
-
-  /**
-   * Update user takes user-fields
-   * as input and returns the updated user
-   */
-  updateUser: (
-    req: {
-      params: {
-        id: number;
-      };
-      body: {
-        username?: string;
-        age?: number;
-        isCool?: boolean;
-        createdAt?: string;
-      };
-      /**
-       * Authenticated route. Must pass correct JWT.
-       */
-      headers: AuthenticatedRoute;
-    },
-    context: T,
-  ) => MaybePromise<
-    | {
-        code: 200;
-        /**
-         * The updated user
-         */
-        body: User;
-      }
-    | {
-        code: 400;
-        body: Error;
-      }
-    | {
-        code: 404;
-        body: Error;
-      }
-  >;
+        headers: AuthenticatedRoute;
+      },
+      context: T,
+    ) => MaybePromise<
+      | {
+          code: 200;
+          /**
+           * The updated user
+           */
+          body: User;
+        }
+      | {
+          code: 400;
+          body: Error;
+        }
+      | {
+          code: 404;
+          body: Error;
+        }
+    >;
+  };
 };
 const RestPlugin: FastifyPluginAsync<{ routes: Api; setContext: (req: FastifyRequest) => any }> = async (
   fastify,
@@ -590,16 +595,16 @@ const RestPlugin: FastifyPluginAsync<{ routes: Api; setContext: (req: FastifyReq
     '/users',
     {
       schema: {
-        querystring: { $ref: 'schema#/definitions/getUsers_query' },
-        headers: { $ref: 'schema#/definitions/getUsers_headers' },
+        querystring: { $ref: 'schema#/definitions/Users_getUsers_query' },
+        headers: { $ref: 'schema#/definitions/Users_getUsers_headers' },
         response: {
-          '200': { $ref: 'schema#/definitions/getUsers_200' },
-          '400': { $ref: 'schema#/definitions/getUsers_400' },
+          '200': { $ref: 'schema#/definitions/Users_getUsers_200' },
+          '400': { $ref: 'schema#/definitions/Users_getUsers_400' },
         },
       },
     },
     async (req, reply) => {
-      const response = await options.routes.getUsers(
+      const response = await options.routes.Users.getUsers(
         {
           query: req.query,
           headers: req.headers,
@@ -623,15 +628,15 @@ const RestPlugin: FastifyPluginAsync<{ routes: Api; setContext: (req: FastifyReq
     '/users/:id',
     {
       schema: {
-        params: { $ref: 'schema#/definitions/getUser_params' },
+        params: { $ref: 'schema#/definitions/Users_getUser_params' },
         response: {
-          '200': { $ref: 'schema#/definitions/getUser_200' },
-          '400': { $ref: 'schema#/definitions/getUser_400' },
+          '200': { $ref: 'schema#/definitions/Users_getUser_200' },
+          '400': { $ref: 'schema#/definitions/Users_getUser_400' },
         },
       },
     },
     async (req, reply) => {
-      const response = await options.routes.getUser(
+      const response = await options.routes.Users.getUser(
         {
           params: req.params,
         },
@@ -658,16 +663,16 @@ const RestPlugin: FastifyPluginAsync<{ routes: Api; setContext: (req: FastifyReq
     '/users',
     {
       schema: {
-        headers: { $ref: 'schema#/definitions/postUser_headers' },
-        body: { $ref: 'schema#/definitions/postUser_body' },
+        headers: { $ref: 'schema#/definitions/Users_createUser_headers' },
+        body: { $ref: 'schema#/definitions/Users_createUser_body' },
         response: {
-          '200': { $ref: 'schema#/definitions/postUser_200' },
-          '400': { $ref: 'schema#/definitions/postUser_400' },
+          '200': { $ref: 'schema#/definitions/Users_createUser_200' },
+          '400': { $ref: 'schema#/definitions/Users_createUser_400' },
         },
       },
     },
     async (req, reply) => {
-      const response = await options.routes.postUser(
+      const response = await options.routes.Users.createUser(
         {
           body: req.body,
           headers: req.headers,
@@ -698,18 +703,18 @@ const RestPlugin: FastifyPluginAsync<{ routes: Api; setContext: (req: FastifyReq
     '/users/:id',
     {
       schema: {
-        params: { $ref: 'schema#/definitions/updateUser_params' },
-        headers: { $ref: 'schema#/definitions/updateUser_headers' },
-        body: { $ref: 'schema#/definitions/updateUser_body' },
+        params: { $ref: 'schema#/definitions/Users_updateUser_params' },
+        headers: { $ref: 'schema#/definitions/Users_updateUser_headers' },
+        body: { $ref: 'schema#/definitions/Users_updateUser_body' },
         response: {
-          '200': { $ref: 'schema#/definitions/updateUser_200' },
-          '400': { $ref: 'schema#/definitions/updateUser_400' },
-          '404': { $ref: 'schema#/definitions/updateUser_404' },
+          '200': { $ref: 'schema#/definitions/Users_updateUser_200' },
+          '400': { $ref: 'schema#/definitions/Users_updateUser_400' },
+          '404': { $ref: 'schema#/definitions/Users_updateUser_404' },
         },
       },
     },
     async (req, reply) => {
-      const response = await options.routes.updateUser(
+      const response = await options.routes.Users.updateUser(
         {
           params: req.params,
           body: req.body,

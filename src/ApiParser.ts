@@ -158,7 +158,14 @@ export type Docs =
     }
   | undefined;
 
-export type Definition = TypeDeclaration | ApiDefinition | EnumDeclaration | UnionDeclaration;
+export type ApiGroup = {
+  type: 'ApiGroup';
+  name: string;
+  docs: Docs;
+  apis: ApiDefinition[];
+  token: Token;
+};
+export type Definition = TypeDeclaration | ApiDefinition | EnumDeclaration | UnionDeclaration | ApiGroup;
 
 export type Ast = {
   type: 'Document';
@@ -196,13 +203,14 @@ class ApiParser {
   }
 
   Definitions(): Definition[] {
-    const definitions: (TypeDeclaration | ApiDefinition | EnumDeclaration | UnionDeclaration)[] = [];
+    const definitions: Definition[] = [];
     while (
       this.isDocs() ||
       this.lookahead.type === 'WORD_WITH_COLON' ||
       this.lookahead.type === 'TYPE_DECLARATION' ||
       this.lookahead.type === 'ENUM_DECLARATION' ||
-      this.lookahead.type === 'UNION_DECLARATION'
+      this.lookahead.type === 'UNION_DECLARATION' ||
+      this.lookahead.type === 'API_GROUP'
     ) {
       const docs = this.docs();
       if (this.lookahead.type === 'WORD_WITH_COLON') {
@@ -213,6 +221,8 @@ class ApiParser {
         definitions.push(this.enumDeclaration(docs));
       } else if (this.lookahead.type === 'UNION_DECLARATION') {
         definitions.push(this.unionDeclaration(docs));
+      } else if (this.lookahead.type === 'API_GROUP') {
+        definitions.push(this.apiGroup(docs));
       } else {
         this.reportAndExit(this.lookahead, 'TypeDefinition or ApiDefinition required on top-level');
       }
@@ -221,6 +231,30 @@ class ApiParser {
       this.reportAndExit(this.lookahead, 'TypeDefinition or ApiDefinition required on top-level');
     }
     return definitions;
+  }
+
+  apiGroup(docs: Docs): ApiGroup {
+    if (this.lookahead.type !== 'API_GROUP') {
+      this.reportAndExit(this.lookahead, 'Expected an `api` group');
+    }
+    const name = this.lookahead.value.replace('api ', '');
+    const token = this.lookahead;
+    this.eat('API_GROUP');
+    this.eat('{');
+
+    const apis: ApiDefinition[] = [];
+    while (this.isDocs() || (this.lookahead as Token).type === 'WORD_WITH_COLON') {
+      const docs = this.docs();
+      apis.push(this.ApiDefinition(docs));
+    }
+    this.eat('}');
+    return {
+      type: 'ApiGroup',
+      name,
+      apis,
+      token,
+      docs,
+    };
   }
 
   docs(): Docs {

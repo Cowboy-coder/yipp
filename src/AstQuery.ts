@@ -1,4 +1,8 @@
-import { ApiDefinition, Ast, EnumDeclaration, TypeDeclaration, UnionDeclaration } from './ApiParser';
+import { ApiDefinition, ApiGroup, Ast, EnumDeclaration, TypeDeclaration, UnionDeclaration } from './ApiParser';
+
+export const getApiGroups = (ast: Ast) => {
+  return ast.definitions.filter((d): d is ApiGroup => d.type === 'ApiGroup');
+};
 
 export const getApiDefinitions = (ast: Ast) => {
   return ast.definitions.filter((d): d is ApiDefinition => d.type === 'ApiDefinition');

@@ -1,35 +1,7 @@
 import { Context } from '.';
 import { Api, User, UserType } from './generated';
 
-const routes: Api<Context> = {
-  health: () => ({ code: 200, body: { ok: 'ok' } }),
-  login: ({ body: { username, password } }, { db }) => {
-    if (db.login(username, password)) {
-      return {
-        code: 200,
-        body: {
-          token: 'secret',
-        },
-      };
-    }
-    return {
-      code: 400,
-      body: {
-        message: 'bad username and password',
-        fields: [
-          {
-            name: 'username',
-            message: 'Bad username',
-          },
-          {
-            name: 'password',
-            message: 'Bad password',
-          },
-        ],
-      },
-    };
-  },
-  logout: () => ({ code: 204 }),
+const Users: Api<Context>['Users'] = {
   getUser: (_, { db }) => {
     return {
       code: 200,
@@ -52,7 +24,7 @@ const routes: Api<Context> = {
       },
     };
   },
-  postUser: ({ body, headers }) => {
+  createUser: ({ body, headers }) => {
     if (headers.authorization === 'Bearer secret') {
       const user: User = {
         id: 999,
@@ -116,6 +88,38 @@ const routes: Api<Context> = {
       },
     };
   },
+};
+
+const routes: Api<Context> = {
+  Users,
+  health: () => ({ code: 200, body: { ok: 'ok' } }),
+  login: ({ body: { username, password } }, { db }) => {
+    if (db.login(username, password)) {
+      return {
+        code: 200,
+        body: {
+          token: 'secret',
+        },
+      };
+    }
+    return {
+      code: 400,
+      body: {
+        message: 'bad username and password',
+        fields: [
+          {
+            name: 'username',
+            message: 'Bad username',
+          },
+          {
+            name: 'password',
+            message: 'Bad password',
+          },
+        ],
+      },
+    };
+  },
+  logout: () => ({ code: 204 }),
   getFeed: () => {
     return {
       code: 200,

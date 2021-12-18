@@ -17,11 +17,11 @@ import createHTTPClient, { UserType } from './generated';
       })
     ).data;
     console.log('login', login);
-    console.log('getUser', (await api.getUser(1)).data);
+    console.log('Users.getUser', (await api.Users.getUser(1)).data);
     console.log(
       'updateUser',
       (
-        await api.updateUser(1, {
+        await api.Users.updateUser(1, {
           headers: {
             authorization: `Bearer ${login.token}`,
           },
@@ -34,9 +34,9 @@ import createHTTPClient, { UserType } from './generated';
       ).data,
     );
     console.log(
-      'getUsers',
+      'Users.getUsers',
       (
-        await api.getUsers({
+        await api.Users.getUsers({
           headers: {
             authorization: `Bearer ${login.token}`,
           },
@@ -47,9 +47,9 @@ import createHTTPClient, { UserType } from './generated';
       ).data,
     );
     console.log(
-      'postUser',
+      'Users.createUser',
       (
-        await api.postUser({
+        await api.Users.createUser({
           headers: {
             authorization: `Bearer ${login.token}`,
           },

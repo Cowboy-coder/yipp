@@ -849,4 +849,100 @@ describe('ApiParser', () => {
       ],
     });
   });
+
+  describe('api groups', () => {
+    it('works', () => {
+      const program = `
+      "docs"
+      api Users {
+        "docs1"
+        foo1: GET /foo1 {
+          200: {
+            body: {
+              id: String!
+            } 
+          }
+        }
+        "docs2"
+        foo2: GET /foo2 {
+          200: {
+            body: {
+              id: String!
+            } 
+          }
+        }
+      }
+    `;
+      expect(parse(program)).toMatchObject({
+        type: 'Document',
+        definitions: [
+          {
+            type: 'ApiGroup',
+            name: 'Users',
+            apis: [
+              {
+                type: 'ApiDefinition',
+                docs: {
+                  type: 'Docs',
+                  value: 'docs1',
+                },
+                name: 'foo1',
+                method: 'GET',
+                path: '/foo1',
+                responses: [
+                  {
+                    type: 'ApiResponseDefinition',
+                    status: 200,
+                    body: {
+                      variableType: 'Object',
+                      fields: [
+                        {
+                          type: 'ObjectField',
+                          name: 'id',
+                          variableType: 'String',
+                          isRequired: true,
+                        },
+                      ],
+                    },
+                  },
+                ],
+              },
+              {
+                type: 'ApiDefinition',
+                docs: {
+                  type: 'Docs',
+                  value: 'docs2',
+                },
+                name: 'foo2',
+                method: 'GET',
+                path: '/foo2',
+                responses: [
+                  {
+                    type: 'ApiResponseDefinition',
+                    status: 200,
+                    body: {
+                      variableType: 'Object',
+                      fields: [
+                        {
+                          type: 'ObjectField',
+                          name: 'id',
+                          variableType: 'String',
+                          isRequired: true,
+                        },
+                      ],
+                    },
+                  },
+                ],
+              },
+            ],
+            docs: {
+              type: 'Docs',
+              value: 'docs',
+              isMultiLine: false,
+            },
+          },
+        ],
+      });
+    });
+  });
 });
